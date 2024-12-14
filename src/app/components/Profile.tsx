@@ -16,11 +16,39 @@ const ProfileForm = () => {
 
   const [user, setUser] = useState();
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [isClient, setIsClient] = useState(false);
+
   const [sportsList, setSportsList] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>("");
   const { data: session } = useSession();
-  console.log(session);
+  console.log(user?.phoneNumber)
+  useEffect(()=>{
+    if(!session?.user?.phoneNumber){
+      toast.error("Enter Phone Number", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  },[])
+
+  // useEffect(() => {
+  //   setIsClient(true);
+  // }, []);
+
+  // if (!isClient) {
+  //   return (
+  //     <>
+  //       {/* <Navbar /> */}
+  //       <div className="flex items-center justify-center min-h-screen">
+  //         <div id="preloader"></div>
+  //       </div>
+  //     </>
+  //   );
+  // }
   const fetchSportsList = async () => {
     try {
       const response = await fetch(
@@ -56,7 +84,6 @@ const ProfileForm = () => {
       console.error("Error fetching sports list:", error);
     }
   };
-  
 
   const fetchUserDetails = async (userId) => {
     try {
@@ -85,7 +112,7 @@ const ProfileForm = () => {
       );
 
       const { data, errors } = await response.json();
-
+      console.log(data);
       if (errors) {
         console.error("GraphQL errors:", errors);
         return;
@@ -155,8 +182,7 @@ const ProfileForm = () => {
           draggable: true,
         });
         return;
-      }else{
-
+      } else {
         toast.success("Details updated successful!", {
           position: "top-right",
           autoClose: 3000,
@@ -181,13 +207,11 @@ const ProfileForm = () => {
     }
   };
 
-
-
   const addSport = () => {
     if (selectedSport && !formData.favoriteSports.includes(selectedSport)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        favoriteSports: [...prev.favoriteSports, selectedSport]
+        favoriteSports: [...prev.favoriteSports, selectedSport],
       }));
       setSelectedSport(""); // Reset dropdown
     }
@@ -195,9 +219,11 @@ const ProfileForm = () => {
 
   // Remove sport from favorites
   const removeSport = (sportToRemove) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      favoriteSports: prev.favoriteSports.filter(sport => sport !== sportToRemove)
+      favoriteSports: prev.favoriteSports.filter(
+        (sport) => sport !== sportToRemove
+      ),
     }));
   };
 
@@ -205,6 +231,7 @@ const ProfileForm = () => {
     if (session?.user?.id) {
       fetchUserDetails(session.user.id);
       fetchSportsList();
+      console.log("hello");
     }
   }, [session]);
 
@@ -216,135 +243,145 @@ const ProfileForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="max-w-xl mx-auto">
-        {/* Profile Picture */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-white shadow-lg overflow-hidden">
-              <img
-                src="/user.jpeg"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+    <>
+      <ToastContainer />
+
+      <div className="min-h-screen bg-white p-6">
+        <div className="max-w-xl mx-auto">
+          {/* Profile Picture */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-white shadow-lg overflow-hidden">
+                <img
+                  src="/user.jpeg"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Form Fields */}
-        <div className="space-y-6">
-          {/* Name Fields */}
-          <div className="space-y-1">
-            <label className="text-sm text-purple-200 flex items-center">
-              Name
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange("firstName", e.target.value)}
-              className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
-              placeholder="Name"
-            />
-          </div>
-
-          {/* Phone Number */}
-          <div className="space-y-1">
-            <label className="text-sm text-purple-200">Phone No.</label>
-            <div className="flex gap-2">
+          {/* Form Fields */}
+          <div className="space-y-6">
+            {/* Name Fields */}
+            <div className="space-y-1">
+              <label className="text-sm text-purple-200 flex items-center">
+                Name
+                <span className="text-red-500 ml-1">*</span>
+              </label>
               <input
                 type="text"
-                value="+91"
-                disabled
-                className="w-16 p-3 rounded-lg bg-gray-50 border border-gray-100 text-gray-500"
-              />
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-                className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                placeholder="Phone number"
-                // disabled={!!formData.phone}
+                value={formData.firstName}
+                onChange={(e) => handleInputChange("firstName", e.target.value)}
+                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
+                placeholder="Name"
               />
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="text-sm text-purple-200 flex items-center">
-              Email
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
-              placeholder="Email address"
-              readOnly
-            />
-          </div>
+            {/* Phone Number */}
+            <div className="space-y-1">
+              <label className="text-sm text-purple-200">
+                Phone No.
+                <span className="text-red-500 ml-1">*</span>
+              </label>
 
-          {/* Favorite Sports */}
-          <div className="space-y-1">
-            <label className="text-sm text-purple-200">Favorite Sports</label>
-            <div className="flex gap-2 mb-2">
-              <select 
-                value={selectedSport}
-                onChange={(e) => setSelectedSport(e.target.value)}
-                className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value="+91"
+                  disabled
+                  className="w-16 p-3 rounded-lg bg-gray-50 border border-gray-100 text-gray-500"
+                />
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
+                  placeholder="Phone number"
+                  // disabled={!!formData.phone}
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1">
+              <label className="text-sm text-purple-200 flex items-center">
+                Email
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
+                placeholder="Email address"
+                readOnly
+              />
+            </div>
+
+            {/* Favorite Sports */}
+            <div className="space-y-1">
+              <label className="text-sm text-purple-200">Favorite Sports</label>
+              <div className="flex gap-2 mb-2">
+                <select
+                  value={selectedSport}
+                  onChange={(e) => setSelectedSport(e.target.value)}
+                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
+                >
+                  <option value="">Select a Sport</option>
+                  {sportsList.map((sport) => (
+                    <option key={sport.id} value={sport.name}>
+                      {sport.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={addSport}
+                  className="p-3 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Display Selected Sports */}
+              {formData.favoriteSports.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-purple-200 mb-1">
+                    Selected Sports:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.favoriteSports.map((sport) => (
+                      <div
+                        key={sport}
+                        className="bg-purple-100 px-2 py-1 rounded-full flex items-center text-sm"
+                      >
+                        {sport}
+                        <button
+                          onClick={() => removeSport(sport)}
+                          className="ml-2 text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Save Button */}
+            <div className="mt-4">
+              <button
+                onClick={saveUserDetails}
+                className="w-full p-3 rounded-lg bg-green-600 text-white hover:bg-green-600"
+                disabled={isSaving}
               >
-                <option value="">Select a Sport</option>
-                {sportsList.map((sport) => (
-                  <option key={sport.id} value={sport.name}>
-                    {sport.name}
-                  </option>
-                ))}
-              </select>
-              <button 
-                onClick={addSport}
-                className="p-3 rounded-lg bg-green-500 text-white hover:bg-green-600"
-              >
-                Add
+                {isSaving ? "Saving..." : "Save Details"}
               </button>
             </div>
-
-            {/* Display Selected Sports */}
-            {formData.favoriteSports.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-purple-200 mb-1">Selected Sports:</p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.favoriteSports.map((sport) => (
-                    <div 
-                      key={sport} 
-                      className="bg-purple-100 px-2 py-1 rounded-full flex items-center text-sm"
-                    >
-                      {sport}
-                      <button 
-                        onClick={() => removeSport(sport)}
-                        className="ml-2 text-red-500 hover:text-red-700"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Save Button */}
-          <div className="mt-4">
-            <button
-              onClick={saveUserDetails}
-              className="w-full p-3 rounded-lg bg-green-600 text-white hover:bg-green-600"
-              disabled={isSaving}
-            >
-              {isSaving ? "Saving..." : "Save Details"}
-            </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

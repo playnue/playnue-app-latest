@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useGeolocated } from "react-geolocated";
 import Navbar from "../components/Navbar";
-
+import "../loader.css";
 export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -29,28 +29,26 @@ export default function Bookings() {
     });
 
   // Ensure component only renders on client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  
 
   // Fetch location details based on coordinates
   useEffect(() => {
     const fetchLocationWithBackup = async () => {
       const services = [
-        'https://ipapi.co/json/',
-        'https://ip-api.com/json/',
-        'https://ipinfo.io/json'
+        "https://ipapi.co/json/",
+        "https://ip-api.com/json/",
+        "https://ipinfo.io/json",
       ];
-  
+
       for (const serviceUrl of services) {
         try {
           const response = await fetch(serviceUrl);
           const data = await response.json();
-          
+
           const city = data.city || data.City || data.cityName;
           const state = data.region || data.regionName || data.region_name;
           const country = data.country_name || data.country || data.Country;
-  
+
           if (city && state && country) {
             setLocation(`${city}, ${state}, ${country}`);
             break;
@@ -60,7 +58,7 @@ export default function Bookings() {
         }
       }
     };
-  
+
     fetchLocationWithBackup();
   }, []);
 
@@ -83,12 +81,10 @@ export default function Bookings() {
                 sports
                 title
                 id
-                images
                 location
-                map
                 description
                 user_id
-                rating
+                
               }
             }
           `,
@@ -181,13 +177,17 @@ export default function Bookings() {
     </div>
   );
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // If not client-side, render nothing or a placeholder
   if (!isClient) {
     return (
       <>
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
-          <p>Loading...</p>
+          <div id="preloader"></div>
         </div>
       </>
     );
@@ -205,9 +205,20 @@ export default function Bookings() {
     );
   }
 
+  // useEffect(() => {
+  //   const preloader = document.getElementById("preloader");
+  //   if (preloader) {
+  //     preloader.style.opacity = "0"; // Fade out effect
+  //     setTimeout(() => {
+  //       preloader.style.display = "none"; // Hide preloader
+  //     }, 600); // Matches CSS transition duration
+  //   }
+  // }, []);
+
   return (
     <>
       <Navbar />
+      {/* <div id="preloader"></div> Add Preloader */}
       <SidebarInset>
         <header className="flex h-16 items-center px-4">
           <h1 className="text-2xl font-bold text-black-600">

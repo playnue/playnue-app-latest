@@ -114,14 +114,14 @@ export function LoginForm() {
               <Button type="submit" className="w-full">
                 Login
               </Button>
-              {/* <Button
+              <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogleLogin}
               >
                 Login with Google
-              </Button> */}
+              </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm">

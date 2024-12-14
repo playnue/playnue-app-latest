@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
+import "../../loader.css";
 export default function BookNow() {
   const { id } = useParams();
   const [cart, setCart] = useState([]);
@@ -63,60 +63,66 @@ export default function BookNow() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data: session } = useSession();
+  const [isClient, setIsClient] = useState(false);
 
   const logSlotTimes = (slots, setSlots, bookedSlots) => {
-    const allSlots = []; // Array to store all the time intervals
+    const allSlots = [];
 
     // Convert booked slots to Date ranges
     const bookedRanges = bookedSlots.map((booked) => {
-      const [startHour, startMinute, startSecond] = booked.start_time
-        .split(":")
-        .map(Number);
-      const [endHour, endMinute, endSecond] = booked.end_time
-        .split(":")
-        .map(Number);
+      const [startHour, startMinute] = booked.start_time.split(":").map(Number);
+      const [endHour, endMinute] = booked.end_time.split(":").map(Number);
 
       const start = new Date();
-      start.setHours(startHour, startMinute, startSecond);
+      start.setHours(startHour, startMinute, 0);
 
       const end = new Date();
-      end.setHours(endHour, endMinute, endSecond);
+      end.setHours(endHour, endMinute, 0);
 
       return { start, end };
     });
 
     slots.forEach((slot) => {
-      const startTimeParts = slot.start_at.split(":").map(Number);
-      const endTimeParts = slot.end_at.split(":").map(Number);
+      const [startHour, startMinute] = slot.start_at.split(":").map(Number);
+      const [endHour, endMinute] = slot.end_at.split(":").map(Number);
 
-      const startTime = new Date();
-      const endTime = new Date();
+      // Create base date objects for start and end times
+      let startTime = new Date();
+      startTime.setHours(startHour, startMinute, 0);
 
-      startTime.setHours(
-        startTimeParts[0],
-        startTimeParts[1],
-        startTimeParts[2]
-      );
-      endTime.setHours(endTimeParts[0], endTimeParts[1], endTimeParts[2]);
+      let endTime = new Date();
+      endTime.setHours(endHour, endMinute, 0);
+
+      // Handle overnight slots (when end time is before start time)
+      if (endTime < startTime) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
 
       const durationMinutes = slot.duration;
       let currentTime = new Date(startTime);
 
+      // Generate slots until we reach the end time
       while (currentTime < endTime) {
         const slotEndTime = new Date(currentTime);
         slotEndTime.setMinutes(slotEndTime.getMinutes() + durationMinutes);
 
         // Check if this slot overlaps with any booked slot
-        const isBooked = bookedRanges.some(
-          (range) => currentTime < range.end && slotEndTime > range.start // Overlap condition
-        );
+        const isBooked = bookedRanges.some((range) => {
+          // Handle overnight bookings
+          let rangeStart = new Date(range.start);
+          let rangeEnd = new Date(range.end);
+          if (rangeEnd < rangeStart) {
+            rangeEnd.setDate(rangeEnd.getDate() + 1);
+          }
+          return currentTime < rangeEnd && slotEndTime > rangeStart;
+        });
 
         if (!isBooked) {
           allSlots.push({
-            id: slot.id, // Include the slot ID for reference
-            time: new Date(currentTime), // Store the time as a Date object
-            price: slot.price, // Include the price for this slot
-            duration: slot.duration, // Include the duration
+            id: slot.id,
+            time: new Date(currentTime),
+            price: slot.price,
+            duration: slot.duration,
           });
         }
 
@@ -124,11 +130,10 @@ export default function BookNow() {
       }
     });
 
-    // Update the state with the filtered slots
-    setSlots(allSlots);
+    // Sort slots by time
+    allSlots.sort((a, b) => a.time - b.time);
 
-    // Log the available slots (optional)
-    console.log("All available slots:", allSlots);
+    setSlots(allSlots);
   };
 
   const fetchSlotsForCourt = async (courtId, selectedDate) => {
@@ -246,7 +251,7 @@ export default function BookNow() {
     console.log(selectedSlotPrice);
 
     // Calculate the total price (price per 30-minute block)
-    const totalPrice = selectedSlotPrice * (duration / 30);
+    const totalPrice = selectedSlotPrice * (duration / 60);
     console.log(totalPrice);
     // Create a new booking object
     const newBooking = {
@@ -547,6 +552,21 @@ export default function BookNow() {
     }
   }, [selectedCourt, selectedDate]); // Added selectedDate dependency
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // If not client-side, render nothing or a placeholder
+  if (!isClient) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div id="preloader"></div>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <ToastContainer />
@@ -618,8 +638,6 @@ export default function BookNow() {
             </Popover>
           </div>
 
-          
-
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Start Time</label>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -633,11 +651,11 @@ export default function BookNow() {
                   <Clock className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[500px] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Select Time</DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-3 gap-2 mt-4">
+                <div className="grid grid-cols-3 gap-2 mt-4 overflow-y-auto pr-2"style={{ maxHeight: '400px' }}>
                   {slots.length === 0 ? (
                     <p className="text-center col-span-3">
                       Please select court

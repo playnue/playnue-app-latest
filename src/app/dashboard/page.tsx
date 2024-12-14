@@ -17,10 +17,12 @@ import {
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Profile from "../components/Profile";
-
+import "../loader.css"
+import Navbar from "../components/Navbar";
 export default function Page() {
   const { data: session } = useSession();
   const [userDetails, setUserDetails] = useState(null);
+  const [isClient, setIsClient] = useState(false);
 
   // Function to fetch user details
   const fetchUserDetails = async (userId: string) => {
@@ -67,6 +69,21 @@ export default function Page() {
       fetchUserDetails(session.user.id);
     }
   }, [session]);
+  useEffect(() => {
+      setIsClient(true);
+    }, []);
+  
+    // If not client-side, render nothing or a placeholder
+    if (!isClient) {
+      return (
+        <>
+          {/* <Navbar /> */}
+          <div className="flex items-center justify-center min-h-screen">
+            <div id="preloader"></div>
+          </div>
+        </>
+      );
+    }
   return (
     <SidebarProvider>
       <AppSidebar />

@@ -3,7 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { nhost } from "../lib/nhost";
+import { signIn } from "next-auth/react";
 import bcrypt from "bcryptjs";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Card,
   CardContent,
@@ -14,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NextResponse } from "next/server";
+// import { toast } from "react-toastify";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -35,77 +39,94 @@ export function SignupForm() {
     });
     // localStorage.setItem("user",JSON.stringify(res));
     console.log(res);
+    if (res?.ok) {
+      toast.success(" User Created successfully", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 3000);
+    } else {
+      toast.error("Booking failed", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    signIn("google"); // Replace "google" with your Google provider ID
   };
 
   return (
-    <Card className="mx-auto max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">Sign Up</CardTitle>
-        <CardDescription>
-          Enter your email below to create a new account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="text"
-                type="text"
-                value={password}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Phone Number</Label>
-              <Input
-                id="phone"
-                type="text"
-                placeholder="Enter Phone Number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+    <>
+      <ToastContainer />
+      <Card className="mx-auto max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardDescription>
+            Enter your email below to create a new account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-            <Button type="submit" className="w-full">
-              Sign Up
-            </Button>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full">
+                Sign Up
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleLogin}
+              >
+                SignUp with Google
+              </Button>
+            </div>
+          </form>
+          {message && (
+            <p className="mt-4 text-center text-sm text-red-600">{message}</p>
+          )}
+          <div className="mt-4 text-center text-sm">
+            Already have an account?{" "}
+            <Link href={`/login`} className="underline">
+              Login
+            </Link>
           </div>
-        </form>
-        {message && (
-          <p className="mt-4 text-center text-sm text-red-600">{message}</p>
-        )}
-        <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
-          <Link href={`/login`} className="underline">
-            Login
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -14,8 +15,26 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import VenueForm from "../venue-form/page"
+import "../loader.css"
+import { useEffect, useState } from "react"
 
 export default function Page() {
+    const [isClient, setIsClient] = useState(false);
+     useEffect(() => {
+          setIsClient(true);
+        }, []);
+      
+        // If not client-side, render nothing or a placeholder
+        if (!isClient) {
+          return (
+            <>
+              {/* <Navbar /> */}
+              <div className="flex items-center justify-center min-h-screen">
+                <div id="preloader"></div>
+              </div>
+            </>
+          );
+        }
   return (
     <SidebarProvider>
       <AppSidebar />

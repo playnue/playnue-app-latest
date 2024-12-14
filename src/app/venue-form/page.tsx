@@ -1,5 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Clock,
   MapPin,
@@ -9,12 +13,9 @@ import {
   X,
   ChevronUp,
   ChevronDown,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { nhost } from "@/lib/nhost";
 import {
   Select,
   SelectContent,
@@ -22,8 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSession } from "next-auth/react";
-
+// Import existing TimePicker component from your code
 const TimePicker = ({ value, onChange, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hours, setHours] = useState("12");
@@ -49,7 +49,11 @@ const TimePicker = ({ value, onChange, label }) => {
     }
   }, [value]);
 
-  const handleTimeChange = (newHours: string, newMinutes: string, newPeriod: string) => {
+  const handleTimeChange = (
+    newHours: string,
+    newMinutes: string,
+    newPeriod: string
+  ) => {
     let hour = parseInt(newHours);
 
     // Convert to 24-hour format
@@ -166,11 +170,17 @@ const TimePicker = ({ value, onChange, label }) => {
     </div>
   );
 };
+// Assuming TimePicker component exists as previously defined
 
-const VenueForm = () => {
-  const { data: session } = useSession();
-  const token = session?.token; // Replace `token` with the actual key storing your JWT if needed
-  console.log("Bearer Token:", token);
+const MultiStepVenueForm = () => {
+  const [step, setStep] = useState(1);
+  const [venueId, setVenueId] = useState(null);
+  const [courtId, setCourtId] = useState(null);
+
+  const [newAmenity, setNewAmenity] = useState("");
+  const [newSport, setNewSport] = useState("");
+
+  // Form states
   const [venue, setVenue] = useState({
     title: "",
     description: "",
@@ -180,14 +190,29 @@ const VenueForm = () => {
     amenities: [],
     sports: [],
     sellerEmail: "",
-    latitude: "",
-    longitude: "",
-    rating: 0,
-    // images: [],
   });
 
-  const [newAmenity, setNewAmenity] = useState("");
-  const [newSport, setNewSport] = useState("");
+  const [court, setCourt] = useState({
+    name: "",
+    description: "",
+  });
+
+  const [slots, setSlots] = useState([
+    {
+      startTime: venue.openingTime || "12:00",
+      endTime: venue.closingTime || "24:00",
+      price: "",
+    },
+  ]);
+
+  const handleSlotTimeChange = (index, field, value) => {
+    const newSlots = [...slots];
+    newSlots[index] = {
+      ...newSlots[index],
+      [field]: value,
+    };
+    setSlots(newSlots);
+  };
 
   const fetchUserIdByEmail = async (email: string) => {
     try {
@@ -208,12 +233,12 @@ const VenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": "nhost-admin-secret"
+          "x-hasura-admin-secret": "nhost-admin-secret",
         },
         body: JSON.stringify({
           query,
-          variables: { email}
-        })
+          variables: { email },
+        }),
       });
 
       const result = await response.json();
@@ -231,7 +256,164 @@ const VenueForm = () => {
     }
   };
 
-  const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
+  const handleVenueSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const userId = await fetchUserIdByEmail(venue.sellerEmail);
+      console.log(venue.openingTime);
+      if (!userId) {
+        alert("No user found with the provided email.");
+        return;
+      }
+
+      const mutation = `
+        mutation InsertVenue($object: venues_insert_input!) {
+          insert_venues_one(object: $object) {
+            id
+            title
+          }
+        }
+      `;
+
+      const variables = {
+        object: {
+          title: venue.title,
+          description: venue.description,
+          location: venue.location,
+          open_at: venue.openingTime || "00:00",
+          close_at: venue.closingTime || "00:00",
+          amenities: venue.amenities,
+          sports: venue.sports,
+          user_id: userId,
+        },
+      };
+
+      const response = await fetch(
+        "https://local.hasura.local.nhost.run/v1/graphql",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-hasura-admin-secret": "nhost-admin-secret",
+          },
+          body: JSON.stringify({ query: mutation, variables }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.data?.insert_venues_one?.id) {
+        setVenueId(result.data.insert_venues_one.id);
+        setStep(2);
+      }
+    } catch (error) {
+      console.error("Error saving venue:", error);
+      alert("Failed to save venue");
+    }
+  };
+
+  const handleCourtSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const mutation = `
+        mutation InsertCourt($object: courts_insert_input!) {
+          insert_courts_one(object: $object) {
+            id
+            name
+          }
+        }
+      `;
+
+      const variables = {
+        object: {
+          name: court.name,
+          venue_id: venueId,
+        },
+      };
+
+      const response = await fetch(
+        "https://local.hasura.local.nhost.run/v1/graphql",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-hasura-admin-secret": "nhost-admin-secret",
+          },
+          body: JSON.stringify({ query: mutation, variables }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.data?.insert_courts_one?.id) {
+        setCourtId(result.data.insert_courts_one.id);
+        setStep(3);
+      }
+    } catch (error) {
+      console.error("Error saving court:", error);
+      alert("Failed to save court");
+    }
+  };
+
+  const handleSlotSubmit = async (e) => {
+    console.log(slots.map((slot) => console.log(slot.startTime)));
+    e.preventDefault();
+    try {
+      const mutation = `
+        mutation InsertSlots($objects: [slots_insert_input!]!) {
+          insert_slots(objects: $objects) {
+            affected_rows
+          }
+        }
+      `;
+
+      const slotObjects = slots.map((slot) => ({
+        start_at: slot.startTime + ":00",
+        end_at: slot.endTime + ":00",
+        price: parseFloat(slot.price),
+        court_id: courtId,
+      }));
+
+      const variables = {
+        objects: slotObjects,
+      };
+
+      const response = await fetch(
+        "https://local.hasura.local.nhost.run/v1/graphql",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-hasura-admin-secret": "nhost-admin-secret",
+          },
+          body: JSON.stringify({ query: mutation, variables }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.data?.insert_slots?.affected_rows > 0) {
+        alert("All data saved successfully!");
+        // Reset form or redirect
+      }
+    } catch (error) {
+      console.error("Error saving slots:", error);
+      alert("Failed to save slots");
+    }
+  };
+
+  const addSlot = () => {
+    setSlots([
+      ...slots,
+      {
+        startTime: "09:00",
+        endTime: "10:00",
+        price: "",
+      },
+    ]);
+  };
+
+  const removeSlot = (index) => {
+    setSlots(slots.filter((_, i) => i !== index));
+  };
+  const handleInputChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
     setVenue((prev) => ({
       ...prev,
@@ -262,344 +444,302 @@ const VenueForm = () => {
     }
   };
 
-  const removeItem = (field: string, index: number) => {
-    setVenue((prev) => ({
-      ...prev,
-      [field]: prev[field].filter((_: any, i: any) => i !== index),
-    }));
-  };
-
-  const handleImageUpload = async (e: { target: { files: Iterable<unknown> | ArrayLike<unknown>; }; }) => {
-    const files = Array.from(e.target.files);
-    try {
-      const uploadedImages = await Promise.all(
-        files.map(async (file) => {
-          const { fileMetadata, error } = await nhost.storage.upload({ file });
-          if (error) {
-            console.error("Error uploading file:", error.message);
-            return null;
-          }
-          return nhost.storage.getPublicUrl({ fileId: fileMetadata.id });
-        })
-      );
-
-      setVenue((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedImages.filter(Boolean)], // Filter out failed uploads
-      }));
-    } catch (error) {
-      console.error("Error uploading images:", error.message);
-    }
-  };
-
-  const handleSubmit = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-
-    try {
-      const userId = await fetchUserIdByEmail(venue.sellerEmail);
-
-      if (!userId) {
-        alert("No user found with the provided email.");
-        return;
-      }
-      // Replace with your Hasura GraphQL endpoint
-      const hasuraEndpoint = "https://local.hasura.local.nhost.run/v1/graphql";
-      const hasuraSecret = "nhost-admin-secret";
-
-      // Construct the mutation payload
-      const mutation = `
-        mutation InsertVenue($object: venues_insert_input!) {
-          insert_venues_one(object: $object) {
-            id
-            title
-          }
-        }
-      `;
-
-      const variables = {
-        object: {
-          title: venue.title,
-          description: venue.description,
-          location: venue.location,
-          open_at: venue.openingTime,
-          close_at: venue.closingTime,
-          amenities: venue.amenities,
-          sports: venue.sports,
-          user_id: userId, // Map sellerEmail to user_id for simplicity
-          map: [`${venue.latitude},${venue.longitude}`],
-          rating: parseInt(venue.rating, 10),
-          // images: venue.images,
-        },
-      };
-
-      const response = await fetch(hasuraEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": "nhost-admin-secret"
-          // "Authorization":`Bearer ${token}`
-        },
-        body: JSON.stringify({ query: mutation, variables }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.data) {
-        alert("Venue added successfully!");
-        // Reset form or handle success state
-        setVenue({
-          title: "",
-          description: "",
-          location: "",
-          openingTime: "",
-          closingTime: "",
-          amenities: [],
-          sports: [],
-          user_id: "",
-          latitude: "",
-          longitude: "",
-          rating: 0,
-          // images: [],
-        });
-      } else {
-        console.error("Error saving venue:", result.errors);
-        alert("Failed to save the venue. Please check your input.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An unexpected error occurred. Please try again.");
-    }
-  };
-
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Add New Venue</CardTitle>
+        <CardTitle>
+          {step === 1 && "Add Venue Details"}
+          {step === 2 && "Add Court Details"}
+          {step === 3 && "Add Time Slots"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Details */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
-              <Input
-                name="title"
-                value={venue.title}
-                onChange={handleInputChange}
-                placeholder="Enter venue title"
-                required
-              />
+        {step === 1 && (
+          <form onSubmit={handleVenueSubmit} className="space-y-6">
+            {/* Basic Details */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title</label>
+                <Input
+                  name="title"
+                  value={venue.title}
+                  onChange={handleInputChange}
+                  placeholder="Enter venue title"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
+                <Textarea
+                  name="description"
+                  value={venue.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter venue description"
+                  required
+                  className="h-32"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  <MapPin className="inline-block w-4 h-4 mr-1" />
+                  Location (City)
+                </label>
+                <Input
+                  name="location"
+                  value={venue.location}
+                  onChange={handleInputChange}
+                  placeholder="Enter city"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Description
-              </label>
-              <Textarea
-                name="description"
-                value={venue.description}
-                onChange={handleInputChange}
-                placeholder="Enter venue description"
-                required
-                className="h-32"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                <MapPin className="inline-block w-4 h-4 mr-1" />
-                Location (City)
-              </label>
-              <Input
-                name="location"
-                value={venue.location}
-                onChange={handleInputChange}
-                placeholder="Enter city"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Time Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <TimePicker
-              label="Opening Time"
-              value={venue.openingTime}
-              onChange={(value: any) => handleTimeChange("openingTime", value)}
-            />
-            <TimePicker
-              label="Closing Time"
-              value={venue.closingTime}
-              onChange={(value: any) => handleTimeChange("closingTime", value)}
-            />
-          </div>
-
-          {/* Rest of the form remains the same */}
-          {/* Amenities */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Amenities</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newAmenity}
-                onChange={(e) => setNewAmenity(e.target.value)}
-                placeholder="Add amenity"
-              />
-              <Button
-                type="button"
-                onClick={() =>
-                  newAmenity && handleArrayInput("amenities", newAmenity)
-                }
-                className="flex-shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {venue.amenities.map((amenity, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-1"
-                >
-                  {amenity}
-                  <button
-                    type="button"
-                    onClick={() => removeItem("amenities", index)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Sports */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Sports</label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newSport}
-                onChange={(e) => setNewSport(e.target.value)}
-                placeholder="Add sport"
-              />
-              <Button
-                type="button"
-                onClick={() => newSport && handleArrayInput("sports", newSport)}
-                className="flex-shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {venue.sports.map((sport, index) => (
-                <span
-                  key={index}
-                  className="bg-green-100 text-green-800 px-2 py-1 rounded-md flex items-center gap-1"
-                >
-                  {sport}
-                  <button
-                    type="button"
-                    onClick={() => removeItem("sports", index)}
-                    className="text-green-600 hover:text-green-800"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Contact and Location */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                <Mail className="inline-block w-4 h-4 mr-1" />
-                Seller Email
-              </label>
-              <Input
-                type="email"
-                name="sellerEmail"
-                value={venue.sellerEmail}
-                onChange={handleInputChange}
-                placeholder="Enter seller email"
-                required
-              />
-            </div>
+            {/* Time Details */}
+            <p className="block text-sm font-medium text-red-500">
+              If open 24/7 leave this
+            </p>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Latitude
-                </label>
+              <TimePicker
+                label="Opening Time"
+                value={venue.openingTime}
+                onChange={(value: any) =>
+                  handleTimeChange("openingTime", value)
+                }
+              />
+              <TimePicker
+                label="Closing Time"
+                value={venue.closingTime}
+                onChange={(value: any) =>
+                  handleTimeChange("closingTime", value)
+                }
+              />
+            </div>
+
+            {/* Rest of the form remains the same */}
+            {/* Amenities */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Amenities
+              </label>
+              <div className="flex gap-2 mb-2">
                 <Input
-                  type="number"
-                  name="latitude"
-                  value={venue.latitude}
-                  onChange={handleInputChange}
-                  placeholder="Enter latitude"
-                  required
-                  step="any"
+                  value={newAmenity}
+                  onChange={(e) => setNewAmenity(e.target.value)}
+                  placeholder="Add amenity"
                 />
+                <Button
+                  type="button"
+                  onClick={() =>
+                    newAmenity && handleArrayInput("amenities", newAmenity)
+                  }
+                  className="flex-shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Longitude
-                </label>
-                <Input
-                  type="number"
-                  name="longitude"
-                  value={venue.longitude}
-                  onChange={handleInputChange}
-                  placeholder="Enter longitude"
-                  required
-                  step="any"
-                />
+              <div className="flex flex-wrap gap-2">
+                {venue.amenities.map((amenity, index) => (
+                  <span
+                    key={index}
+                    className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-1"
+                  >
+                    {amenity}
+                    <button
+                      type="button"
+                      onClick={() => removeItem("amenities", index)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
               </div>
             </div>
 
+            {/* Sports */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Sports</label>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  value={newSport}
+                  onChange={(e) => setNewSport(e.target.value)}
+                  placeholder="Add sport"
+                />
+                <Button
+                  type="button"
+                  onClick={() =>
+                    newSport && handleArrayInput("sports", newSport)
+                  }
+                  className="flex-shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {venue.sports.map((sport, index) => (
+                  <span
+                    key={index}
+                    className="bg-green-100 text-green-800 px-2 py-1 rounded-md flex items-center gap-1"
+                  >
+                    {sport}
+                    <button
+                      type="button"
+                      onClick={() => removeItem("sports", index)}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Contact and Location */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  <Mail className="inline-block w-4 h-4 mr-1" />
+                  Seller Email
+                </label>
+                <Input
+                  type="email"
+                  name="sellerEmail"
+                  value={venue.sellerEmail}
+                  onChange={handleInputChange}
+                  placeholder="Enter seller email"
+                  required
+                />
+              </div>
+              {/* {Images} */}
+              {/* <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Upload Venue Images
+                        </label>
+                        <Input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="w-full"
+                        />
+          
+                        {venue.imageUrls && venue.imageUrls.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {venue.imageUrls.map((url, index) => (
+                              <img
+                                key={index}
+                                src={url}
+                                alt={`Venue image ${index + 1}`}
+                                className="w-20 h-20 object-cover rounded"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div> */}
+            </div>
+
+            {/* <Button type="submit" className="w-full">
+              Save Venue
+            </Button> */}
+            <Button type="submit" className="w-full">
+              Next: Add Court
+            </Button>
+          </form>
+        )}
+
+        {step === 2 && (
+          <form onSubmit={handleCourtSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-1">
-                <Star className="inline-block w-4 h-4 mr-1" />
-                Rating
+                Court Name
               </label>
               <Input
-                type="number"
-                name="rating"
-                value={venue.rating}
-                onChange={handleInputChange}
-                min="0"
-                max="5"
-                step="1"
+                value={court.name}
+                onChange={(e) => setCourt({ ...court, name: e.target.value })}
                 required
               />
             </div>
+            <div className="flex gap-4">
+              <Button type="button" onClick={() => setStep(1)}>
+                Back
+              </Button>
+              <Button type="submit" className="flex-1">
+                Next: Add Slots
+              </Button>
+            </div>
+          </form>
+        )}
 
-            {/* <div>
-              <label className="block text-sm font-medium mb-1">Images</label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="cursor-pointer"
-              />
-              <div className="mt-2 text-sm text-gray-500">
-                Selected files: {venue.images.length}
+        {step === 3 && (
+          <form onSubmit={handleSlotSubmit} className="space-y-6">
+            {slots.map((slot, index) => (
+              <div key={index} className="p-4 border rounded-lg space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Slot {index + 1}</h3>
+                  {slots.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => removeSlot(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <TimePicker
+                    label="Start Time"
+                    value={slot.startTime}
+                    onChange={(value) =>
+                      handleSlotTimeChange(index, "startTime", value)
+                    }
+                  />
+                  <TimePicker
+                    label="End Time"
+                    value={slot.endTime}
+                    onChange={(value) =>
+                      handleSlotTimeChange(index, "endTime", value)
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Price
+                  </label>
+                  <Input
+                    type="number"
+                    value={slot.price}
+                    onChange={(e) => {
+                      const newSlots = [...slots];
+                      newSlots[index].price = e.target.value;
+                      setSlots(newSlots);
+                    }}
+                    required
+                  />
+                </div>
               </div>
-            </div> */}
-          </div>
-
-          <Button type="submit" className="w-full">
-            Save Venue
-          </Button>
-        </form>
+            ))}
+            <Button type="button" onClick={addSlot} className="w-full mb-4">
+              <Plus className="w-4 h-4 mr-2" /> Add Another Slot
+            </Button>
+            <div className="flex gap-4">
+              <Button type="button" onClick={() => setStep(2)}>
+                Back
+              </Button>
+              <Button type="submit" className="flex-1">
+                Save All
+              </Button>
+            </div>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-export default VenueForm;
-
-
-
-
+export default MultiStepVenueForm;

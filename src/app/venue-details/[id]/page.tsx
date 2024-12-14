@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
-
+import "../../loader.css"
 interface VenueDetails {
   id: string;
   title: string;
@@ -16,8 +16,6 @@ interface VenueDetails {
   amenities: string[];
   images: string[];
   location: string;
-  latitude: number;
-  longitude: number;
   open_at: string;
   close_at: string;
   rating?: number; // Optional fields can be added based on available data
@@ -39,6 +37,7 @@ const VenuePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
+  const [isClient, setIsClient] = useState(false);
 
   // Fetch data from Hasura
   useEffect(() => {
@@ -63,7 +62,6 @@ const VenuePage = () => {
                   amenities
                   images
                   location
-                  map
                   open_at
                   close_at
                 }
@@ -88,6 +86,22 @@ const VenuePage = () => {
 
     fetchVenueDetails();
   }, [id]);
+
+  useEffect(() => {
+      setIsClient(true);
+    }, []);
+  
+    // If not client-side, render nothing or a placeholder
+    if (!isClient) {
+      return (
+        <>
+          <Navbar />
+          <div className="flex items-center justify-center min-h-screen">
+            <div id="preloader"></div>
+          </div>
+        </>
+      );
+    }
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -189,7 +203,7 @@ const VenuePage = () => {
           </div>
 
           {/* Map Location */}
-          <div>
+          {/* <div>
             <h2 className="text-xl font-semibold mb-4">Location</h2>
             <div className="border rounded-lg overflow-hidden shadow-sm">
               <iframe
@@ -202,7 +216,7 @@ const VenuePage = () => {
                 className="border-none"
               ></iframe>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

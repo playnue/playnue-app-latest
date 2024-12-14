@@ -20,11 +20,11 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import Link from "next/link";
-
+import "../loader.css"
 export default function Page() {
   const { data: session } = useSession();
   const [userBookings, setUserBookings] = useState([]);
-
+  const [isClient, setIsClient] = useState(false);
   // Function to fetch bookings
   const fetchUserBookings = async (userId) => {
     try {
@@ -149,6 +149,21 @@ export default function Page() {
     }
   }, [session]);
 
+  useEffect(() => {
+      setIsClient(true);
+    }, []);
+  
+    // If not client-side, render nothing or a placeholder
+    if (!isClient) {
+      return (
+        <>
+          {/* <Navbar /> */}
+          <div className="flex items-center justify-center min-h-screen">
+            <div id="preloader"></div>
+          </div>
+        </>
+      );
+    }
   return (
     <SidebarProvider>
       <AppSidebar />

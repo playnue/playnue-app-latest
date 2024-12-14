@@ -1,4 +1,5 @@
-import { AppSidebar } from "@/components/nav-sidebar"
+"use client";
+import AppSidebar from "@/components/user-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,15 +7,66 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import Profile from "../components/Profile";
 
 export default function Page() {
+  const { data: session } = useSession();
+  const [userDetails, setUserDetails] = useState(null);
+
+  // Function to fetch user details
+  const fetchUserDetails = async (userId: string) => {
+    try {
+      const response = await fetch(
+        "https://local.hasura.local.nhost.run/v1/graphql",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-hasura-admin-secret": "nhost-admin-secret",
+          },
+          body: JSON.stringify({
+            query: `
+              query MyQuery($id: uuid!) {
+                user(id: $id) {
+                  displayName
+                  email
+                  phoneNumber
+                }
+              }
+            `,
+
+            variables: { id: userId },
+          }),
+        }
+      );
+
+      const { data, errors } = await response.json();
+
+      if (errors) {
+        console.error("GraphQL errors:", errors);
+        return;
+      }
+
+      setUserDetails(data?.user);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchUserDetails(session.user.id);
+    }
+  }, [session]);
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -32,21 +84,14 @@ export default function Page() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                  <BreadcrumbPage>My Profile</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-          </div>
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
-        </div>
+      <Profile/>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

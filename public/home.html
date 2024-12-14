@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Playnue </title>
+    <title>Playnue</title>
     <meta name="description" content="" />
     <meta name="keywords" content="" />
 
@@ -48,6 +48,11 @@
   </head>
 
   <body class="index-page">
+    <style>
+      .hidden {
+        display: none;
+      }
+    </style>
     <header id="header" class="header d-flex align-items-center fixed-top">
       <div
         class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between"
@@ -57,7 +62,7 @@
             src="logo.png"
             alt="PlayNue Logo"
             class="logo-img"
-            style="width: 100px; height: auto"
+            style="width: 80px; height: auto"
           />
         </a>
 
@@ -66,17 +71,38 @@
             <li><a href="#hero" class="active">Home</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#gallery">Gallery</a></li>
-            <li><a href="/user-dashboard">Dashboard</a></li>
+            <li><a href="/dashboard">Dashboard</a></li>
             <li><a href="/venues">Venues</a></li>
-            <li class="rounded-full mr-4">
-              <a href="/signup">Login</a>
+            <li class="rounded-full mr-4" id="loginButton">
+              <a href="/login">Login</a>
             </li>
           </ul>
           <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
         </nav>
       </div>
     </header>
+    <script>
+      // Function to check the session
+      async function checkSession() {
+        try {
+          const response = await fetch("/api/auth/session");
+          const session = await response.json();
 
+          // If a session exists and user is logged in, hide the login button
+          if (session && session.user) {
+            const loginButton = document.getElementById("loginButton");
+            if (loginButton) {
+              loginButton.classList.add("hidden"); // Add the 'hidden' class
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching session:", error);
+        }
+      }
+
+      // Run the function after the DOM has fully loaded
+      document.addEventListener("DOMContentLoaded", checkSession);
+    </script>
     <main class="main">
       <!-- Hero Section -->
       <section id="hero" class="hero section dark-background">
@@ -103,7 +129,7 @@
               <h1>Book Sports Facility Easily With <span>PlayNue</span></h1>
               <p>Connect with local venues for all your sports needs</p>
               <div class="d-flex">
-                <a href="#about" class="btn-get-started">Book Now</a>
+                <a href="/venues" class="btn-get-started">Book Now</a>
               </div>
             </div>
           </div>
@@ -211,8 +237,8 @@
       <!-- /About Section -->
 
       <!-- Gallery Section -->
-      <section id="gallery" class="gallery section">
-        <!-- Section Title -->
+
+      <!-- <section id="gallery" class="gallery section">
         <div class="container section-title" data-aos="fade-up">
           <h2>Gallery</h2>
           <div>
@@ -220,26 +246,24 @@
             <span class="description-title">Gallery</span>
           </div>
         </div>
-        <!-- End Section Title -->
 
         <div class="container" data-aos="fade-up" data-aos-delay="100">
           <div class="row g-0">
             <div class="col-lg-3 col-md-4">
               <div class="gallery-item">
                 <a
-                  href="assets/img/gallery/gallery-1.jpg"
+                  href="assets/img/gallery/gallery9.jpeg"
                   class="glightbox"
                   data-gallery="images-gallery"
                 >
                   <img
-                    src="assets/img/gallery/gallery-1.jpg"
+                    src="assets/img/gallery/turf1.jpeg"
                     alt=""
                     class="img-fluid"
                   />
                 </a>
               </div>
             </div>
-            <!-- End Gallery Item -->
 
             <div class="col-lg-3 col-md-4">
               <div class="gallery-item">
@@ -249,14 +273,13 @@
                   data-gallery="images-gallery"
                 >
                   <img
-                    src="assets/img/gallery/gallery-2.jpg"
+                    src="assets/img/gallery/turf2.jpeg"
                     alt=""
                     class="img-fluid"
                   />
                 </a>
               </div>
             </div>
-            <!-- End Gallery Item -->
 
             <div class="col-lg-3 col-md-4">
               <div class="gallery-item">
@@ -273,7 +296,6 @@
                 </a>
               </div>
             </div>
-            <!-- End Gallery Item -->
 
             <div class="col-lg-3 col-md-4">
               <div class="gallery-item">
@@ -290,85 +312,15 @@
                 </a>
               </div>
             </div>
-            <!-- End Gallery Item -->
-
-            <div class="col-lg-3 col-md-4">
-              <div class="gallery-item">
-                <a
-                  href="assets/img/gallery/gallery-5.jpg"
-                  class="glightbox"
-                  data-gallery="images-gallery"
-                >
-                  <img
-                    src="assets/img/gallery/gallery-5.jpg"
-                    alt=""
-                    class="img-fluid"
-                  />
-                </a>
-              </div>
-            </div>
-            <!-- End Gallery Item -->
-
-            <div class="col-lg-3 col-md-4">
-              <div class="gallery-item">
-                <a
-                  href="assets/img/gallery/gallery-6.jpg"
-                  class="glightbox"
-                  data-gallery="images-gallery"
-                >
-                  <img
-                    src="assets/img/gallery/gallery-6.jpg"
-                    alt=""
-                    class="img-fluid"
-                  />
-                </a>
-              </div>
-            </div>
-            <!-- End Gallery Item -->
-
-            <div class="col-lg-3 col-md-4">
-              <div class="gallery-item">
-                <a
-                  href="assets/img/gallery/gallery-7.jpg"
-                  class="glightbox"
-                  data-gallery="images-gallery"
-                >
-                  <img
-                    src="assets/img/gallery/gallery-7.jpg"
-                    alt=""
-                    class="img-fluid"
-                  />
-                </a>
-              </div>
-            </div>
-            <!-- End Gallery Item -->
-
-            <div class="col-lg-3 col-md-4">
-              <div class="gallery-item">
-                <a
-                  href="assets/img/gallery/gallery-8.jpg"
-                  class="glightbox"
-                  data-gallery="images-gallery"
-                >
-                  <img
-                    src="assets/img/gallery/gallery-8.jpg"
-                    alt=""
-                    class="img-fluid"
-                  />
-                </a>
-              </div>
-            </div>
-            <!-- End Gallery Item -->
           </div>
         </div>
-      </section>
-      <!-- /Gallery Section -->
+      </section> -->
 
       <!-- Team Section -->
       <section id="team" class="team section">
         <!-- Section Title -->
         <div class="container section-title" data-aos="fade-up">
-          <h2>Team</h2>
+          <h2>Meet Team</h2>
           <div>
             <span>Check Our</span> <span class="description-title">Team</span>
           </div>
@@ -376,38 +328,70 @@
         <!-- End Section Title -->
 
         <div class="container">
-          <div class="row gy-5">
+          <div class="row gy-5 justify-content-center">
             <div
-              class="col-lg-4 col-md-6"
+              class="col-lg-3 col-md-6 col-sm-6"
               data-aos="fade-up"
               data-aos-delay="100"
             >
               <div class="member">
                 <div class="pic">
-                  <img src="vikartan.jpg" class="img-fluid" alt="" />
+                  <img src="agrim.jpg" alt="Agrim" />
                 </div>
                 <div class="member-info">
-                  <h4>Vikartan Wahal</h4>
-                  <span>
-                    Co - Founder Business Development & Creative Head</span
-                  >
+                  <h4>Agrim</h4>
+                  <span>Co - Founder Operations & IT Head</span>
                 </div>
               </div>
             </div>
             <!-- End Team Member -->
 
             <div
-              class="col-lg-4 col-md-6"
+              class="col-lg-3 col-md-6 col-sm-6"
               data-aos="fade-up"
               data-aos-delay="200"
             >
               <div class="member">
                 <div class="pic">
-                  <img src="agrim.jpg" class="img-fluid" alt="" />
+                  <img src="vikartan.jpg" alt="Vikartan" />
                 </div>
                 <div class="member-info">
-                  <h4>Agrim Khandelwal</h4>
-                  <span> Co - Founder Operations & IT Head</span>
+                  <h4>Vikartan</h4>
+                  <span>Co - Founder Business Development & Creative Head</span>
+                </div>
+              </div>
+            </div>
+            <!-- End Team Member -->
+
+            <div
+              class="col-lg-3 col-md-6 col-sm-6"
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
+              <div class="member">
+                <div class="pic">
+                  <img src="rahul.jpg" alt="Abhilash" />
+                </div>
+                <div class="member-info">
+                  <h4>Rahul Maithani</h4>
+                  <span>Backend Developer</span>
+                </div>
+              </div>
+            </div>
+            <!-- End Team Member -->
+
+            <div
+              class="col-lg-3 col-md-6 col-sm-6"
+              data-aos="fade-up"
+              data-aos-delay="400"
+            >
+              <div class="member">
+                <div class="pic">
+                  <img src="yash.jpeg" alt="Ajay" />
+                </div>
+                <div class="member-info">
+                  <h4>Yash Sachdeva</h4>
+                  <span>Frontend Developer</span>
                 </div>
               </div>
             </div>
@@ -422,7 +406,7 @@
         <div class="container section-title" data-aos="fade-up">
           <h2>Contact</h2>
           <div>
-            <span>Contact</span>
+            <span>Partner with</span>
             <span class="description-title">us</span>
           </div>
         </div>
@@ -431,8 +415,81 @@
         <div class="container" data-aos="fade" data-aos-delay="100">
           <div class="row gy-4">
             <div class="col-lg-4">
+              <div class="col-lg-8">
+                <form
+                  id="contact-form"
+                  onsubmit="sendEmail(event)"
+                  method="post"
+                  class="php-email-form"
+                  data-aos="fade-up"
+                  data-aos-delay="200"
+                >
+                  <div class="row gy-4">
+                    <div class="col-md-6">
+                      <input
+                        type="text"
+                        name="name"
+                        class="form-control"
+                        placeholder="Your Name"
+                        required=""
+                      />
+                    </div>
+
+                    <div class="col-md-6">
+                      <input
+                        type="email"
+                        class="form-control"
+                        name="email"
+                        placeholder="Your Email"
+                        required=""
+                      />
+                    </div>
+
+                    <div class="col-md-6">
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="subject"
+                        placeholder="Subject"
+                        required=""
+                      />
+                    </div>
+                    <div class="col-md-6">
+                      <input
+                        type="text"
+                        class="form-control"
+                        name="phone"
+                        placeholder="Phone Number"
+                        required=""
+                      />
+                    </div>
+
+                    <div class="col-md-12">
+                      <textarea
+                        class="form-control"
+                        name="message"
+                        rows="6"
+                        placeholder="Message"
+                        required=""
+                      ></textarea>
+                    </div>
+
+                    <div class="col-md-12 text-center">
+                      <div class="loading">Loading</div>
+                      <!-- <div class="error-message"></div> -->
+                      <div class="sent-message">
+                        Your message has been sent. Thank you!
+                      </div>
+
+                      <button type="submit">Send Message</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <!-- End Contact Form -->
+
               <div
-                class="info-item d-flex"
+                class="info-item d-flex mt-4"
                 data-aos="fade-up"
                 data-aos-delay="200"
               >
@@ -473,72 +530,32 @@
               </div>
               <!-- End Info Item -->
             </div>
-
-            <div class="col-lg-8">
-              <form
-                action="forms/contact.php"
-                method="post"
-                class="php-email-form"
-                data-aos="fade-up"
-                data-aos-delay="200"
-              >
-                <div class="row gy-4">
-                  <div class="col-md-6">
-                    <input
-                      type="text"
-                      name="name"
-                      class="form-control"
-                      placeholder="Your Name"
-                      required=""
-                    />
-                  </div>
-
-                  <div class="col-md-6">
-                    <input
-                      type="email"
-                      class="form-control"
-                      name="email"
-                      placeholder="Your Email"
-                      required=""
-                    />
-                  </div>
-
-                  <div class="col-md-12">
-                    <input
-                      type="text"
-                      class="form-control"
-                      name="subject"
-                      placeholder="Subject"
-                      required=""
-                    />
-                  </div>
-
-                  <div class="col-md-12">
-                    <textarea
-                      class="form-control"
-                      name="message"
-                      rows="6"
-                      placeholder="Message"
-                      required=""
-                    ></textarea>
-                  </div>
-
-                  <div class="col-md-12 text-center">
-                    <div class="loading">Loading</div>
-                    <div class="error-message"></div>
-                    <div class="sent-message">
-                      Your message has been sent. Thank you!
-                    </div>
-
-                    <button type="submit">Send Message</button>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <!-- End Contact Form -->
           </div>
         </div>
       </section>
+      <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+      <script>
+        (function () {
+          emailjs.init("5SDFJB3Dvejs6P0n8"); // Replace with your EmailJS User ID
+        })();
+
+        function sendEmail(event) {
+          event.preventDefault();
+
+          const form = document.getElementById("contact-form");
+
+          emailjs.sendForm("service_z16dtz9", "template_4j6rkxp", form).then(
+            (response) => {
+              alert("Message sent successfully!");
+              form.reset();
+            },
+            (error) => {
+              alert("Failed to send message. Please try again.");
+              console.error("EmailJS Error:", error);
+            }
+          );
+        }
+      </script>
       <!-- /Contact Section -->
     </main>
 
@@ -571,37 +588,12 @@
               <li><a href="#">Home</a></li>
               <li><a href="#">About </a></li>
               <li><a href="#">Gallery</a></li>
-              <li><a href="#">Terms of service</a></li>
-              <li><a href="#">Privacy policy</a></li>
+              <li><a href="#">Terms & Conditions</a></li>
+              <li><a href="/privacy-policy">Privacy policy</a></li>
             </ul>
           </div>
 
           <div class="col-lg-2 col-md-3 footer-links"></div>
-
-          <div class="col-lg-4 col-md-12 footer-newsletter">
-            <h4>Our Newsletter</h4>
-            <p>
-              Subscribe to our newsletter and receive the latest news about our
-              offers and services!
-            </p>
-            <form
-              action="forms/newsletter.php"
-              method="post"
-              class="php-email-form"
-            >
-              <div class="newsletter-form">
-                <input type="email" name="email" /><input
-                  type="submit"
-                  value="Subscribe"
-                />
-              </div>
-              <div class="loading">Loading</div>
-              <div class="error-message"></div>
-              <div class="sent-message">
-                Your subscription request has been sent. Thank you!
-              </div>
-            </form>
-          </div>
         </div>
       </div>
 
@@ -626,7 +618,7 @@
     <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
     <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- Main JS File -->
     <script src="assets/js/main.js"></script>
   </body>

@@ -9,6 +9,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import { Download, ArrowRight } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import {
   SidebarInset,
   SidebarProvider,
@@ -17,6 +19,8 @@ import {
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
+import Link from "next/link";
+
 export default function Page() {
   const { data: session } = useSession();
   const [userBookings, setUserBookings] = useState([]);
@@ -101,6 +105,7 @@ export default function Page() {
     // Save the PDF
     doc.save(`Invoice_${booking.id}.pdf`);
   };
+  
   const fetchCourtName = async (courtId) => {
     try {
       const response = await fetch(
@@ -168,73 +173,86 @@ export default function Page() {
           </div>
         </header>
 
-        <div className="p-4">
-          <h2 className="text-lg font-semibold mb-4">Your Bookings</h2>
-
+        <Card className="w-full max-w-6xl mx-auto bg-white shadow-lg rounded-lg">
           {userBookings.length > 0 ? (
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-2">
-                    Booking Date
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Court Name
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Start Time
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">End Time</th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Created At
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">
-                    Total Price
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userBookings
-                  .sort(
-                    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-                  )
-                  .map((booking) => (
-                    <tr key={booking.id}>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {booking.booking_date}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {booking.court_name}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {booking.start_time}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {booking.end_time}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {new Date(booking.created_at).toLocaleString()}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {booking.price}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        <button
-                          onClick={() => downloadInvoice(booking)}
-                          className="bg-blue-500 text-white px-4 py-2 rounded"
-                        >
-                          Download Invoice
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <>
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="text-2xl font-bold text-gray-800">Your Bookings</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
+                          Booking Date
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
+                          Start Time
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
+                          Total Price
+                        </th>
+                        <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600 tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {userBookings
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .map((booking) => (
+                          <tr 
+                            key={booking.id}
+                            className="hover:bg-gray-50 transition-colors duration-150"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {booking.booking_date}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {booking.start_time}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              ₹{booking.price}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <button
+                                onClick={() => downloadInvoice(booking)}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Invoice
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </>
           ) : (
-            <p>No bookings found.</p>
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+              <img 
+                src="empty-cart.jpeg" 
+                alt="No bookings" 
+                className="mb-6 rounded-lg"
+              />
+              <CardTitle className="text-2xl font-bold text-gray-800 mb-4">
+                No Bookings Yet
+              </CardTitle>
+              <CardDescription className="text-gray-600 mb-6 max-w-md">
+                It seems you haven't made any bookings yet. Explore our venues and book your perfect sports court today!
+              </CardDescription>
+              <Link 
+                href="/venues"
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 font-semibold"
+              >
+                Find Venues <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </SidebarInset>
     </SidebarProvider>
   );

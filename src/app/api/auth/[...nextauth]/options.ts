@@ -39,15 +39,15 @@ export const options: NextAuthOptions = {
               },
               body: JSON.stringify({
                 query: `
-              query GetUserByEmail($email: citext!) {
-  user: users(where: { email: { _eq: $email } }) {
-    id
+                query GetUserByEmail($email: citext!) {
+                  user: users(where: { email: { _eq: $email } }) {
+                    id
     displayName
     email
     passwordHash
     defaultRole
     phoneNumber
-  }
+    }
 }`,
                 variables: {
                   email: credentials?.email,
@@ -56,8 +56,8 @@ export const options: NextAuthOptions = {
             }
           );
 
+          console.log(credentials?.email);
           const { data, errors } = await response.json();
-
           // Handle GraphQL errors
           if (errors) {
             console.error("GraphQL errors:", errors);
@@ -70,13 +70,11 @@ export const options: NextAuthOptions = {
           if (!user) {
             return null;
           }
-
           // Compare the provided password with the hashed password
           const isValidPassword = bcrypt.compareSync(
             credentials?.password,
             user.passwordHash
           );
-
           if (isValidPassword) {
             // Return the user object to NextAuth
             return {
@@ -98,7 +96,8 @@ export const options: NextAuthOptions = {
     }),
   ],
   pages: {
-    newUser: "/", // Redirect new users to a welcome page
+    newUser: "/",
+    signIn: "/auth/signin", // Redirect new users to a welcome page
   },
   callbacks: {
     async session({ session, token }) {
@@ -118,16 +117,13 @@ export const options: NextAuthOptions = {
       return token;
     },
     async redirect({ url, baseUrl }) {
-      // Log for debugging
-      console.log("Redirect URL:", url, "Base URL:", baseUrl);
-
-      // Redirect to a custom page after login
+      // If the URL starts with the base URL, keep the redirect
       if (url.startsWith(baseUrl)) {
-        return url; // Keep the redirect within the same domain
+        return url; // Stay within the same domain
       }
 
-      // Default redirect for all logins
-      return "/"; // Redirect users to the admin page
+      // Default redirect for all other cases
+      return "/venues"; // Redirect users to the home page
     },
   },
 };

@@ -1,6 +1,9 @@
 "use client";
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
+import Razorpay from "razorpay";
+import Script from "next/script";
+// import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -10,8 +13,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Clock, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
+import {
+  Clock,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  Calculator,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Select,
   SelectContent,
@@ -29,20 +41,27 @@ import {
 } from "@/components/ui/popover";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-const page = () => {
+
+export default function BookNow() {
   const { id } = useParams();
+  const [cart, setCart] = useState([]);
+  const CONVENIENCE_FEE_PERCENTAGE = 2.36;
+  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+  const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
+  const totalCost = Math.round(subtotal + convenienceFees);
   const [venue, setVenue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [duration, setDuration] = useState(30);
-  const [cart, setCart] = useState([]);
+  const [duration, setDuration] = useState(60);
   const [selectedCourt, setSelectedCourt] = useState("");
   const [courts, setCourts] = useState([]);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlots] = useState([]);
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data: session } = useSession();
 
   const logSlotTimes = (slots, setSlots, bookedSlots) => {
@@ -258,83 +277,183 @@ const page = () => {
     if (duration > 30) setDuration(duration - 30); // Minimum duration: 30 minutes
   };
 
-  const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
+  // const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
 
   const handleBookNow = async () => {
-    // Ensure the cart is not empty and necessary fields are available
+    if (!session) {
+      return router.push("/login");
+    }
+    console.log(session);
     if (cart.length === 0) {
       alert("Your cart is empty. Please add a court and time to book.");
       return;
     }
 
-    // Prepare the booking data (replace these with actual values from the cart)
-    const { court, time, duration, price } = cart[0]; // Assuming one item in the cart for simplicity
-    const bookingDate = new Date().toISOString().split("T")[0]; // Use the current date (you can adjust this)
-
-    const startTime = time; // This should be formatted as HH:MM
-    const endTime = calculateEndTime(startTime, duration); // Calculate the end time based on the duration
-
-    // Prepare the mutation variables
-    const bookingData = {
-      // You should have a selectedSlot object with the slot_id
-      booking_date: bookingDate,
-      court_id: selectedCourt, // The selected court ID
-      start_time: startTime,
-      end_time: endTime,
-      price: price,
-      rzp_id: "sample_razorpay_id", // Replace with actual Razorpay ID after payment
-      user_id: "1cff347d-6685-4b9d-9940-f64f646bd683", // Replace with the logged-in user ID
-    };
-
     try {
-      const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+      // Create order via your backend
+      const orderResponse = await fetch(
+        "https://local.functions.local.nhost.run/v1/razorpay/order",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
           },
           body: JSON.stringify({
-            query: `
-            mutation InsertBooking(
-              $booking_date: date!,
-              $court_id: uuid!,
-              $start_time: time,
-              $end_time: time,
-              $price:Int,
-              $rzp_id: String!,
-              $user_id: uuid!
-            ) {
-              insert_bookings_one(object: {
-                booking_date: $booking_date,
-                court_id: $court_id,
-                start_time: $start_time,
-                end_time: $end_time,
-                price: $price
-                rzp_id: $rzp_id,
-                user_id: $user_id
-              }) {
-                id
-              }
-            }
-          `,
-            variables: bookingData,
+            amount: totalCost, // Backend will multiply by 100
+            currency: "INR",
           }),
         }
       );
 
-      const data = await response.json();
-      if (data.errors) {
-        console.error(data.errors);
-        alert("Error creating booking.");
+      if (!orderResponse.ok) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      const orderData = await orderResponse.json();
+      console.log("Razorpay Order Created:", orderData);
+
+      // Razorpay checkout options
+      const options = {
+        key: "rzp_test_crzs6Gnk9wGFxm", // Your Razorpay Key ID
+        amount: orderData.amount, // Amount from the created order
+        currency: orderData.currency,
+        name: "Your Sport Venue",
+        description: "Court Booking",
+        order_id: orderData.id, // Use the order_id from the created order
+        handler: async function (response) {
+          try {
+            // Verify payment on your backend
+            // const verificationResponse = await fetch(
+            //   "https://local.functions.local.nhost.run/v1/razorpay/payment",
+            //   {
+            //     method: "POST",
+            //     headers: {
+            //       "Content-Type": "application/json",
+            //     },
+            //     body: JSON.stringify({
+            //       razorpay_payment_id: response.razorpay_payment_id,
+            //       razorpay_order_id: orderData.id,
+            //       razorpay_signature: response.razorpay_signature,
+            //     }),
+            //   }
+            // );
+
+            // const verificationResult = await verificationResponse.json();
+
+            // if (verificationResult.success) {
+            // Save booking details
+            const bookingData = {
+              booking_date: new Date().toISOString().split("T")[0],
+              court_id: selectedCourt,
+              start_time: cart[0].time,
+              end_time: calculateEndTime(cart[0].time, duration),
+              price: totalCost,
+              rzp_id: response.razorpay_payment_id,
+              user_id: session?.user?.id,
+            };
+
+            // Save booking to Hasura
+            const bookingResponse = await fetch(
+              "https://local.hasura.local.nhost.run/v1/graphql",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-hasura-admin-secret": "nhost-admin-secret",
+                },
+                body: JSON.stringify({
+                  query: `
+                      mutation InsertBooking(
+                        $booking_date: date!,
+                        $court_id: uuid!,
+                        $start_time: time,
+                        $end_time: time,
+                        $price: Int,
+                        $rzp_id: String!,
+                        $user_id: uuid!
+                      ) {
+                        insert_bookings_one(object: {
+                          booking_date: $booking_date,
+                          court_id: $court_id,
+                          start_time: $start_time,
+                          end_time: $end_time,
+                          price: $price,
+                          rzp_id: $rzp_id,
+                          user_id: $user_id
+                        }) {
+                          id
+                        }
+                      }
+                    `,
+                  variables: bookingData,
+                }),
+              }
+            );
+
+            const bookingResult = await bookingResponse.json();
+
+            if (!bookingResult.errors) {
+              toast.success("Booking successful!", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+              });
+              setTimeout(() => {
+                window.location.href = "/user-bookings";
+              }, 3000);
+            } else {
+              toast.error("Booking failed", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+              });
+            }
+            // } else {
+            //   alert("Payment verification failed");
+            // }
+          } catch (error) {
+            toast.error("An error occurred during booking.", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          }
+        },
+        prefill: {
+          name: session?.user?.name || "Guest",
+          email: session?.user?.email || "guest@example.com",
+        },
+        theme: {
+          color: "#3399cc",
+        },
+      };
+
+      // Initialize Razorpay
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       } else {
-        setCart([]); // Clear the cart after booking
-        router.push("/user-bookings"); 
+        console.error("Razorpay SDK not loaded");
+        alert("Payment gateway is temporarily unavailable");
       }
     } catch (error) {
-      console.error("Booking error:", error);
-      alert("An error occurred while processing your booking.");
+      toast.error("Could not process your booking. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -430,6 +549,12 @@ const page = () => {
 
   return (
     <>
+      <ToastContainer />
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+        onLoad={() => console.log("Razorpay script loaded successfully")}
+      />
       <Navbar />
       <div className="max-w-md mx-auto p-4">
         <Card className="p-4 mb-4">
@@ -451,10 +576,29 @@ const page = () => {
           </div>
 
           <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Court</label>
+            <Select onValueChange={setSelectedCourt}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Court" />
+              </SelectTrigger>
+              <SelectContent>
+                {courts.map((court) => (
+                  <SelectItem key={court.id} value={court.id}>
+                    {court.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Date</label>
-            <Popover>
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                >
                   {selectedDate
                     ? format(selectedDate, "yyyy-MM-dd")
                     : "Select Date"}
@@ -464,18 +608,27 @@ const page = () => {
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => setSelectedDate(date)}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setIsPopoverOpen(false);
+                  }}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
 
+          
+
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Start Time</label>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => setIsDialogOpen(!isDialogOpen)}
+                >
                   {selectedTime || "Select Time"}
                   <Clock className="h-4 w-4" />
                 </Button>
@@ -506,6 +659,7 @@ const page = () => {
                             })
                           );
                           setSelectedSlots(slot);
+                          setIsDialogOpen(false); // Close dialog on selection
                         }}
                         className="text-sm"
                       >
@@ -541,22 +695,6 @@ const page = () => {
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Court</label>
-            <Select onValueChange={setSelectedCourt}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Court" />
-              </SelectTrigger>
-              <SelectContent>
-                {courts.map((court) => (
-                  <SelectItem key={court.id} value={court.id}>
-                    {court.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <Button onClick={handleAddToCart} className="w-full">
             Add to Cart
           </Button>
@@ -572,12 +710,13 @@ const page = () => {
               >
                 <div>
                   <p className="text-sm">{item.court}</p>
-                  <p className="text-sm">{item.time}</p>{" "}
-                  {/* Ensure item.time is a string */}
+                  <p className="text-sm">{item.time}</p>
                   <p className="text-sm">{item.duration} Minute(s)</p>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold">₹{item.price}</p>
+                <div className="text-right">
+                  <p className="text-sm font-semibold">
+                    ₹{item.price.toFixed(2)}
+                  </p>
                   <Button
                     onClick={() => handleRemoveFromCart(item.id)}
                     variant="ghost"
@@ -590,39 +729,40 @@ const page = () => {
             ))}
           </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <p className="text-xl font-semibold">Total: ₹{totalCost}</p>
+          <Card className="mt-4 p-4 bg-gray-50">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <Calculator className="h-5 w-5 mr-2 text-gray-600" />
+                <span className="text-gray-700">Subtotal</span>
+              </div>
+              <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
+                <span className="text-gray-700">
+                  Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
+                </span>
+              </div>
+              <span className="font-semibold">
+                ₹{convenienceFees.toFixed(2)}
+              </span>
+            </div>
+            <div className="border-t pt-2 mt-2 flex justify-between items-center">
+              <span className="text-xl font-bold text-gray-900">Total</span>
+              <span className="text-xl font-bold text-blue-600">
+                ₹{totalCost.toFixed(2)}
+              </span>
+            </div>
             <Button
               onClick={handleBookNow}
-              className="bg-blue-500 text-white px-6 py-2"
+              className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
             >
               Book Now
             </Button>
-          </div>
+          </Card>
         </div>
       </div>
     </>
   );
-};
-
-export default page;
-
-// id- uuid, primary key, unique, default: gen_random_uuid()
-
-// created_at- timestamp with time zone, default: now()
-
-// updated_at- timestamp with time zone, default: now()
-
-// slot_id- uuid, nullable
-
-// user_id- uuid
-
-// rzp_id- text
-
-// booking_date- date
-
-// court_id- uuid
-
-// start_time- time without time zone, nullable
-
-// end_time- time without time zone, nullable
+}

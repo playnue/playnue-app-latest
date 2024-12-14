@@ -19,12 +19,12 @@ export default function Sidebar() {
   const role = session?.user?.defaultRole || "user";
   const menuItems = [
     {
-      title: "Platform",
+      // title: "Platform",
       items: [
         { name: "Play", href: "/venues", icon: <Monitor size={18} /> },
         {
           name: "Dashboard",
-          href: role === "admin" ? "/admin-dashboard" : "/user-dashboard",
+          href: role === "admin" ? "/admin-dashboard" : "/dashboard",
           icon: <Building2 size={18} />,
         },
       ],
@@ -66,7 +66,7 @@ export default function Sidebar() {
       </div>
 
       {/* Footer Items */}
-      <div className="border-t border-gray-800 pt-4">
+      {/* <div className="border-t border-gray-800 pt-4">
         <a
           href="#"
           className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 mb-1"
@@ -81,7 +81,7 @@ export default function Sidebar() {
           <MessageSquare size={18} />
           <span>Feedback</span>
         </a>
-      </div>
+      </div> */}
 
       {/* User Profile */}
       <div className="flex items-center gap-2 p-2 mt-2 rounded hover:bg-gray-800 cursor-pointer">

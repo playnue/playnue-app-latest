@@ -16,7 +16,6 @@ export default function Navbar() {
   // Function to toggle sidebar
   const toggleSidebar = () => {
     setSidebarVisible((prev) => !prev);
-    console.log(session?.user)
   };
 
   return (
@@ -48,13 +47,13 @@ export default function Navbar() {
         {!session && (
           <ul className="flex justify-between content-center">
             <li className="rounded-full mr-4">
-              <Link href="/api/auth/signin">
+              <Link href="/login">
                 <Button>Login</Button>
               </Link>
             </li>
             <li>
               <Link href="/signup">
-                <Button>Signup</Button>
+                <Button>SignUp</Button>
               </Link>
             </li>
           </ul>

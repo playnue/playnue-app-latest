@@ -115,7 +115,7 @@ const VenuePage = () => {
         </div>
 
         {/* Image Gallery */}
-        <div className="relative mb-8">
+        {/* <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
               src={venue?.images[currentImage]}
@@ -132,7 +132,7 @@ const VenuePage = () => {
             </button>
           </div>
           <div className="flex justify-center gap-2 mt-2">
-            {venue.images.map((_, idx) => (
+            {venue?.images?.map((_, idx) => (
               <button
                 key={idx}
                 className={`w-2 h-2 rounded-full ${
@@ -142,7 +142,7 @@ const VenuePage = () => {
               />
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Info Sections */}
         <div className="">

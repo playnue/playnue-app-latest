@@ -38,6 +38,7 @@ export default function Page() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({
@@ -120,6 +121,7 @@ export default function Page() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({

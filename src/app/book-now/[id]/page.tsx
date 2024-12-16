@@ -1,9 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import Razorpay from "razorpay";
 import Script from "next/script";
-import { addDays } from "date-fns";
 // import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -51,7 +49,6 @@ export default function BookNow() {
   const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
   const totalCost = Math.round(subtotal + convenienceFees);
   const [venue, setVenue] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [duration, setDuration] = useState(60);
@@ -60,7 +57,6 @@ export default function BookNow() {
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlots] = useState([]);
   const router = useRouter();
-  const [bookings, setBookings] = useState([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data: session } = useSession();
@@ -88,10 +84,10 @@ export default function BookNow() {
       const [endHour, endMinute] = slot.end_at.split(":").map(Number);
 
       // Create base date objects for start and end times
-      let startTime = new Date();
+      const startTime = new Date();
       startTime.setHours(startHour, startMinute, 0);
 
-      let endTime = new Date();
+      const endTime = new Date();
       endTime.setHours(endHour, endMinute, 0);
 
       // Handle overnight slots (when end time is before start time)
@@ -100,7 +96,7 @@ export default function BookNow() {
       }
 
       const durationMinutes = slot.duration;
-      let currentTime = new Date(startTime);
+      const currentTime = new Date(startTime);
 
       // Generate slots until we reach the end time
       while (currentTime < endTime) {
@@ -110,8 +106,8 @@ export default function BookNow() {
         // Check if this slot overlaps with any booked slot
         const isBooked = bookedRanges.some((range) => {
           // Handle overnight bookings
-          let rangeStart = new Date(range.start);
-          let rangeEnd = new Date(range.end);
+          const rangeStart = new Date(range.start);
+          const rangeEnd = new Date(range.end);
           if (rangeEnd < rangeStart) {
             rangeEnd.setDate(rangeEnd.getDate() + 1);
           }
@@ -146,6 +142,7 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
           },
           body: JSON.stringify({
             query: `query GetSlots {
@@ -175,6 +172,7 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({
@@ -212,8 +210,8 @@ export default function BookNow() {
     if (!match) {
       return "Invalid Time Format"; // If input doesn't match the format, return an error message
     }
-
-    let [_, hour, minute, period] = match; // Extract hour, minute, and period (AM/PM)
+// eslint-disable-next-line no-unused-vars
+    const [_, hour, minute, period] = match; // Extract hour, minute, and period (AM/PM)
 
     let hour24 = parseInt(hour, 10);
 
@@ -293,6 +291,7 @@ export default function BookNow() {
       alert("Your cart is empty. Please add a court and time to book.");
       return;
     }
+    console.log("success")
 
     try {
       // Create order via your backend
@@ -433,6 +432,7 @@ export default function BookNow() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               
             },
             body: JSON.stringify({
@@ -452,10 +452,8 @@ export default function BookNow() {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        setLoading(false);
       } catch (error) {
         console.log(error);
-        setLoading(false);
       }
     };
 
@@ -467,6 +465,7 @@ export default function BookNow() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               
             },
             body: JSON.stringify({

@@ -35,12 +35,12 @@ export const options: NextAuthOptions = {
         try {
           // Send GraphQL query to fetch user by email
           const response = await fetch(
-            process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+            `${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               },
               body: JSON.stringify({
                 query: `
@@ -107,6 +107,7 @@ export const options: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (token) {
+        session.user = session.user || {}
         session.user.id = token.id;
         session.user.defaultRole = token.defaultRole;
         session.user.phoneNumber = token.phoneNumber; // Add the user ID from token to the session

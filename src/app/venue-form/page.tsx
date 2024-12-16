@@ -259,6 +259,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
           
         },
         body: JSON.stringify({
@@ -384,6 +385,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({ query: mutation, variables }),
@@ -491,6 +493,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
           },
           body: JSON.stringify({
             query: courtsMutation,
@@ -535,6 +538,7 @@ const MultiStepVenueForm = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               
             },
             body: JSON.stringify({
@@ -623,6 +627,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({ query: mutation, variables }),
@@ -741,6 +746,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             
           },
           body: JSON.stringify({

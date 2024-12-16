@@ -29,7 +29,6 @@ export default function Bookings() {
     });
 
   // Ensure component only renders on client
-  
 
   // Fetch location details based on coordinates
   useEffect(() => {
@@ -63,16 +62,14 @@ export default function Bookings() {
   }, []);
 
   const getVenues = async () => {
-    const response = await fetch(
-      process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          
-        },
-        body: JSON.stringify({
-          query: `
+    const response = await fetch(`${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+      },
+      body: JSON.stringify({
+        query: `
             query {
               venues {
                 amenities
@@ -88,9 +85,8 @@ export default function Bookings() {
               }
             }
           `,
-        }),
-      }
-    );
+      }),
+    });
 
     const { data, errors } = await response.json();
 
@@ -131,8 +127,8 @@ export default function Bookings() {
     // Fetch venues when component mounts, regardless of geolocation
     getVenues();
   }, []);
-  
-  console.log(process.env.NEXT_PUBLIC_DOMAIN)
+
+  console.log(process.env.NEXT_PUBLIC_DOMAIN);
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };

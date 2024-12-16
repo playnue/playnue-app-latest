@@ -40,7 +40,7 @@ export const options: NextAuthOptions = {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+                "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               },
               body: JSON.stringify({
                 query: `
@@ -76,10 +76,11 @@ export const options: NextAuthOptions = {
             return null;
           }
           // Compare the provided password with the hashed password
-          const isValidPassword = bcrypt.compareSync(
-            credentials?.password,
+          const isValidPassword = await bcrypt.compare(
+            credentials.password,
             user.passwordHash
           );
+
           if (isValidPassword) {
             // Return the user object to NextAuth
             return {
@@ -104,10 +105,11 @@ export const options: NextAuthOptions = {
     newUser: "/",
     signIn: "/auth/signin", // Redirect new users to a welcome page
   },
+  secret: process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, token }) {
       if (token) {
-        session.user = session.user || {}
+        session.user = session.user || {};
         session.user.id = token.id;
         session.user.defaultRole = token.defaultRole;
         session.user.phoneNumber = token.phoneNumber; // Add the user ID from token to the session

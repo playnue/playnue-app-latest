@@ -2,6 +2,13 @@
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tag } from "lucide-react";
+
 // import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -10,8 +17,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Clock,
   ShoppingCart,
@@ -44,10 +49,16 @@ import "../../loader.css";
 export default function BookNow() {
   const { id } = useParams();
   const [cart, setCart] = useState([]);
+  const [couponCode, setCouponCode] = useState("");
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const VALID_COUPON = "PLAYNUE99";
+  const COUPON_DISCOUNT = 99;
   const CONVENIENCE_FEE_PERCENTAGE = 2.36;
+  const discount = isCouponApplied ? COUPON_DISCOUNT : 0;
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
-  const totalCost = Math.round(subtotal + convenienceFees);
+  const totalCost = Math.round(subtotal + convenienceFees - discount);
   const [venue, setVenue] = useState([]);
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -61,6 +72,15 @@ export default function BookNow() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { data: session } = useSession();
   const [isClient, setIsClient] = useState(false);
+  const handleCouponSubmit = () => {
+    if (couponCode.trim() === VALID_COUPON) {
+      setIsCouponApplied(true);
+      setCouponError("");
+    } else {
+      setCouponError("Invalid coupon code");
+      setIsCouponApplied(false);
+    }
+  };
 
   const logSlotTimes = (slots, setSlots, bookedSlots) => {
     const allSlots = [];
@@ -249,6 +269,7 @@ export default function BookNow() {
     console.log(selectedSlotPrice);
 
     // Calculate the total price (price per 30-minute block)
+    
     const totalPrice = selectedSlotPrice * (duration / 60);
     console.log(totalPrice);
     // Create a new booking object
@@ -674,67 +695,105 @@ export default function BookNow() {
         </Card>
 
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
-          <div className="space-y-4">
-            {cart.map((item) => (
-              <Card
-                key={item.id}
-                className="flex items-center justify-between p-4"
+      <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
+      <div className="space-y-4">
+        {cart.map((item) => (
+          <Card key={item.id} className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm">{item.court}</p>
+              <p className="text-sm">{item.time}</p>
+              <p className="text-sm">{item.duration} Minute(s)</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold">₹{item.price.toFixed(2)}</p>
+              <Button
+                onClick={() => handleRemoveFromCart(item.id)}
+                variant="ghost"
+                className="p-2 ml-2"
               >
-                <div>
-                  <p className="text-sm">{item.court}</p>
-                  <p className="text-sm">{item.time}</p>
-                  <p className="text-sm">{item.duration} Minute(s)</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold">
-                    ₹{item.price.toFixed(2)}
-                  </p>
-                  <Button
-                    onClick={() => handleRemoveFromCart(item.id)}
-                    variant="ghost"
-                    className="p-2 ml-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <Card className="mt-4 p-4 bg-gray-50">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center">
-                <Calculator className="h-5 w-5 mr-2 text-gray-600" />
-                <span className="text-gray-700">Subtotal</span>
-              </div>
-              <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
-                <span className="text-gray-700">
-                  Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
-                </span>
-              </div>
-              <span className="font-semibold">
-                ₹{convenienceFees.toFixed(2)}
-              </span>
-            </div>
-            <div className="border-t pt-2 mt-2 flex justify-between items-center">
-              <span className="text-xl font-bold text-gray-900">Total</span>
-              <span className="text-xl font-bold text-blue-600">
-                ₹{totalCost.toFixed(2)}
-              </span>
-            </div>
-            <Button
-              onClick={handleBookNow}
-              className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
-            >
-              Book Now
-            </Button>
           </Card>
+        ))}
+      </div>
+
+      <Card className="mt-4 p-4">
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <Input
+              maxLength={9}
+              placeholder="Enter coupon code"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              className="flex-grow"
+            />
+            <Button 
+              onClick={handleCouponSubmit}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Tag className="h-4 w-4" />
+              Apply
+            </Button>
+          </div>
+          {couponError && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertDescription>{couponError}</AlertDescription>
+            </Alert>
+          )}
+          {isCouponApplied && (
+            <Alert className="mt-2 bg-green-50">
+              <AlertDescription className="text-green-600">
+                Coupon applied successfully! ₹99 discount added.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <Calculator className="h-5 w-5 mr-2 text-gray-600" />
+              <span className="text-gray-700">Subtotal</span>
+            </div>
+            <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
+              <span className="text-gray-700">
+                Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
+              </span>
+            </div>
+            <span className="font-semibold">₹{convenienceFees.toFixed(2)}</span>
+          </div>
+          {isCouponApplied && (
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <Tag className="h-5 w-5 mr-2 text-green-600" />
+                <span className="text-green-600">Coupon Discount</span>
+              </div>
+              <span className="font-semibold text-green-600">
+                -₹{COUPON_DISCOUNT.toFixed(2)}
+              </span>
+            </div>
+          )}
+          <div className="border-t pt-2 mt-2 flex justify-between items-center">
+            <span className="text-xl font-bold text-gray-900">Total</span>
+            <span className="text-xl font-bold text-blue-600">
+              ₹{totalCost.toFixed(2)}
+            </span>
+          </div>
+          <Button
+            onClick={handleBookNow}
+            className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Book Now
+          </Button>
+        </div>
+      </Card>
+    </div>
       </div>
     </>
   );

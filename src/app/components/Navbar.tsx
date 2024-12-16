@@ -5,10 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import logo from "../logo.png";
-import  Sidebar  from "@/components/nav-sidebar";
+import Sidebar from "@/components/nav-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import sidebar from "../sidebar.png"
-import right from "../right.png"
+import sidebar from "../sidebar.png";
+import right from "../right.png";
 export default function Navbar() {
   const { data: session } = useSession(); // Get session data client-side
   const [sidebarVisible, setSidebarVisible] = useState(false); // State for sidebar visibility
@@ -28,21 +28,18 @@ export default function Navbar() {
               aria-label="Toggle Sidebar"
               className="focus:outline-none mr-4"
             >
-              <Image
-            src={right}
-            alt="sidebar Logo"
-            height={20}
-            width={20}
-          />
+              <Image src={right} alt="sidebar Logo" height={20} width={20} />
             </button>
           )}
+          <Link href={"/"}>
           <Image
             src={logo}
             alt="PlayNue Logo"
             className="h-8"
             height={30}
             width={80}
-          />
+            />
+            </Link>
         </li>
         {!session && (
           <ul className="flex justify-between content-center">
@@ -60,13 +57,13 @@ export default function Navbar() {
         )}
       </ul>
 
-       <div
+      <div
         className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-transform duration-300 ${
           sidebarVisible ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{ width: "250px", zIndex: 50 }}
       >
-        <Sidebar/>
+        <Sidebar />
       </div>
       {sidebarVisible && (
         <div

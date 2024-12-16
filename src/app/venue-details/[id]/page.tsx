@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
-import "../../loader.css"
+import "../../loader.css";
 interface VenueDetails {
   id: string;
   title: string;
@@ -44,12 +44,12 @@ const VenuePage = () => {
     const fetchVenueDetails = async () => {
       try {
         const response = await fetch(
-          "https://local.hasura.local.nhost.run/v1/graphql",
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": "nhost-admin-secret",
+              
             },
             body: JSON.stringify({
               query: `
@@ -64,6 +64,7 @@ const VenuePage = () => {
                   location
                   open_at
                   close_at
+                  
                 }
               }
             `,
@@ -88,20 +89,20 @@ const VenuePage = () => {
   }, [id]);
 
   useEffect(() => {
-      setIsClient(true);
-    }, []);
-  
-    // If not client-side, render nothing or a placeholder
-    if (!isClient) {
-      return (
-        <>
-          <Navbar />
-          <div className="flex items-center justify-center min-h-screen">
-            <div id="preloader"></div>
-          </div>
-        </>
-      );
-    }
+    setIsClient(true);
+  }, []);
+
+  // If not client-side, render nothing or a placeholder
+  if (!isClient) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div id="preloader"></div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -129,7 +130,7 @@ const VenuePage = () => {
         </div>
 
         {/* Image Gallery */}
-        {/* <div className="relative mb-8">
+        <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
               src={venue?.images[currentImage]}
@@ -156,7 +157,7 @@ const VenuePage = () => {
               />
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Info Sections */}
         <div className="">
@@ -165,7 +166,9 @@ const VenuePage = () => {
             <Card className="p-4 mb-4">
               <h2 className="text-lg font-semibold mb-2">Timing</h2>
               <p>
-                {venue.open_at} - {venue.close_at}
+                {venue.open_at === "00:00:00" && venue.close_at === "00:00:00"
+                  ? "24/7"
+                  : `${venue.open_at} - ${venue.close_at}`}
               </p>
             </Card>
 
@@ -199,6 +202,11 @@ const VenuePage = () => {
             <Card className="p-4">
               <h2 className="text-lg font-semibold mb-2">About Venue</h2>
               <p>{venue.description}</p>
+            </Card>
+            <Card className="p-4">
+              <Link href={`https://google.com/maps/search/?api=1&query=${venue.location}`}>
+              <h2 className="text-lg font-semibold mb-2">Map</h2>
+              </Link>
             </Card>
           </div>
 

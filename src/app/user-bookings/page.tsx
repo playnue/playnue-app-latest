@@ -21,6 +21,10 @@ import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import Link from "next/link";
 import "../loader.css"
+import 'jspdf-autotable';
+
+
+
 export default function Page() {
   const { data: session } = useSession();
   const [userBookings, setUserBookings] = useState([]);
@@ -29,12 +33,12 @@ export default function Page() {
   const fetchUserBookings = async (userId) => {
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `
@@ -45,7 +49,7 @@ export default function Page() {
                   created_at
                   end_time
                   id
-                  price
+                  
                   start_time
                 }
               }
@@ -92,7 +96,7 @@ export default function Page() {
     doc.text(`Court Name: ${booking.court_name}`, 20, 60);
     doc.text(`Start Time: ${booking.start_time}`, 20, 70);
     doc.text(`End Time: ${booking.end_time}`, 20, 80);
-    doc.text(`Total Price: ₹${booking.price}`, 20, 90);
+    // doc.text(`Total Price: ₹${booking.price}`, 20, 90);
     doc.text(
       `Created At: ${new Date(booking.created_at).toLocaleString()}`,
       20,
@@ -106,15 +110,17 @@ export default function Page() {
     doc.save(`Invoice_${booking.id}.pdf`);
   };
   
+  
+
   const fetchCourtName = async (courtId) => {
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `
@@ -205,11 +211,8 @@ export default function Page() {
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
                           Start Time
                         </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
-                          Total Price
-                        </th>
                         <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600 tracking-wider">
-                          Actions
+                          End Time
                         </th>
                       </tr>
                     </thead>
@@ -227,18 +230,10 @@ export default function Page() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                               {booking.start_time}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              ₹{booking.price}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {booking.end_time}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <button
-                                onClick={() => downloadInvoice(booking)}
-                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Invoice
-                              </button>
-                            </td>
+                            
                           </tr>
                         ))}
                     </tbody>

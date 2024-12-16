@@ -71,7 +71,7 @@
             <li><a href="#hero" class="active">Home</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#gallery">Gallery</a></li>
-            <li><a href="/user-bookings">Dashboard</a></li>
+            <li id="dashboardButton"><a href="/user-bookings" >Dashboard</a></li>
             <li><a href="/venues">Venues</a></li>
             <li class="rounded-full mr-4" id="loginButton">
               <a href="/login">Login</a>
@@ -94,6 +94,11 @@
             if (loginButton) {
               loginButton.classList.add("hidden"); // Add the 'hidden' class
             }
+          }else{
+            const dashboardButton = document.getElementById("dashboardButton");
+            if(dashboardButton){
+              dashboardButton.classList.add("hidden")
+            }
           }
         } catch (error) {
           console.error("Error fetching session:", error);
@@ -109,14 +114,14 @@
         <img src="assets/img/hero-bg-2.jpg" alt="" class="hero-bg" />
 
         <div class="container">
-          <div class="row gy-4 justify-content-between">
+          <div class="row gy-4 justify-content-center">
             <div
               class="col-lg-4 order-lg-last hero-img"
               data-aos="zoom-out"
               data-aos-delay="100"
             >
               <img
-                src="assets/img/hero-img.png"
+                src="assets/img/hom2.png"
                 class="img-fluid animated"
                 alt=""
               />
@@ -358,6 +363,21 @@
             >
               <div class="member">
                 <div class="pic">
+                  <img src="mrinal.png" alt="Abhilash" />
+                </div>
+                <div class="member-info">
+                  <h4>Mrinal Wahal</h4>
+                  <span>Technical Head</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="col-lg-3 col-md-6 col-sm-6"
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
+              <div class="member">
+                <div class="pic">
                   <img src="rahul.jpg" alt="Abhilash" />
                 </div>
                 <div class="member-info">
@@ -576,8 +596,9 @@
               <li><a href="#">Home</a></li>
               <li><a href="#">About </a></li>
               <li><a href="#">Gallery</a></li>
-              <li><a href="#">Terms & Conditions</a></li>
+              <li><a href="/terms-conditions">Terms & Conditions</a></li>
               <li><a href="/privacy-policy">Privacy policy</a></li>
+              <li><a href="/refund-policy">Refund policy</a></li>
             </ul>
           </div>
 

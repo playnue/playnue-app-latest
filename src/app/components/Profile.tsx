@@ -22,8 +22,9 @@ const ProfileForm = () => {
   const [selectedSport, setSelectedSport] = useState<string>("");
   const { data: session } = useSession();
   console.log(user?.phoneNumber)
-  useEffect(()=>{
-    if(!session?.user?.phoneNumber){
+  
+  useEffect(() => {
+    if (user && !user.phoneNumber) {
       toast.error("Enter Phone Number", {
         position: "top-right",
         autoClose: 3000,
@@ -33,7 +34,7 @@ const ProfileForm = () => {
         draggable: true,
       });
     }
-  },[])
+  }, [user?.phoneNumber]);
 
   // useEffect(() => {
   //   setIsClient(true);
@@ -52,12 +53,12 @@ const ProfileForm = () => {
   const fetchSportsList = async () => {
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `
@@ -88,12 +89,12 @@ const ProfileForm = () => {
   const fetchUserDetails = async (userId) => {
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `
@@ -137,12 +138,12 @@ const ProfileForm = () => {
     setIsSaving(true);
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `

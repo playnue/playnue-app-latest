@@ -28,12 +28,12 @@ export default function Page() {
   const fetchUserDetails = async (userId: string) => {
     try {
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `

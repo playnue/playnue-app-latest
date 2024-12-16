@@ -207,7 +207,7 @@ const MultiStepVenueForm = () => {
   const fetchUserIdByEmail = async (email: string) => {
     try {
       // Replace with your Hasura GraphQL endpoint
-      const hasuraEndpoint = "https://local.hasura.local.nhost.run/v1/graphql";
+      const hasuraEndpoint = process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL;
 
       const query = `
         query MyQuery($email: citext!) {
@@ -223,7 +223,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": "nhost-admin-secret",
+          
         },
         body: JSON.stringify({
           query,
@@ -278,12 +278,12 @@ const MultiStepVenueForm = () => {
       };
 
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({ query: mutation, variables }),
         }
@@ -321,12 +321,12 @@ const MultiStepVenueForm = () => {
       };
 
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({ query: mutation, variables }),
         }
@@ -366,12 +366,12 @@ const MultiStepVenueForm = () => {
       };
 
       const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({ query: mutation, variables }),
         }

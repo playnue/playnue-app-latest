@@ -3,6 +3,7 @@ import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Razorpay from "razorpay";
 import Script from "next/script";
+import { addDays } from "date-fns";
 // import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -140,12 +141,11 @@ export default function BookNow() {
     try {
       // Fetch slots for the selected court
       const slotResponse = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
           },
           body: JSON.stringify({
             query: `query GetSlots {
@@ -170,12 +170,12 @@ export default function BookNow() {
 
       // Fetch existing bookings for the selected date
       const bookingResponse = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
+            
           },
           body: JSON.stringify({
             query: `query GetBookings {
@@ -297,7 +297,7 @@ export default function BookNow() {
     try {
       // Create order via your backend
       const orderResponse = await fetch(
-        "https://local.functions.local.nhost.run/v1/razorpay/order",
+        `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
           method: "POST",
           headers: {
@@ -318,6 +318,29 @@ export default function BookNow() {
       console.log("Razorpay Order Created:", orderData);
 
       // Razorpay checkout options
+      console.log(selectedDate);
+      const date = new Date(selectedDate);
+
+      // Extract year, month, and day
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-based
+      const day = String(date.getDate()).padStart(2, "0");
+
+      // Combine into YYYY-MM-DD format
+      const formattedDate = `${year}-${month}-${day}`;
+
+      console.log(formattedDate);
+      const bookingData = {
+        booking_date: formattedDate,
+        court_id: selectedCourt,
+        start_time: cart[0].time,
+        end_time: calculateEndTime(cart[0].time, duration),
+        price: totalCost,
+        rzp_id: "",
+        user_id: session?.user?.id,
+      };
+      console.log(bookingData);
+ 
       const options = {
         key: "rzp_test_crzs6Gnk9wGFxm", // Your Razorpay Key ID
         amount: orderData.amount, // Amount from the created order
@@ -328,100 +351,30 @@ export default function BookNow() {
         handler: async function (response) {
           try {
             // Verify payment on your backend
-            // const verificationResponse = await fetch(
-            //   "https://local.functions.local.nhost.run/v1/razorpay/payment",
-            //   {
-            //     method: "POST",
-            //     headers: {
-            //       "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify({
-            //       razorpay_payment_id: response.razorpay_payment_id,
-            //       razorpay_order_id: orderData.id,
-            //       razorpay_signature: response.razorpay_signature,
-            //     }),
-            //   }
-            // );
-
-            // const verificationResult = await verificationResponse.json();
-
-            // if (verificationResult.success) {
-            // Save booking details
-            const bookingData = {
-              booking_date: new Date().toISOString().split("T")[0],
-              court_id: selectedCourt,
-              start_time: cart[0].time,
-              end_time: calculateEndTime(cart[0].time, duration),
-              price: totalCost,
-              rzp_id: response.razorpay_payment_id,
-              user_id: session?.user?.id,
-            };
-
-            // Save booking to Hasura
-            const bookingResponse = await fetch(
-              "https://local.hasura.local.nhost.run/v1/graphql",
+            const verificationResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/payment`,
               {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "x-hasura-admin-secret": "nhost-admin-secret",
                 },
                 body: JSON.stringify({
-                  query: `
-                      mutation InsertBooking(
-                        $booking_date: date!,
-                        $court_id: uuid!,
-                        $start_time: time,
-                        $end_time: time,
-                        $price: Int,
-                        $rzp_id: String!,
-                        $user_id: uuid!
-                      ) {
-                        insert_bookings_one(object: {
-                          booking_date: $booking_date,
-                          court_id: $court_id,
-                          start_time: $start_time,
-                          end_time: $end_time,
-                          price: $price,
-                          rzp_id: $rzp_id,
-                          user_id: $user_id
-                        }) {
-                          id
-                        }
-                      }
-                    `,
-                  variables: bookingData,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: orderData.id,
+                  razorpay_signature: response.razorpay_signature,
+                  booking_details: bookingData,
                 }),
               }
             );
 
-            const bookingResult = await bookingResponse.json();
+            const verificationResult = await verificationResponse.json();
 
-            if (!bookingResult.errors) {
-              toast.success("Booking successful!", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-              });
-              setTimeout(() => {
-                window.location.href = "/user-bookings";
-              }, 3000);
+            if (verificationResult.success) {
+              console.log("success");
+              router.push("/user-bookings")
             } else {
-              toast.error("Booking failed", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-              });
+              alert("Payment verification failed");
             }
-            // } else {
-            //   alert("Payment verification failed");
-            // }
           } catch (error) {
             toast.error("An error occurred during booking.", {
               position: "top-right",
@@ -475,12 +428,12 @@ export default function BookNow() {
     const fetchVenueDetails = async () => {
       try {
         const response = await fetch(
-          "https://local.hasura.local.nhost.run/v1/graphql",
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": "nhost-admin-secret",
+              
             },
             body: JSON.stringify({
               query: `query MyQuery {
@@ -509,12 +462,12 @@ export default function BookNow() {
     const fetchCourtDetails = async () => {
       try {
         const courtResponse = await fetch(
-          "https://local.hasura.local.nhost.run/v1/graphql",
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": "nhost-admin-secret",
+              
             },
             body: JSON.stringify({
               query: `query GetCourts {
@@ -655,7 +608,10 @@ export default function BookNow() {
                 <DialogHeader>
                   <DialogTitle>Select Time</DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-3 gap-2 mt-4 overflow-y-auto pr-2"style={{ maxHeight: '400px' }}>
+                <div
+                  className="grid grid-cols-3 gap-2 mt-4 overflow-y-auto pr-2"
+                  style={{ maxHeight: "400px" }}
+                >
                   {slots.length === 0 ? (
                     <p className="text-center col-span-3">
                       Please select court

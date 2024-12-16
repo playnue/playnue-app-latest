@@ -64,12 +64,12 @@ export default function Bookings() {
 
   const getVenues = async () => {
     const response = await fetch(
-      "https://local.hasura.local.nhost.run/v1/graphql",
+      process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": "nhost-admin-secret",
+          
         },
         body: JSON.stringify({
           query: `
@@ -84,7 +84,7 @@ export default function Bookings() {
                 location
                 description
                 user_id
-                
+               images 
               }
             }
           `,
@@ -131,7 +131,8 @@ export default function Bookings() {
     // Fetch venues when component mounts, regardless of geolocation
     getVenues();
   }, []);
-
+  
+  console.log(process.env.NEXT_PUBLIC_DOMAIN)
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };
@@ -154,7 +155,7 @@ export default function Bookings() {
       onMouseLeave={() => setHoveredItem(null)}
     >
       <img
-        src={item?.images}
+        src={item?.images[0]}
         alt={`${item.title}'s image`}
         className="w-full h-full object-cover rounded-lg"
       />

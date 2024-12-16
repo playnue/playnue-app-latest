@@ -49,7 +49,7 @@ export function SignupForm() {
         draggable: true,
       });
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = "/login";
       }, 3000);
     } else {
       toast.error("Booking failed", {
@@ -106,14 +106,14 @@ export function SignupForm() {
               <Button type="submit" className="w-full">
                 Sign Up
               </Button>
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogleLogin}
               >
                 SignUp with Google
-              </Button>
+              </Button> */}
             </div>
           </form>
           {message && (

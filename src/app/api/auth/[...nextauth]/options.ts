@@ -35,12 +35,12 @@ export const options: NextAuthOptions = {
         try {
           // Send GraphQL query to fetch user by email
           const response = await fetch(
-            "https://local.hasura.local.nhost.run/v1/graphql",
+            process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-hasura-admin-secret": "nhost-admin-secret",
+                
               },
               body: JSON.stringify({
                 query: `

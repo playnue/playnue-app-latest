@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NextResponse } from "next/server";
-// import { toast } from "react-toastify";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -25,22 +23,48 @@ export function SignupForm() {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [number, setNumber] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // Password validation logic
+  const validatePassword = (password: string) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!]).{8,20}$/;
+    if (!regex.test(password)) {
+      return "Password must be 8-20 characters long, include uppercase, lowercase, a number, and a special character.";
+    }
+    return "";
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    const error = validatePassword(newPassword);
+    setPasswordError(error);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // const hashedPassword =await bcrypt.hash(password,10);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`, {
-      method: "POST",
-      body: JSON.stringify({
-        email: email,
-        password: password,
-        name: name,
-      }),
-    });
-    // localStorage.setItem("user",JSON.stringify(res));
-    console.log(res);
+
+    // Final password validation before submission
+    const error = validatePassword(password);
+    if (error) {
+      setPasswordError(error);
+      return;
+    }
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          name: name,
+        }),
+      }
+    );
+
     if (res?.ok) {
-      toast.success(" User Created successfully", {
+      toast.success("User Created successfully", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -52,7 +76,7 @@ export function SignupForm() {
         window.location.href = "/login";
       }, 3000);
     } else {
-      toast.error("Booking failed", {
+      toast.error("Signup failed", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -61,10 +85,6 @@ export function SignupForm() {
         draggable: true,
       });
     }
-  };
-
-  const handleGoogleLogin = () => {
-    signIn("google"); // Replace "google" with your Google provider ID
   };
 
   return (
@@ -98,22 +118,21 @@ export function SignupForm() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   required
                 />
+                {passwordError && (
+                  <p className="text-sm text-red-600">{passwordError}</p>
+                )}
               </div>
 
-              <Button type="submit" className="w-full">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!!passwordError}
+              >
                 Sign Up
               </Button>
-              {/* <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleLogin}
-              >
-                SignUp with Google
-              </Button> */}
             </div>
           </form>
           {message && (

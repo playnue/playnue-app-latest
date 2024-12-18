@@ -29,7 +29,7 @@ export function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // const hashedPassword =await bcrypt.hash(password,10);
-    const res = await fetch("http://localhost:3000/api/auth/register", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`, {
       method: "POST",
       body: JSON.stringify({
         email: email,

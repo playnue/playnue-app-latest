@@ -28,26 +28,6 @@ const data = {
         },
       ],
     },
-    {
-      title: "API Reference",
-      url: "#",
-      items: [
-        {
-          title: "Components",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Architecture",
-      url: "#",
-      items: [
-        {
-          title: "Accessibility",
-          url: "#",
-        },
-      ],
-    },
   ],
 }
 
@@ -59,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           versions={data.versions}
           defaultVersion={data.versions[0]}
         />
-        <SearchForm />
+        {/* <SearchForm /> */}
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}

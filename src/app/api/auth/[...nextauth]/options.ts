@@ -107,22 +107,22 @@ export const options: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.defaultRole = user.defaultRole;
+        token.phoneNumber = user.phoneNumber;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token) {
         session.user = session.user || {};
         session.user.id = token.id;
         session.user.defaultRole = token.defaultRole;
-        session.user.phoneNumber = token.phoneNumber; // Add the user ID from token to the session
+        session.user.phoneNumber = token.phoneNumber;
       }
       return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.defaultRole = user.defaultRole;
-        token.phoneNumber = user.phoneNumber; // Add user ID to the token
-      }
-      return token;
     },
     async redirect({ url, baseUrl }) {
       // If the URL starts with the base URL, keep the redirect

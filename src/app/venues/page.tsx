@@ -81,7 +81,7 @@ export default function Bookings() {
                 location
                 description
                 user_id
-               images 
+               extra_image_ids 
               }
             }
           `,
@@ -151,7 +151,7 @@ export default function Bookings() {
       onMouseLeave={() => setHoveredItem(null)}
     >
       <img
-        src={item?.images[0]}
+        src={item?.extra_image_ids[0]}
         alt={`${item.title}'s image`}
         className="w-full h-full object-cover rounded-lg"
       />

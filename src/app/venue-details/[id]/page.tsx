@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
+import { useRouter } from "next/navigation";
 import "../../loader.css";
 interface VenueDetails {
   id: string;
@@ -14,7 +15,7 @@ interface VenueDetails {
   description: string;
   sports: { name: string; icon: string }[];
   amenities: string[];
-  images: string[];
+  extra_image_ids: string[];
   location: string;
   open_at: string;
   close_at: string;
@@ -38,7 +39,14 @@ const VenuePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
+  const handleButtonClick = (e) => {
+    e.preventDefault(); // Prevent the default behavior of the link
+    setIsLoading(true);
+    router.push(`/book-now/${venue.id}`);
+  };
   // Fetch data from Hasura
   useEffect(() => {
     const fetchVenueDetails = async () => {
@@ -49,8 +57,7 @@ const VenuePage = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              
+              "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             },
             body: JSON.stringify({
               query: `
@@ -61,7 +68,7 @@ const VenuePage = () => {
                   description
                   sports
                   amenities
-                  images
+                  extra_image_ids
                   location
                   open_at
                   close_at
@@ -78,7 +85,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        console.log(data.data.venues[0].images);
+        console.log(data.data.venues[0].extra_image_ids);
         setLoading(false);
       } catch (error) {
         console.log(error);
@@ -122,33 +129,45 @@ const VenuePage = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Link href={`/book-now/${venue.id}`}>
-              <button className="px-6 py-2 bg-green-500 text-white rounded-lg">
-                Book Now
-              </button>
-            </Link>
-          </div>
+      <button
+        onClick={handleButtonClick}
+        disabled={isLoading} // Disable button during loading
+        className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg ${
+          isLoading
+            ? "bg-gray-400 cursor-not-allowed" // Disabled style
+            : "bg-green-500 text-white" // Normal style
+        }`}
+      >
+        {isLoading ? (
+          <div className="loader w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        ) : (
+          "Book Now"
+        )}
+      </button>
+    </div>
         </div>
 
         {/* Image Gallery */}
         <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
-              src={venue?.images[currentImage]}
+              src={venue?.extra_image_ids[currentImage]}
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
               onClick={() =>
-                setCurrentImage((prev) => (prev + 1) % venue.images.length)
+                setCurrentImage(
+                  (prev) => (prev + 1) % venue.extra_image_ids.length
+                )
               }
             >
               <ChevronRight className="w-6 h-6" />
             </button>
           </div>
           <div className="flex justify-center gap-2 mt-2">
-            {venue?.images?.map((_, idx) => (
+            {venue?.extra_image_ids?.map((_, idx) => (
               <button
                 key={idx}
                 className={`w-2 h-2 rounded-full ${
@@ -205,8 +224,10 @@ const VenuePage = () => {
               <p>{venue.description}</p>
             </Card>
             <Card className="p-4">
-              <Link href={`https://google.com/maps/search/?api=1&query=${venue.location}`}>
-              <h2 className="text-lg font-semibold mb-2">Map</h2>
+              <Link
+                href={`https://google.com/maps/search/?api=1&query=${venue.location}`}
+              >
+                <h2 className="text-lg font-semibold mb-2">Map</h2>
               </Link>
             </Card>
           </div>

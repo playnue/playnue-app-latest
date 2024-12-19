@@ -200,7 +200,7 @@ const MultiStepVenueForm = () => {
     sports: [],
     sellerEmail: "",
     // imageUrls: [],
-    images:[]
+    images: [],
   });
 
   const [courts, setCourts] = useState([
@@ -259,8 +259,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-          
+          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
         },
         body: JSON.stringify({
           query,
@@ -379,18 +378,14 @@ const MultiStepVenueForm = () => {
         },
       };
 
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({ query: mutation, variables }),
-        }
-      );
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+        },
+        body: JSON.stringify({ query: mutation, variables }),
+      });
 
       const result = await response.json();
       if (result.data?.insert_venues_one?.id) {
@@ -493,7 +488,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+            "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
           },
           body: JSON.stringify({
             query: courtsMutation,
@@ -538,8 +533,7 @@ const MultiStepVenueForm = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              
+              "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             },
             body: JSON.stringify({
               query: slotsMutation,
@@ -575,14 +569,14 @@ const MultiStepVenueForm = () => {
   // Handle image upload
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    
+
     try {
-      const base64Promises = files.map(file => fileToBase64(file));
+      const base64Promises = files.map((file) => fileToBase64(file));
       const base64Results = await Promise.all(base64Promises);
-      
-      setVenue(prev => ({
+
+      setVenue((prev) => ({
         ...prev,
-        images: [...prev.images, ...base64Results]
+        images: [...prev.images, ...base64Results],
       }));
     } catch (error) {
       console.error("Error converting images:", error);
@@ -592,9 +586,9 @@ const MultiStepVenueForm = () => {
 
   // Remove image
   const removeImage = (index) => {
-    setVenue(prev => ({
+    setVenue((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
@@ -621,18 +615,14 @@ const MultiStepVenueForm = () => {
         objects: slotObjects,
       };
 
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({ query: mutation, variables }),
-        }
-      );
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+        },
+        body: JSON.stringify({ query: mutation, variables }),
+      });
 
       const result = await response.json();
       if (result.data?.insert_slots?.affected_rows > 0) {
@@ -722,7 +712,7 @@ const MultiStepVenueForm = () => {
           amenities: venue.amenities,
           sports: venue.sports,
           user_id: userId,
-          images: venue.images,
+          extra_image_ids: venue.images,
           courts: {
             data: courts.map((court) => ({
               name: court.name,
@@ -740,21 +730,17 @@ const MultiStepVenueForm = () => {
       };
 
       // Execute the mutation
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: mutation,
-            variables,
-          }),
-        }
-      );
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables,
+        }),
+      });
 
       const result = await response.json();
 
@@ -953,8 +939,7 @@ const MultiStepVenueForm = () => {
                   required
                 />
               </div>
-
-              <div className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Upload Venue Images
@@ -982,7 +967,7 @@ const MultiStepVenueForm = () => {
                         type="button"
                         onClick={() => removeImage(index)}
                         className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 
-                                 opacity-0 group-hover:opacity-100 transition-opacity"
+                         opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -992,9 +977,8 @@ const MultiStepVenueForm = () => {
               )}
             </div>
 
-
-              {/* {Images} */}
-              {/* <div>
+            {/* {Images} */}
+            {/* <div>
         <label className="block text-sm font-medium mb-1">
           Upload Venue Images
         </label>
@@ -1043,7 +1027,7 @@ const MultiStepVenueForm = () => {
           </div>
         )}
       </div> */}
-              {/* <div>
+            {/* <div>
                         <label className="block text-sm font-medium mb-1">
                           Upload Venue Images
                         </label>
@@ -1068,12 +1052,11 @@ const MultiStepVenueForm = () => {
                           </div>
                         )}
                       </div> */}
-            </div>
 
             {/* <Button type="submit" className="w-full">
               Save Venue
             </Button> */}
-
+</div>
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? "Saving..." : "Next: Add Courts"}
             </Button>
@@ -1234,8 +1217,6 @@ const MultiStepVenueForm = () => {
             </div>
           </form>
         )}
-
-        
       </CardContent>
     </Card>
   );

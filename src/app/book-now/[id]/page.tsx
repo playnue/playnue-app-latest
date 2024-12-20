@@ -82,22 +82,8 @@ export default function BookNow() {
     }
   };
 
-  const logSlotTimes = (slots, setSlots, bookedSlots) => {
+  const logSlotTimes = (slots, setSlots) => {
     const allSlots = [];
-
-    // Convert booked slots to Date ranges
-    const bookedRanges = bookedSlots.map((booked) => {
-      const [startHour, startMinute] = booked.start_time.split(":").map(Number);
-      const [endHour, endMinute] = booked.end_time.split(":").map(Number);
-
-      const start = new Date();
-      start.setHours(startHour, startMinute, 0);
-
-      const end = new Date();
-      end.setHours(endHour, endMinute, 0);
-
-      return { start, end };
-    });
 
     slots.forEach((slot) => {
       const [startHour, startMinute] = slot.start_at.split(":").map(Number);
@@ -115,7 +101,7 @@ export default function BookNow() {
         endTime.setDate(endTime.getDate() + 1);
       }
 
-      const durationMinutes = slot.duration;
+      const durationMinutes = 60; // Default duration or you can use slot.duration
       const currentTime = new Date(startTime);
 
       // Generate slots until we reach the end time
@@ -123,25 +109,12 @@ export default function BookNow() {
         const slotEndTime = new Date(currentTime);
         slotEndTime.setMinutes(slotEndTime.getMinutes() + durationMinutes);
 
-        // Check if this slot overlaps with any booked slot
-        const isBooked = bookedRanges.some((range) => {
-          // Handle overnight bookings
-          const rangeStart = new Date(range.start);
-          const rangeEnd = new Date(range.end);
-          if (rangeEnd < rangeStart) {
-            rangeEnd.setDate(rangeEnd.getDate() + 1);
-          }
-          return currentTime < rangeEnd && slotEndTime > rangeStart;
+        allSlots.push({
+          id: slot.id,
+          time: new Date(currentTime),
+          price: slot.price,
+          duration: durationMinutes,
         });
-
-        if (!isBooked) {
-          allSlots.push({
-            id: slot.id,
-            time: new Date(currentTime),
-            price: slot.price,
-            duration: slot.duration,
-          });
-        }
 
         currentTime.setMinutes(currentTime.getMinutes() + durationMinutes);
       }
@@ -149,77 +122,93 @@ export default function BookNow() {
 
     // Sort slots by time
     allSlots.sort((a, b) => a.time - b.time);
-
     setSlots(allSlots);
   };
 
   const fetchSlotsForCourt = async (courtId, selectedDate) => {
     try {
-      // Fetch slots for the selected court
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      
+      // Modified query to also fetch bookings for the selected date and court
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+            "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
           },
           body: JSON.stringify({
-            query: `query GetSlots {
-              slots(where: {court_id: {_eq: "${courtId}"}}) {
-                id
-                start_at
-                end_at
-                price
-                duration
+            query: `
+              query GetSlotsAndBookings($courtId: uuid!, $date: date!) {
+                slots(where: {
+                  court_id: {_eq: $courtId},
+                  date: {_eq: $date}
+                }) {
+                  id
+                  start_at
+                  end_at
+                  price
+                }
+                bookings(where: {
+                  slot: {
+                    court_id: {_eq: $courtId},
+                    date: {_eq: $date}
+                  }
+                }) {
+                  slot_id
+                }
               }
-            }`,
+            `,
+            variables: {
+              courtId: courtId,
+              date: formattedDate
+            }
           }),
         }
       );
-
-      const slotData = await slotResponse.json();
-      if (slotData.errors) {
+  
+      const responseData = await slotResponse.json();
+      if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-
-      const fetchedSlots = slotData.data.slots;
-
-      // Fetch existing bookings for the selected date
-      const bookingResponse = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `query GetBookings {
-              bookings(where: {court_id: {_eq: "${courtId}"}, booking_date: {_eq: "${format(
-              selectedDate,
-              "yyyy-MM-dd"
-            )}"}}) {
-                start_time
-                end_time
-              }
-            }`,
-          }),
-        }
-      );
-
-      const bookingData = await bookingResponse.json();
-      if (bookingData.errors) {
-        throw new Error("Failed to fetch bookings data");
-      }
-      const bookedSlots = bookingData?.data?.bookings;
-      console.log(bookedSlots);
-      logSlotTimes(fetchedSlots, setSlots, bookedSlots);
-      // Generate available slots
+  
+      // Extract slots and bookings from the response
+      const { slots, bookings } = responseData.data;
+      
+      // Create a Set of booked slot IDs for efficient lookup
+      const bookedSlotIds = new Set(bookings.map(booking => booking.slot_id));
+  
+      // Filter out booked slots
+      const availableSlots = slots.filter(slot => !bookedSlotIds.has(slot.id));
+  
+      // Sort available slots by start time
+      availableSlots.sort((a, b) => {
+        const timeA = convertTo24HourFormat(a.start_at);
+        const timeB = convertTo24HourFormat(b.start_at);
+        return timeA.localeCompare(timeB);
+      });
+  
+      setSlots(availableSlots);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching slots:", error);
+      setSlots([]);
     }
+  };
+
+  const formatTimeRange = (startTime, endTime) => {
+    const formatTime = (time) => {
+      const [hours, minutes] = time.split(':');
+      const date = new Date();
+      date.setHours(hours, minutes);
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
   function convertTo24HourFormat(time) {
@@ -247,48 +236,24 @@ export default function BookNow() {
   }
 
   const handleAddToCart = () => {
-    // Ensure a court is selected
-    if (!selectedCourt) {
-      alert("Please select a court first");
+    if (!selectedCourt || !selectedSlot) {
+      alert("Please select a court and time slot first");
       return;
     }
 
-    // Format selected time to 24-hour format
-    const formattedTime = convertTo24HourFormat(selectedTime);
-    console.log("Formatted Time:", formattedTime); // Log formatted time
+    const selectedCourtName = courts.find((court) => court.id === selectedCourt)?.name || "Court";
+    const selectedSlotPrice = parseFloat(selectedSlot.price.replace(/[^0-9.-]+/g, ""));
 
-    // Find the selected court's name
-    const selectedCourtName =
-      courts.find((court) => court.id === selectedCourt)?.name || "Court";
-
-    // Find the selected slot's price
-    console.log(selectedSlot.price);
-    const selectedSlotPrice = parseFloat(
-      selectedSlot.price.replace(/[^0-9.-]+/g, "")
-    );
-    console.log(selectedSlotPrice);
-
-    // Calculate the total price (price per 30-minute block)
-    
-    const totalPrice = selectedSlotPrice * (duration / 60);
-    console.log(totalPrice);
-    // Create a new booking object
     const newBooking = {
       id: Date.now(),
-      time: formattedTime, // Use the formatted time
-      duration,
-      court: selectedCourtName, // Use the selected court's name
-      price: totalPrice, // Calculate total price based on duration
+      time: formatTimeRange(selectedSlot.start_at, selectedSlot.end_at),
+      duration: duration,
+      court: selectedCourtName,
+      price: selectedSlotPrice,
     };
 
-    // Add the new booking to the cart
-    console.log(newBooking.price);
     setCart([...cart, newBooking]);
-
-    // Optionally, log the updated cart to verify
-    console.log("Updated Cart:", cart);
   };
-
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));
   };
@@ -349,13 +314,9 @@ export default function BookNow() {
       // Combine into YYYY-MM-DD format
       const formattedDate = `${year}-${month}-${day}`;
 
-      console.log(formattedDate);
+      const slotId = selectedSlot.id;
       const bookingData = {
-        booking_date: formattedDate,
-        court_id: selectedCourt,
-        start_time: cart[0].time,
-        end_time: calculateEndTime(cart[0].time, duration),
-        price: totalCost,
+        slot_id:slotId,
         rzp_id: "",
         user_id: session?.user?.id,
       };
@@ -625,69 +586,47 @@ export default function BookNow() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-h-[500px] flex flex-col">
-                <DialogHeader>
-                  <DialogTitle>Select Time</DialogTitle>
-                </DialogHeader>
-                <div
-                  className="grid grid-cols-3 gap-2 mt-4 overflow-y-auto pr-2"
-                  style={{ maxHeight: "400px" }}
-                >
-                  {slots.length === 0 ? (
-                    <p className="text-center col-span-3">
-                      Please select court
-                    </p>
-                  ) : (
-                    slots.map((slot, index) => (
-                      <Button
-                        key={index}
-                        variant={
-                          selectedTime === slot.time.toISOString()
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() => {
-                          setSelectedTime(
-                            slot.time.toLocaleTimeString("en-US", {
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })
-                          );
-                          setSelectedSlots(slot);
-                          setIsDialogOpen(false); // Close dialog on selection
-                        }}
-                        className="text-sm"
-                      >
-                        {slot.time.toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </Button>
-                    ))
-                  )}
-                </div>
-              </DialogContent>
+        <DialogHeader>
+          <DialogTitle>Select Time</DialogTitle>
+        </DialogHeader>
+        <div
+          className="grid grid-cols-2 gap-2 mt-4 overflow-y-auto pr-2"
+          style={{ maxHeight: "400px" }}
+        >
+          {!selectedCourt ? (
+            <p className="text-center col-span-2">
+              Please select a court first
+            </p>
+          ) : slots.length === 0 ? (
+            <p className="text-center col-span-2">
+              No slots available for the selected date
+            </p>
+          ) : (
+            slots.map((slot) => (
+              <Button
+                key={slot.id}
+                variant={
+                  selectedSlot?.id === slot.id
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() => {
+                  setSelectedTime(formatTimeRange(slot.start_at, slot.end_at));
+                  setSelectedSlots(slot);
+                  setIsDialogOpen(false);
+                }}
+                className="text-sm"
+              >
+                {formatTimeRange(slot.start_at, slot.end_at)}
+              </Button>
+            ))
+          )}
+        </div>
+      </DialogContent>
             </Dialog>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Duration</label>
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={handleDecreaseDuration}
-                disabled={duration === 30}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span>{duration} mins</span> {/* Display duration in minutes */}
-              <Button
-                onClick={handleIncreaseDuration}
-                disabled={duration === 240}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          
 
           <Button onClick={handleAddToCart} className="w-full">
             Add to Cart
@@ -702,7 +641,7 @@ export default function BookNow() {
             <div>
               <p className="text-sm">{item.court}</p>
               <p className="text-sm">{item.time}</p>
-              <p className="text-sm">{item.duration} Minute(s)</p>
+              {/* <p className="text-sm">{item.duration} Minute(s)</p> */}
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold">₹{item.price.toFixed(2)}</p>

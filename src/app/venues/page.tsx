@@ -120,6 +120,8 @@ export default function Bookings() {
     Cricket: " 🏏 ",
     Badminton: " 🏸 ",
     Tennis: " 🎾 ",
+    Pickleball: " 🎾 ",
+    Golf: " ⛳ ",
     Swimming: " 🏊 ",
   };
 

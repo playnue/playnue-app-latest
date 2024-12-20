@@ -27,8 +27,11 @@ const sportIcons = {
   Football: " ⚽ ",
   Basketball: " 🏀 ",
   Cricket: " 🏏 ",
+  Golf: " ⛳ ",
+  Pickleball: " 🎾 ",
   Badminton: " 🏸 ",
   Tennis: " 🎾 ",
+  // TableTennis: " :table "
 };
 
 const VenuePage = () => {

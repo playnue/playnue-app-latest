@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+import { Calendar } from "@/components/ui/calendar";
 import { NhostClient } from "@nhost/nhost-js";
 import { useNhostClient } from "@nhost/nextjs";
 import {
@@ -25,16 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { nhost } from "@/lib/nhost";
-// Import existing TimePicker component from your code
+
 const TimePicker = ({ value, onChange, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hours, setHours] = useState("12");
   const [minutes, setMinutes] = useState("00");
   const [period, setPeriod] = useState("AM");
-  const nhost = useNhostClient();
-
-  // const [nhostClient] = useState(() => createNhostClient());
 
   React.useEffect(() => {
     if (value) {
@@ -55,17 +53,10 @@ const TimePicker = ({ value, onChange, label }) => {
     }
   }, [value]);
 
-  const handleTimeChange = (
-    newHours: string,
-    newMinutes: string,
-    newPeriod: string
-  ) => {
+  const handleTimeChange = (newHours, newMinutes, newPeriod) => {
     let hour = parseInt(newHours);
-
-    // Convert to 24-hour format
     if (newPeriod === "PM" && hour !== 12) hour += 12;
     if (newPeriod === "AM" && hour === 12) hour = 0;
-
     const time = `${hour.toString().padStart(2, "0")}:${newMinutes}`;
     onChange(time);
   };
@@ -102,15 +93,11 @@ const TimePicker = ({ value, onChange, label }) => {
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  className="max-h-[200px] overflow-y-auto"
-                >
+                <SelectContent>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
                     <SelectItem
                       key={hour}
                       value={hour.toString().padStart(2, "0")}
-                      className="cursor-pointer hover:bg-gray-100"
                     >
                       {hour.toString().padStart(2, "0")}
                     </SelectItem>
@@ -128,15 +115,11 @@ const TimePicker = ({ value, onChange, label }) => {
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="MM" />
                 </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  className="max-h-[200px] overflow-y-auto"
-                >
+                <SelectContent>
                   {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
                     <SelectItem
                       key={minute}
                       value={minute.toString().padStart(2, "0")}
-                      className="cursor-pointer hover:bg-gray-100"
                     >
                       {minute.toString().padStart(2, "0")}
                     </SelectItem>
@@ -154,19 +137,9 @@ const TimePicker = ({ value, onChange, label }) => {
                 <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem
-                    value="AM"
-                    className="cursor-pointer hover:bg-gray-100"
-                  >
-                    AM
-                  </SelectItem>
-                  <SelectItem
-                    value="PM"
-                    className="cursor-pointer hover:bg-gray-100"
-                  >
-                    PM
-                  </SelectItem>
+                <SelectContent>
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -185,6 +158,8 @@ const MultiStepVenueForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [courtId, setCourtId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [selectedDates, setSelectedDates] = useState([]);
   // const nhost = useNhostClient();
   const [newAmenity, setNewAmenity] = useState("");
   const [newSport, setNewSport] = useState("");
@@ -203,18 +178,24 @@ const MultiStepVenueForm = () => {
     images: [],
   });
 
+  const handleDateSelect = (dates) => {
+    setSelectedDates(Array.isArray(dates) ? dates : [dates]);
+  };
   const [courts, setCourts] = useState([
     {
       name: "",
-      // description: "",
       slots: [
         {
-          startTime: "09:00",
-          endTime: "10:00",
-          price: "",
-        },
-      ],
-    },
+          timeSlots: [
+            {
+              startTime: "09:00",
+              endTime: "10:00",
+              price: "",
+            }
+          ]
+        }
+      ]
+    }
   ]);
 
   const removeItem = (field: "amenities" | "sports", index: number) => {
@@ -345,58 +326,7 @@ const MultiStepVenueForm = () => {
   //   }
   // };
 
-  const handleVenueSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userId = await fetchUserIdByEmail(venue.sellerEmail);
-      console.log(venue.openingTime);
-      if (!userId) {
-        alert("No user found with the provided email.");
-        return;
-      }
-
-      const mutation = `
-        mutation InsertVenue($object: venues_insert_input!) {
-          insert_venues_one(object: $object) {
-            id
-            title
-          }
-        }
-      `;
-
-      const variables = {
-        object: {
-          title: venue.title,
-          description: venue.description,
-          location: venue.location,
-          open_at: venue.openingTime || "00:00",
-          close_at: venue.closingTime || "00:00",
-          amenities: venue.amenities,
-          sports: venue.sports,
-          user_id: userId,
-          // image_id: venue.imageUrls,
-        },
-      };
-
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-        },
-        body: JSON.stringify({ query: mutation, variables }),
-      });
-
-      const result = await response.json();
-      if (result.data?.insert_venues_one?.id) {
-        setVenueId(result.data.insert_venues_one.id);
-        setStep(2);
-      }
-    } catch (error) {
-      console.error("Error saving venue:", error);
-      alert("Failed to save venue");
-    }
-  };
+  
 
   const addCourt = () => {
     setCourts([
@@ -405,32 +335,39 @@ const MultiStepVenueForm = () => {
         name: "",
         slots: [
           {
-            startTime: "09:00",
-            endTime: "10:00",
-            price: "",
+            timeSlots:[
+              {
+              startTime: "09:00",
+              endTime: "10:00",
+              price: "",
+              }
+            ]
           },
         ],
       },
     ]);
   };
 
-  // Remove a court
-  const removeCourt = (index) => {
-    const updatedCourts = courts.filter((_, i) => i !== index);
-    setCourts(updatedCourts);
-  };
-
-  const addSlotToCourt = (courtIndex) => {
-    const updatedCourts = [...courts];
-    updatedCourts[courtIndex].slots.push({
+  const addTimeSlot = (courtIndex, slotPatternIndex) => {
+    const newCourts = [...courts];
+    newCourts[courtIndex].slots[slotPatternIndex].timeSlots.push({
       startTime: "09:00",
       endTime: "10:00",
       price: "",
     });
-    setCourts(updatedCourts);
+    setCourts(newCourts);
   };
 
-  // Remove a slot from a specific court
+  const removeTimeSlot = (courtIndex, slotPatternIndex, timeSlotIndex) => {
+    const newCourts = [...courts];
+    const currentTimeSlots = newCourts[courtIndex].slots[slotPatternIndex].timeSlots;
+    if (currentTimeSlots.length > 1) {
+      newCourts[courtIndex].slots[slotPatternIndex].timeSlots = 
+        currentTimeSlots.filter((_, index) => index !== timeSlotIndex);
+      setCourts(newCourts);
+    }
+  };
+
   const removeSlotFromCourt = (courtIndex, slotIndex) => {
     const updatedCourts = [...courts];
     updatedCourts[courtIndex].slots = updatedCourts[courtIndex].slots.filter(
@@ -759,14 +696,112 @@ const MultiStepVenueForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const removeCourt = (courtIndex) => {
+    setCourts(prev => prev.filter((_, index) => index !== courtIndex));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (step === 1) {
       setStep(2);
-    } else if (step === 2) {
-      handleVenueAndCourtsSubmit(e);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Step 1: Get user ID
+      const userId = await fetchUserIdByEmail(venue.sellerEmail);
+      if (!userId) {
+        throw new Error("No user found with the provided email.");
+      }
+
+      // Step 2: Create venue
+      const venueResponse = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateVenue($venueData: venues_insert_input!) {
+              insert_venues_one(object: $venueData) {
+                id
+              }
+            }
+          `,
+          variables: {
+            venueData: {
+              title: venue.title,
+              description: venue.description,
+              location: venue.location,
+              open_at: venue.openingTime || "00:00",
+              close_at: venue.closingTime || "00:00",
+              amenities: venue.amenities,
+              sports: venue.sports,
+              user_id: userId,
+              extra_image_ids: venue.images
+            }
+          }
+        })
+      });
+
+      const venueResult = await venueResponse.json();
+      const venueId = venueResult.data?.insert_venues_one?.id;
+
+      if (!venueId) {
+        throw new Error("Failed to create venue");
+      }
+
+      // Step 3: Create courts with slots across selected dates
+      const courtsWithSlots = courts.map(court => ({
+        name: court.name,
+        venue_id: venueId,
+        slots: {
+          data: selectedDates.flatMap(date => 
+            court.slots[0].timeSlots.map(slot => ({
+              date: date,
+              start_at: slot.startTime + ":00",
+              end_at: slot.endTime + ":00",
+              price: parseFloat(slot.price)
+            }))
+          )
+        }
+      }));
+
+      await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateCourtsAndSlots($objects: [courts_insert_input!]!) {
+              insert_courts(objects: $objects) {
+                affected_rows
+              }
+            }
+          `,
+          variables: {
+            objects: courtsWithSlots
+          }
+        })
+      });
+
+      alert("Venue, courts and slots created successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+      alert(error.message || "Failed to save data");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+
+
+
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -778,7 +813,7 @@ const MultiStepVenueForm = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {step === 1 && (
+        {step === 1 ? (
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Details */}
             <div className="space-y-4">
@@ -939,46 +974,46 @@ const MultiStepVenueForm = () => {
                   required
                 />
               </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Upload Venue Images
-                </label>
-                <Input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Upload Venue Images
+                  </label>
+                  <Input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Image preview section */}
+                {venue.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-4">
+                    {venue.images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Venue ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 
+                         opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Image preview section */}
-              {venue.images.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {venue.images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={image}
-                        alt={`Venue ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 
-                         opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* {Images} */}
-            {/* <div>
+              {/* {Images} */}
+              {/* <div>
         <label className="block text-sm font-medium mb-1">
           Upload Venue Images
         </label>
@@ -1027,7 +1062,7 @@ const MultiStepVenueForm = () => {
           </div>
         )}
       </div> */}
-            {/* <div>
+              {/* <div>
                         <label className="block text-sm font-medium mb-1">
                           Upload Venue Images
                         </label>
@@ -1053,166 +1088,154 @@ const MultiStepVenueForm = () => {
                         )}
                       </div> */}
 
-            {/* <Button type="submit" className="w-full">
+              {/* <Button type="submit" className="w-full">
               Save Venue
             </Button> */}
-</div>
+            </div>
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? "Saving..." : "Next: Add Courts"}
             </Button>
           </form>
-        )}
-
-        {step === 2 && (
+        ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {courts?.map((court, courtIndex) => (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">
-                    Courts ({courts.length})
-                  </h3>
-                  <Button
-                    type="button"
-                    onClick={addCourt}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add New Court
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Left column: Calendar */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Select Dates</h3>
+                <Calendar
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={handleDateSelect}
+                  className="rounded-md border"
+                />
+                <div className="mt-2 p-2 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600">
+                    Selected dates: {selectedDates.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right column: Courts management */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">Courts</h3>
+                  <Button onClick={addCourt} type="button" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Court
                   </Button>
                 </div>
-                <div key={courtIndex} className="border rounded-lg p-4 mb-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold">Court {courtIndex + 1}</h3>
-                    {courts.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => removeCourt(courtIndex)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Court Name */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1">
-                      Court Name
-                    </label>
-                    <Input
-                      value={court.name}
-                      onChange={(e) =>
-                        updateCourtDetail(courtIndex, "name", e.target.value)
-                      }
-                      required
-                    />
-                  </div>
-
-                  {/* Slots for this Court */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-medium">Time Slots</h4>
-                      <Button
-                        type="button"
-                        onClick={() => addSlotToCourt(courtIndex)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Plus className="w-4 h-4 mr-2" /> Add Slot
-                      </Button>
-                    </div>
-                    {court.slots.map((slot, slotIndex) => (
-                      <div
-                        key={slotIndex}
-                        className="border rounded-lg p-3 space-y-3 bg-white"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span>Slot {slotIndex + 1}</span>
-                          {court.slots.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={() =>
-                                removeSlotFromCourt(courtIndex, slotIndex)
-                              }
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <TimePicker
-                            label="Start Time"
-                            value={slot.startTime}
-                            onChange={(value) =>
-                              updateCourtSlot(
-                                courtIndex,
-                                slotIndex,
-                                "startTime",
-                                value
-                              )
-                            }
-                          />
-                          <TimePicker
-                            label="End Time"
-                            value={slot.endTime}
-                            onChange={(value) =>
-                              updateCourtSlot(
-                                courtIndex,
-                                slotIndex,
-                                "endTime",
-                                value
-                              )
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Price
-                          </label>
-                          <Input
-                            type="number"
-                            value={slot.price}
-                            onChange={(e) =>
-                              updateCourtSlot(
-                                courtIndex,
-                                slotIndex,
-                                "price",
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
-                        </div>
+                
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                  {courts.map((court, courtIndex) => (
+                    <div key={courtIndex} className="border rounded-lg p-4 bg-white shadow-sm">
+                      <div className="flex justify-between items-center mb-4">
+                        <Input
+                          placeholder="Court Name"
+                          value={court.name}
+                          onChange={(e) => {
+                            const newCourts = [...courts];
+                            newCourts[courtIndex].name = e.target.value;
+                            setCourts(newCourts);
+                          }}
+                          className="w-2/3"
+                        />
+                        {courts.length > 1 && (
+                          <Button
+                            onClick={() => removeCourt(courtIndex)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
-                    ))}
 
-                    {/* Add Slot Button for this Court */}
+                      {court.slots.map((slotPattern, slotPatternIndex) => (
+                        <div key={slotPatternIndex} className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <h5 className="font-medium">Time Slots</h5>
+                            <Button
+                              onClick={() => addTimeSlot(courtIndex, slotPatternIndex)}
+                              size="sm"
+                              type="button"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add Slot
+                            </Button>
+                          </div>
 
-                    {/* <div className="flex gap-4">
-                      <Button type="button" onClick={() => setStep(1)}>
-                        Back
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1"
-                      >
-                        {isLoading ? "Saving..." : "Save All"}
-                      </Button>
-                    </div> */}
-                  </div>
+                          <div className="space-y-3">
+                            {slotPattern.timeSlots.map((timeSlot, timeSlotIndex) => (
+                              <div
+                                key={timeSlotIndex}
+                                className="border rounded p-3 bg-gray-50"
+                              >
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-sm font-medium">Slot {timeSlotIndex + 1}</span>
+                                  {slotPattern.timeSlots.length > 1 && (
+                                    <Button
+                                      onClick={() => removeTimeSlot(courtIndex, slotPatternIndex, timeSlotIndex)}
+                                      variant="destructive"
+                                      size="sm"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 mb-2">
+                                  <TimePicker
+                                    label="Start"
+                                    value={timeSlot.startTime}
+                                    onChange={(value) => {
+                                      const newCourts = [...courts];
+                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].startTime = value;
+                                      setCourts(newCourts);
+                                    }}
+                                  />
+                                  <TimePicker
+                                    label="End"
+                                    value={timeSlot.endTime}
+                                    onChange={(value) => {
+                                      const newCourts = [...courts];
+                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].endTime = value;
+                                      setCourts(newCourts);
+                                    }}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Price</label>
+                                  <Input
+                                    type="number"
+                                    value={timeSlot.price}
+                                    onChange={(e) => {
+                                      const newCourts = [...courts];
+                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].price = e.target.value;
+                                      setCourts(newCourts);
+                                    }}
+                                    placeholder="Enter price"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              </>
-            ))}
+              </div>
+            </div>
 
-            {/* Add Court Button */}
-            <div className="flex gap-4">
-              <Button type="button" onClick={() => setStep(1)}>
+            <div className="flex gap-4 mt-6">
+              <Button type="button" onClick={() => setStep(1)} variant="outline">
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
               <Button type="submit" disabled={isLoading} className="flex-1">
                 {isLoading ? "Saving..." : "Save All"}
+                {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>
           </form>

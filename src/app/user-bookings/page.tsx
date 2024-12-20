@@ -32,53 +32,38 @@ export default function Page() {
   // Function to fetch bookings
   const fetchUserBookings = async (userId) => {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `
-              query MyQuery($userId: uuid!) {
-                bookings(where: { user_id: { _eq: $userId } }) {
-                  booking_date
-                  court_id
-                  created_at
-                  end_time
-                  id
-                  
-                  start_time
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+        },
+        body: JSON.stringify({
+          query: `
+            query MyQuery($userId: uuid!) {
+              bookings(where: { user_id: { _eq: $userId } }) {
+                created_at
+                id
+                slot {
+                  price
+                  start_at
+                  date
                 }
               }
-            `,
-            variables: { userId },
-          }),
-        }
-      );
-
+            }
+          `,
+          variables: { userId },
+        }),
+      });
+  
       const { data, errors } = await response.json();
-
+  
       if (errors) {
         console.error("GraphQL errors:", errors);
         return;
       }
-
-      // Fetch court names for each booking
-      const bookingsWithCourtNames = await Promise.all(
-        data?.bookings.map(async (booking) => {
-          const courtName = await fetchCourtName(booking.court_id);
-          return {
-            ...booking,
-            court_name: courtName,
-          };
-        })
-      );
-
-      setUserBookings(bookingsWithCourtNames || []);
+  
+      setUserBookings(data?.bookings || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     }
@@ -214,7 +199,7 @@ export default function Page() {
                           Start Time
                         </th>
                         <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600 tracking-wider">
-                          End Time
+                          Price
                         </th>
                       </tr>
                     </thead>
@@ -227,13 +212,13 @@ export default function Page() {
                             className="hover:bg-gray-50 transition-colors duration-150"
                           >
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                              {booking.booking_date}
+                              {booking.slot.date}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                              {booking.start_time}
+                              {booking?.slot?.start_at}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                              {booking.end_time}
+                            ₹{booking.slot?.price.replace('$', '') || "N/A"}
                             </td>
                             
                           </tr>

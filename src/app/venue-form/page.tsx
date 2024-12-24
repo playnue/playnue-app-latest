@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { nhost } from "../../lib/nhost";
 import { NhostClient } from "@nhost/nhost-js";
-import { useNhostClient } from "@nhost/nextjs";
+import { useAccessToken, useNhostClient, useUserData } from "@nhost/nextjs";
 import {
   Clock,
   MapPin,
@@ -159,10 +159,9 @@ const MultiStepVenueForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [courtId, setCourtId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const data = localStorage.getItem("user");
-  const parsedData = JSON.parse(data);
+  const accessToken = useAccessToken();
+  const user = useUserData();
   const router = useRouter();
-  const user = parsedData?.accessToken
   if(!user){
     router.push("/login")
   }
@@ -279,7 +278,7 @@ const MultiStepVenueForm = () => {
       const {fileMetadata, error  } = await nhost.storage.upload({
         file,
         headers: {
-          "Authorization": `Bearer ${parsedData.accessToken}`,
+          "Authorization": `Bearer ${accessToken}`,
           "X-Hasura-role": "seller"
         }
       });
@@ -423,7 +422,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          "Authorization":`Bearer ${parsedData.accessToken}`
+          "Authorization":`Bearer ${accessToken}`
           },
           body: JSON.stringify({
             query: courtsMutation,
@@ -468,7 +467,7 @@ const MultiStepVenueForm = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-          "Authorization":`Bearer ${parsedData.accessToken}`
+          "Authorization":`Bearer ${accessToken}`
             },
             body: JSON.stringify({
               query: slotsMutation,
@@ -554,7 +553,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${parsedData.accessToken}`
+          "Authorization":`Bearer ${accessToken}`
         },
         body: JSON.stringify({ query: mutation, variables }),
       });
@@ -669,7 +668,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${parsedData.accessToken}`
+          "Authorization":`Bearer ${accessToken}`
         },
         body: JSON.stringify({
           query: mutation,
@@ -717,7 +716,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${parsedData.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "x-hasura-role": "seller",
             // "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
           },
@@ -772,7 +771,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${parsedData.accessToken}`,
+          "Authorization":`Bearer ${accessToken}`,
           "x-hasura-role":"seller",
         },
         body: JSON.stringify({

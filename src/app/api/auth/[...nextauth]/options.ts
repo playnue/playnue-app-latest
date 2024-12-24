@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import bcrypt from "bcryptjs";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import CustomProvider from "next-auth/providers/oauth";
 import CredentialsProvider from "next-auth/providers/credentials";
 export const options: NextAuthOptions = {
   providers: [
@@ -10,9 +11,26 @@ export const options: NextAuthOptions = {
       clientSecret: process.env.GITHUB_SECRET as string,
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_ID as string,
-      clientSecret: process.env.GOOGLE_SECRET as string,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_ID as string,
+      clientSecret: process.env.NEXT_PUBLIC_GOOGLE_SECRET as string,
     }),
+    {
+      id: "nhost",
+      name: "nhost",
+      type: "oauth",
+      authorization: `${process.env.NEXT_PUBLIC_NHOST_AUTH_URL}/v1/signin/google`,
+      // callback:`${process.env.NEXT_PUBLIC_NHOST_AUTH_URL}/v1/signin/google/callback`,
+      token: `${process.env.NEXT_PUBLIC_NHOST_AUTH_URL}/v1/token`,
+      userinfo: `${process.env.NEXT_PUBLIC_NHOST_AUTH_URL}/v1/user`,
+      profile(profile) {
+        return {
+          id: profile.id,
+          // name: profile.kakao_account?.profile.nickname,
+          // email: profile.kakao_account?.email,
+          // image: profile.kakao_account?.profile.profile_image_url,
+        };
+      },
+    },
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -40,7 +58,6 @@ export const options: NextAuthOptions = {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
               },
               body: JSON.stringify({
                 query: `
@@ -89,6 +106,7 @@ export const options: NextAuthOptions = {
               email: user.email,
               defaultRole: user.defaultRole,
               phoneNumber: user.phoneNumber,
+              accessToken: data.accessToken,
             };
           } else {
             // Invalid password
@@ -108,20 +126,16 @@ export const options: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.defaultRole = user.defaultRole;
-        token.phoneNumber = user.phoneNumber;
+      // If user is defined, include the accessToken
+      if (user?.accessToken) {
+        token.accessToken = user.accessToken;
       }
+
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user = session.user || {};
-        session.user.id = token.id;
-        session.user.defaultRole = token.defaultRole;
-        session.user.phoneNumber = token.phoneNumber;
-      }
+      // Add accessToken to the session
+      session.accessToken = token.accessToken;
       return session;
     },
     async redirect({ url, baseUrl }) {

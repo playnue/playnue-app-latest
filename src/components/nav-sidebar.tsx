@@ -11,12 +11,25 @@ import {
   HelpCircle,
   MessageSquare,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { nhost } from "@/lib/nhost";
+import { useUserData } from "@nhost/nextjs";
 
 export default function Sidebar() {
-  const { data: session } = useSession();
-  const role = session?.user?.defaultRole || "user";
+  const user = useUserData();
+  const handleSignout = async () => {
+    try {
+      await nhost.auth.signOut();
+      // Optionally, you can redirect the user after signing out
+      window.location.href = "/login"; // or use your routing method to navigate to the login page
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+  // const data = localStorage.getItem("user");
+  // const parsedDdata = JSON.parse(data);
+  // const user = parsedDdata?.user;
   const menuItems = [
     {
       // title: "Platform",
@@ -24,7 +37,7 @@ export default function Sidebar() {
         { name: "Play", href: "/venues", icon: <Monitor size={18} /> },
         {
           name: "Dashboard",
-          href: role === "admin" ? "/admin-dashboard" : "/dashboard",
+          href: "/dashboard",
           icon: <Building2 size={18} />,
         },
       ],
@@ -86,12 +99,10 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className="flex items-center gap-2 p-2 mt-2 rounded hover:bg-gray-800 cursor-pointer">
         <div className="w-8 h-8 rounded bg-gradient-to-r from-purple-500 to-pink-500" />
-        <Link href="/api/auth/signout">
-          <div className="flex-1">
-            <p className="text-sm">{session?.user?.name}</p>
-            <p className="text-xs text-gray-500">{session?.user?.email}</p>
-          </div>
-        </Link>
+        <div className="flex-1" onClick={handleSignout}>
+          <p className="text-sm">{user?.displayName}</p>
+          <p className="text-xs text-gray-500">Logout</p>
+        </div>
       </div>
     </div>
   );

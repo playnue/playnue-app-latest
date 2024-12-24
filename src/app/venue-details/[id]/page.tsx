@@ -8,6 +8,8 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { useRouter } from "next/navigation";
 import "../../loader.css";
+import { parse } from "path";
+import { nhost } from "@/lib/nhost";
 interface VenueDetails {
   id: string;
   title: string;
@@ -44,7 +46,8 @@ const VenuePage = () => {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
+  const data = localStorage.getItem("user");
+  const parsedData = JSON.parse(data);
   const handleButtonClick = (e) => {
     e.preventDefault(); // Prevent the default behavior of the link
     setIsLoading(true);
@@ -60,7 +63,8 @@ const VenuePage = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+              // Authorization: `Bearer ${parsedData.accessToken}`,
             },
             body: JSON.stringify({
               query: `
@@ -71,7 +75,7 @@ const VenuePage = () => {
                   description
                   sports
                   amenities
-                  extra_image_ids
+                  image_id
                   location
                   open_at
                   close_at
@@ -88,7 +92,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        console.log(data.data.venues[0].extra_image_ids);
+        console.log(data.data.venues[0].image_id);
         setLoading(false);
       } catch (error) {
         console.log(error);
@@ -98,7 +102,6 @@ const VenuePage = () => {
 
     fetchVenueDetails();
   }, [id]);
-
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -132,29 +135,29 @@ const VenuePage = () => {
             </div>
           </div>
           <div className="flex gap-2">
-      <button
-        onClick={handleButtonClick}
-        disabled={isLoading} // Disable button during loading
-        className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg ${
-          isLoading
-            ? "bg-gray-400 cursor-not-allowed" // Disabled style
-            : "bg-green-500 text-white" // Normal style
-        }`}
-      >
-        {isLoading ? (
-          <div className="loader w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-        ) : (
-          "Book Now"
-        )}
-      </button>
-    </div>
+            <button
+              onClick={handleButtonClick}
+              disabled={isLoading} // Disable button during loading
+              className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg ${
+                isLoading
+                  ? "bg-gray-400 cursor-not-allowed" // Disabled style
+                  : "bg-green-500 text-white" // Normal style
+              }`}
+            >
+              {isLoading ? (
+                <div className="loader w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Book Now"
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Image Gallery */}
         <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
-              src={venue?.extra_image_ids[currentImage]}
+              src={venue?.image_id}
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />

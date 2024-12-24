@@ -1,18 +1,22 @@
 "use client"; // Mark the component as a client component
 import { useState } from "react";
-import { useSession } from "next-auth/react"; // Client-side session
+// import { useSession } from "next-auth/react"; // Client-side session
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import logo from "../logo.png";
 import Sidebar from "@/components/nav-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import sidebar from "../sidebar.png";
 import right from "../right.png";
+import { useRouter } from "next/navigation";
+// import { access } from "fs";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function Navbar() {
-  const { data: session } = useSession(); // Get session data client-side
+  // const { data: session } = useSession(); // Get session data client-side
   const [sidebarVisible, setSidebarVisible] = useState(false); // State for sidebar visibility
-
+  
+    const router = useRouter();
+    const accessToken = useAccessToken()
+      const user = useUserData()
   // Function to toggle sidebar
   const toggleSidebar = () => {
     setSidebarVisible((prev) => !prev);
@@ -22,7 +26,7 @@ export default function Navbar() {
     <nav className="bg-black p-4 w-full relative overflow-x-hidden">
       <ul className="flex justify-between text-2xl font-bold content-center">
         <li className="flex content-center items-center">
-          {session && (
+          {user && (
             <button
               onClick={toggleSidebar}
               aria-label="Toggle Sidebar"
@@ -41,7 +45,7 @@ export default function Navbar() {
             />
             </Link>
         </li>
-        {!session && (
+        {!user && (
           <ul className="flex justify-between content-center">
             <li className="rounded-full mr-4">
               <Link href="/login">

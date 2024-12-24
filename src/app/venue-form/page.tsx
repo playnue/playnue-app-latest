@@ -4,8 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
+import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
+import { nhost } from "../../lib/nhost";
 import { NhostClient } from "@nhost/nhost-js";
 import { useNhostClient } from "@nhost/nextjs";
 import {
@@ -158,7 +159,13 @@ const MultiStepVenueForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [courtId, setCourtId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const data = localStorage.getItem("user");
+  const parsedData = JSON.parse(data);
+  const router = useRouter();
+  const user = parsedData?.accessToken
+  if(!user){
+    router.push("/login")
+  }
   const [selectedDates, setSelectedDates] = useState([]);
   // const nhost = useNhostClient();
   const [newAmenity, setNewAmenity] = useState("");
@@ -174,8 +181,8 @@ const MultiStepVenueForm = () => {
     amenities: [],
     sports: [],
     sellerEmail: "",
-    // imageUrls: [],
-    images: [],
+    imageUrls: [],
+    image_id: "",
   });
 
   const handleDateSelect = (dates) => {
@@ -191,11 +198,11 @@ const MultiStepVenueForm = () => {
               startTime: "09:00",
               endTime: "10:00",
               price: "",
-            }
-          ]
-        }
-      ]
-    }
+            },
+          ],
+        },
+      ],
+    },
   ]);
 
   const removeItem = (field: "amenities" | "sports", index: number) => {
@@ -240,7 +247,8 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+
+          // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
         },
         body: JSON.stringify({
           query,
@@ -263,52 +271,43 @@ const MultiStepVenueForm = () => {
     }
   };
 
-  // const uploadImages = async (files) => {
-  //   if (!files || files.length === 0) return;
-
-  //   const uploadedUrls = [];
-  //   setIsUploading(true);
-
-  //   try {
-  //     for (let i = 0; i < files.length; i++) {
-  //       const file = files[i];
-
-  //       // Create a unique file path for each image
-  //       const filePath = `venues/${Date.now()}-${file.name}`;
-
-  //       const { error, fileMetadata } = await nhost.storage.upload({
-  //         file,
-  //         bucketId: "venues",
-  //       });
-
-  //       if (error) {
-  //         console.error("Upload error:", error);
-  //         throw error;
-  //       }
-
-  //       // Get the public URL for the uploaded file
-  //       const publicUrl = nhost.storage.getPublicUrl({
-  //         fileId: fileMetadata.id,
-  //       });
-
-  //       uploadedUrls.push(publicUrl);
-  //       // Update progress
-  //       setUploadProgress(((i + 1) / files.length) * 100);
-  //     }
-
-  //     // Update venue state with new image URLs
-  //     setVenue((prev) => ({
-  //       ...prev,
-  //       imageUrls: [...prev.imageUrls, ...uploadedUrls],
-  //     }));
-  //   } catch (error) {
-  //     console.error("Error uploading images:", error);
-  //     alert("Failed to upload images: " + error.message);
-  //   } finally {
-  //     setIsUploading(false);
-  //     setUploadProgress(0);
-  //   }
-  // };
+  const uploadImages = async (e) => {
+    const file = e.target.files[0];
+    setIsUploading(true);
+  
+    try {
+      const {fileMetadata, error  } = await nhost.storage.upload({
+        file,
+        headers: {
+          "Authorization": `Bearer ${parsedData.accessToken}`,
+          "X-Hasura-role": "seller"
+        }
+      });
+      console.log("Access token available:");
+      console.log(fileMetadata)
+      if (error) {
+        console.error("Nhost upload error:", error);
+        throw error;
+      }
+  
+      if (!fileMetadata) {
+        throw new Error("No file metadata received");
+      }
+  
+      console.log("Upload successful:", fileMetadata);
+  
+      setVenue(prev => ({
+        ...prev,
+        image_id: fileMetadata.id
+      }));
+  
+    } catch (error) {
+      console.error("Full error details:", error);
+      alert(`Upload failed: ${error.message || 'Internal server error'}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // const removeImage = async (url, index) => {
   //   try {
@@ -326,8 +325,6 @@ const MultiStepVenueForm = () => {
   //   }
   // };
 
-  
-
   const addCourt = () => {
     setCourts([
       ...courts,
@@ -335,13 +332,13 @@ const MultiStepVenueForm = () => {
         name: "",
         slots: [
           {
-            timeSlots:[
+            timeSlots: [
               {
-              startTime: "09:00",
-              endTime: "10:00",
-              price: "",
-              }
-            ]
+                startTime: "09:00",
+                endTime: "10:00",
+                price: "",
+              },
+            ],
           },
         ],
       },
@@ -360,9 +357,10 @@ const MultiStepVenueForm = () => {
 
   const removeTimeSlot = (courtIndex, slotPatternIndex, timeSlotIndex) => {
     const newCourts = [...courts];
-    const currentTimeSlots = newCourts[courtIndex].slots[slotPatternIndex].timeSlots;
+    const currentTimeSlots =
+      newCourts[courtIndex].slots[slotPatternIndex].timeSlots;
     if (currentTimeSlots.length > 1) {
-      newCourts[courtIndex].slots[slotPatternIndex].timeSlots = 
+      newCourts[courtIndex].slots[slotPatternIndex].timeSlots =
         currentTimeSlots.filter((_, index) => index !== timeSlotIndex);
       setCourts(newCourts);
     }
@@ -425,7 +423,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+          "Authorization":`Bearer ${parsedData.accessToken}`
           },
           body: JSON.stringify({
             query: courtsMutation,
@@ -470,7 +468,7 @@ const MultiStepVenueForm = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+          "Authorization":`Bearer ${parsedData.accessToken}`
             },
             body: JSON.stringify({
               query: slotsMutation,
@@ -504,22 +502,22 @@ const MultiStepVenueForm = () => {
   };
 
   // Handle image upload
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
+  // const handleImageUpload = async (e) => {
+  //   const files = Array.from(e.target.files);
 
-    try {
-      const base64Promises = files.map((file) => fileToBase64(file));
-      const base64Results = await Promise.all(base64Promises);
+  //   try {
+  //     const base64Promises = files.map((file) => fileToBase64(file));
+  //     const base64Results = await Promise.all(base64Promises);
 
-      setVenue((prev) => ({
-        ...prev,
-        images: [...prev.images, ...base64Results],
-      }));
-    } catch (error) {
-      console.error("Error converting images:", error);
-      alert("Failed to process images");
-    }
-  };
+  //     setVenue((prev) => ({
+  //       ...prev,
+  //       images: [...prev.images, ...base64Results],
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error converting images:", error);
+  //     alert("Failed to process images");
+  //   }
+  // };
 
   // Remove image
   const removeImage = (index) => {
@@ -556,7 +554,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+          "Authorization":`Bearer ${parsedData.accessToken}`
         },
         body: JSON.stringify({ query: mutation, variables }),
       });
@@ -671,7 +669,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+          "Authorization":`Bearer ${parsedData.accessToken}`
         },
         body: JSON.stringify({
           query: mutation,
@@ -697,12 +695,12 @@ const MultiStepVenueForm = () => {
   };
 
   const removeCourt = (courtIndex) => {
-    setCourts(prev => prev.filter((_, index) => index !== courtIndex));
+    setCourts((prev) => prev.filter((_, index) => index !== courtIndex));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (step === 1) {
       setStep(2);
       return;
@@ -711,41 +709,41 @@ const MultiStepVenueForm = () => {
     setIsLoading(true);
     try {
       // Step 1: Get user ID
-      const userId = await fetchUserIdByEmail(venue.sellerEmail);
-      if (!userId) {
-        throw new Error("No user found with the provided email.");
-      }
 
       // Step 2: Create venue
-      const venueResponse = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
-        },
-        body: JSON.stringify({
-          query: `
+      const venueResponse = await fetch(
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${parsedData.accessToken}`,
+            "x-hasura-role": "seller",
+            // "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
+          },
+          body: JSON.stringify({
+            query: `
             mutation CreateVenue($venueData: venues_insert_input!) {
               insert_venues_one(object: $venueData) {
                 id
               }
             }
           `,
-          variables: {
-            venueData: {
-              title: venue.title,
-              description: venue.description,
-              location: venue.location,
-              open_at: venue.openingTime || "00:00",
-              close_at: venue.closingTime || "00:00",
-              amenities: venue.amenities,
-              sports: venue.sports,
-              user_id: userId,
-              extra_image_ids: venue.images
-            }
-          }
-        })
-      });
+            variables: {
+              venueData: {
+                title: venue.title,
+                description: venue.description,
+                location: venue.location,
+                open_at: venue.openingTime || "00:00",
+                close_at: venue.closingTime || "00:00",
+                amenities: venue.amenities,
+                sports: venue.sports,
+                // image_id:venue.image_id
+              },
+            },
+          }),
+        }
+      );
 
       const venueResult = await venueResponse.json();
       const venueId = venueResult.data?.insert_venues_one?.id;
@@ -755,26 +753,27 @@ const MultiStepVenueForm = () => {
       }
 
       // Step 3: Create courts with slots across selected dates
-      const courtsWithSlots = courts.map(court => ({
+      const courtsWithSlots = courts.map((court) => ({
         name: court.name,
         venue_id: venueId,
         slots: {
-          data: selectedDates.flatMap(date => 
-            court.slots[0].timeSlots.map(slot => ({
+          data: selectedDates.flatMap((date) =>
+            court.slots[0].timeSlots.map((slot) => ({
               date: date,
               start_at: slot.startTime + ":00",
               end_at: slot.endTime + ":00",
-              price: parseFloat(slot.price)
+              price: parseFloat(slot.price),
             }))
-          )
-        }
+          ),
+        },
       }));
 
       await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET
+          "Authorization":`Bearer ${parsedData.accessToken}`,
+          "x-hasura-role":"seller",
         },
         body: JSON.stringify({
           query: `
@@ -785,9 +784,9 @@ const MultiStepVenueForm = () => {
             }
           `,
           variables: {
-            objects: courtsWithSlots
-          }
-        })
+            objects: courtsWithSlots,
+          },
+        }),
       });
 
       alert("Venue, courts and slots created successfully!");
@@ -798,10 +797,6 @@ const MultiStepVenueForm = () => {
       setIsLoading(false);
     }
   };
-
-
-
-
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -960,20 +955,6 @@ const MultiStepVenueForm = () => {
 
             {/* Contact and Location */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Mail className="inline-block w-4 h-4 mr-1" />
-                  Seller Email
-                </label>
-                <Input
-                  type="email"
-                  name="sellerEmail"
-                  value={venue.sellerEmail}
-                  onChange={handleInputChange}
-                  placeholder="Enter seller email"
-                  required
-                />
-              </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -981,15 +962,14 @@ const MultiStepVenueForm = () => {
                   </label>
                   <Input
                     type="file"
-                    multiple
                     accept="image/*"
-                    onChange={handleImageUpload}
+                    onChange={uploadImages}
                     className="w-full"
                   />
                 </div>
 
                 {/* Image preview section */}
-                {venue.images.length > 0 && (
+                {/* {venue.images.length > 0 && (
                   <div className="grid grid-cols-3 gap-4">
                     {venue.images.map((image, index) => (
                       <div key={index} className="relative group">
@@ -1009,7 +989,7 @@ const MultiStepVenueForm = () => {
                       </div>
                     ))}
                   </div>
-                )}
+                )} */}
               </div>
 
               {/* {Images} */}
@@ -1124,10 +1104,13 @@ const MultiStepVenueForm = () => {
                     Add Court
                   </Button>
                 </div>
-                
+
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                   {courts.map((court, courtIndex) => (
-                    <div key={courtIndex} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div
+                      key={courtIndex}
+                      className="border rounded-lg p-4 bg-white shadow-sm"
+                    >
                       <div className="flex justify-between items-center mb-4">
                         <Input
                           placeholder="Court Name"
@@ -1155,7 +1138,9 @@ const MultiStepVenueForm = () => {
                           <div className="flex justify-between items-center">
                             <h5 className="font-medium">Time Slots</h5>
                             <Button
-                              onClick={() => addTimeSlot(courtIndex, slotPatternIndex)}
+                              onClick={() =>
+                                addTimeSlot(courtIndex, slotPatternIndex)
+                              }
                               size="sm"
                               type="button"
                             >
@@ -1165,60 +1150,81 @@ const MultiStepVenueForm = () => {
                           </div>
 
                           <div className="space-y-3">
-                            {slotPattern.timeSlots.map((timeSlot, timeSlotIndex) => (
-                              <div
-                                key={timeSlotIndex}
-                                className="border rounded p-3 bg-gray-50"
-                              >
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-sm font-medium">Slot {timeSlotIndex + 1}</span>
-                                  {slotPattern.timeSlots.length > 1 && (
-                                    <Button
-                                      onClick={() => removeTimeSlot(courtIndex, slotPatternIndex, timeSlotIndex)}
-                                      variant="destructive"
-                                      size="sm"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
-                                  )}
-                                </div>
+                            {slotPattern.timeSlots.map(
+                              (timeSlot, timeSlotIndex) => (
+                                <div
+                                  key={timeSlotIndex}
+                                  className="border rounded p-3 bg-gray-50"
+                                >
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-medium">
+                                      Slot {timeSlotIndex + 1}
+                                    </span>
+                                    {slotPattern.timeSlots.length > 1 && (
+                                      <Button
+                                        onClick={() =>
+                                          removeTimeSlot(
+                                            courtIndex,
+                                            slotPatternIndex,
+                                            timeSlotIndex
+                                          )
+                                        }
+                                        variant="destructive"
+                                        size="sm"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                  </div>
 
-                                <div className="grid grid-cols-2 gap-3 mb-2">
-                                  <TimePicker
-                                    label="Start"
-                                    value={timeSlot.startTime}
-                                    onChange={(value) => {
-                                      const newCourts = [...courts];
-                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].startTime = value;
-                                      setCourts(newCourts);
-                                    }}
-                                  />
-                                  <TimePicker
-                                    label="End"
-                                    value={timeSlot.endTime}
-                                    onChange={(value) => {
-                                      const newCourts = [...courts];
-                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].endTime = value;
-                                      setCourts(newCourts);
-                                    }}
-                                  />
-                                </div>
+                                  <div className="grid grid-cols-2 gap-3 mb-2">
+                                    <TimePicker
+                                      label="Start"
+                                      value={timeSlot.startTime}
+                                      onChange={(value) => {
+                                        const newCourts = [...courts];
+                                        newCourts[courtIndex].slots[
+                                          slotPatternIndex
+                                        ].timeSlots[timeSlotIndex].startTime =
+                                          value;
+                                        setCourts(newCourts);
+                                      }}
+                                    />
+                                    <TimePicker
+                                      label="End"
+                                      value={timeSlot.endTime}
+                                      onChange={(value) => {
+                                        const newCourts = [...courts];
+                                        newCourts[courtIndex].slots[
+                                          slotPatternIndex
+                                        ].timeSlots[timeSlotIndex].endTime =
+                                          value;
+                                        setCourts(newCourts);
+                                      }}
+                                    />
+                                  </div>
 
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Price</label>
-                                  <Input
-                                    type="number"
-                                    value={timeSlot.price}
-                                    onChange={(e) => {
-                                      const newCourts = [...courts];
-                                      newCourts[courtIndex].slots[slotPatternIndex].timeSlots[timeSlotIndex].price = e.target.value;
-                                      setCourts(newCourts);
-                                    }}
-                                    placeholder="Enter price"
-                                  />
+                                  <div>
+                                    <label className="block text-sm font-medium mb-1">
+                                      Price
+                                    </label>
+                                    <Input
+                                      type="number"
+                                      value={timeSlot.price}
+                                      onChange={(e) => {
+                                        const newCourts = [...courts];
+                                        newCourts[courtIndex].slots[
+                                          slotPatternIndex
+                                        ].timeSlots[timeSlotIndex].price =
+                                          e.target.value;
+                                        setCourts(newCourts);
+                                      }}
+                                      placeholder="Enter price"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1229,7 +1235,11 @@ const MultiStepVenueForm = () => {
             </div>
 
             <div className="flex gap-4 mt-6">
-              <Button type="button" onClick={() => setStep(1)} variant="outline">
+              <Button
+                type="button"
+                onClick={() => setStep(1)}
+                variant="outline"
+              >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>

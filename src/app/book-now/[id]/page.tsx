@@ -43,9 +43,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import "../../loader.css";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function BookNow() {
   const { id } = useParams();
   const [cart, setCart] = useState([]);
@@ -70,7 +70,12 @@ export default function BookNow() {
   const router = useRouter();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { data: session } = useSession();
+  const data = localStorage.getItem("user");
+  const parsedData = JSON.parse(data);
+
+  const accessToken = useAccessToken();
+  const user = useUserData();
+
   const [isClient, setIsClient] = useState(false);
   const handleCouponSubmit = () => {
     if (couponCode.trim() === VALID_COUPON) {
@@ -128,7 +133,7 @@ export default function BookNow() {
   const fetchSlotsForCourt = async (courtId, selectedDate) => {
     try {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      
+
       // Modified query to also fetch bookings for the selected date and court
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
@@ -136,14 +141,16 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+            Authorization: `Bearer ${accessToken}`,
+            "x-hasura-role": "user",
           },
           body: JSON.stringify({
             query: `
               query GetSlotsAndBookings($courtId: uuid!, $date: date!) {
                 slots(where: {
                   court_id: {_eq: $courtId},
-                  date: {_eq: $date}
+                  date: {_eq: $date},
+                  booked: {_eq: false}
                 }) {
                   id
                   start_at
@@ -162,33 +169,35 @@ export default function BookNow() {
             `,
             variables: {
               courtId: courtId,
-              date: formattedDate
-            }
+              date: formattedDate,
+            },
           }),
         }
       );
-  
+
       const responseData = await slotResponse.json();
       if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-  
+
       // Extract slots and bookings from the response
       const { slots, bookings } = responseData.data;
-      
+
       // Create a Set of booked slot IDs for efficient lookup
-      const bookedSlotIds = new Set(bookings.map(booking => booking.slot_id));
-  
+      const bookedSlotIds = new Set(bookings.map((booking) => booking.slot_id));
+
       // Filter out booked slots
-      const availableSlots = slots.filter(slot => !bookedSlotIds.has(slot.id));
-  
+      const availableSlots = slots.filter(
+        (slot) => !bookedSlotIds.has(slot.id)
+      );
+
       // Sort available slots by start time
       availableSlots.sort((a, b) => {
         const timeA = convertTo24HourFormat(a.start_at);
         const timeB = convertTo24HourFormat(b.start_at);
         return timeA.localeCompare(timeB);
       });
-  
+
       setSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching slots:", error);
@@ -198,13 +207,13 @@ export default function BookNow() {
 
   const formatTimeRange = (startTime, endTime) => {
     const formatTime = (time) => {
-      const [hours, minutes] = time.split(':');
+      const [hours, minutes] = time.split(":");
       const date = new Date();
       date.setHours(hours, minutes);
-      return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
     };
 
@@ -219,7 +228,7 @@ export default function BookNow() {
     if (!match) {
       return "Invalid Time Format"; // If input doesn't match the format, return an error message
     }
-// eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
     const [_, hour, minute, period] = match; // Extract hour, minute, and period (AM/PM)
 
     let hour24 = parseInt(hour, 10);
@@ -241,8 +250,11 @@ export default function BookNow() {
       return;
     }
 
-    const selectedCourtName = courts.find((court) => court.id === selectedCourt)?.name || "Court";
-    const selectedSlotPrice = parseFloat(selectedSlot.price.replace(/[^0-9.-]+/g, ""));
+    const selectedCourtName =
+      courts.find((court) => court.id === selectedCourt)?.name || "Court";
+    const selectedSlotPrice = parseFloat(
+      selectedSlot.price.replace(/[^0-9.-]+/g, "")
+    );
 
     const newBooking = {
       id: Date.now(),
@@ -269,15 +281,11 @@ export default function BookNow() {
   // const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
 
   const handleBookNow = async () => {
-    if (!session) {
-      return router.push("/login");
-    }
-    console.log(session);
     if (cart.length === 0) {
       alert("Your cart is empty. Please add a court and time to book.");
       return;
     }
-    console.log("success")
+    console.log("success");
 
     try {
       // Create order via your backend
@@ -316,12 +324,12 @@ export default function BookNow() {
 
       const slotId = selectedSlot.id;
       const bookingData = {
-        slot_id:slotId,
+        slot_id: slotId,
         rzp_id: "",
-        user_id: session?.user?.id,
+        user_id: user.id,
       };
       console.log(bookingData);
- 
+
       const options = {
         key: "rzp_test_crzs6Gnk9wGFxm", // Your Razorpay Key ID
         amount: orderData.amount, // Amount from the created order
@@ -352,7 +360,7 @@ export default function BookNow() {
 
             if (verificationResult.success) {
               console.log("success");
-              router.push("/user-bookings")
+              router.push("/user-bookings");
             } else {
               alert("Payment verification failed");
             }
@@ -368,8 +376,8 @@ export default function BookNow() {
           }
         },
         prefill: {
-          name: session?.user?.name || "Guest",
-          email: session?.user?.email || "guest@example.com",
+          name: parsedData?.user?.name || "Guest",
+          email: parsedData?.user?.email || "guest@example.com",
         },
         theme: {
           color: "#3399cc",
@@ -414,8 +422,7 @@ export default function BookNow() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              
+              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             },
             body: JSON.stringify({
               query: `query MyQuery {
@@ -447,8 +454,7 @@ export default function BookNow() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              
+              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
             },
             body: JSON.stringify({
               query: `query GetCourts {
@@ -586,47 +592,45 @@ export default function BookNow() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-h-[500px] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Select Time</DialogTitle>
-        </DialogHeader>
-        <div
-          className="grid grid-cols-2 gap-2 mt-4 overflow-y-auto pr-2"
-          style={{ maxHeight: "400px" }}
-        >
-          {!selectedCourt ? (
-            <p className="text-center col-span-2">
-              Please select a court first
-            </p>
-          ) : slots.length === 0 ? (
-            <p className="text-center col-span-2">
-              No slots available for the selected date
-            </p>
-          ) : (
-            slots.map((slot) => (
-              <Button
-                key={slot.id}
-                variant={
-                  selectedSlot?.id === slot.id
-                    ? "default"
-                    : "outline"
-                }
-                onClick={() => {
-                  setSelectedTime(formatTimeRange(slot.start_at, slot.end_at));
-                  setSelectedSlots(slot);
-                  setIsDialogOpen(false);
-                }}
-                className="text-sm"
-              >
-                {formatTimeRange(slot.start_at, slot.end_at)}
-              </Button>
-            ))
-          )}
-        </div>
-      </DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Select Time</DialogTitle>
+                </DialogHeader>
+                <div
+                  className="grid grid-cols-2 gap-2 mt-4 overflow-y-auto pr-2"
+                  style={{ maxHeight: "400px" }}
+                >
+                  {!selectedCourt ? (
+                    <p className="text-center col-span-2">
+                      Please select a court first
+                    </p>
+                  ) : slots.length === 0 ? (
+                    <p className="text-center col-span-2">
+                      No slots available for the selected date
+                    </p>
+                  ) : (
+                    slots.map((slot) => (
+                      <Button
+                        key={slot.id}
+                        variant={
+                          selectedSlot?.id === slot.id ? "default" : "outline"
+                        }
+                        onClick={() => {
+                          setSelectedTime(
+                            formatTimeRange(slot.start_at, slot.end_at)
+                          );
+                          setSelectedSlots(slot);
+                          setIsDialogOpen(false);
+                        }}
+                        className="text-sm"
+                      >
+                        {formatTimeRange(slot.start_at, slot.end_at)}
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </DialogContent>
             </Dialog>
           </div>
-
-          
 
           <Button onClick={handleAddToCart} className="w-full">
             Add to Cart
@@ -634,105 +638,112 @@ export default function BookNow() {
         </Card>
 
         <div className="mt-8">
-      <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
-      <div className="space-y-4">
-        {cart.map((item) => (
-          <Card key={item.id} className="flex items-center justify-between p-4">
-            <div>
-              <p className="text-sm">{item.court}</p>
-              <p className="text-sm">{item.time}</p>
-              {/* <p className="text-sm">{item.duration} Minute(s)</p> */}
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold">₹{item.price.toFixed(2)}</p>
-              <Button
-                onClick={() => handleRemoveFromCart(item.id)}
-                variant="ghost"
-                className="p-2 ml-2"
+          <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
+          <div className="space-y-4">
+            {cart.map((item) => (
+              <Card
+                key={item.id}
+                className="flex items-center justify-between p-4"
               >
-                <Trash2 className="h-4 w-4" />
+                <div>
+                  <p className="text-sm">{item.court}</p>
+                  <p className="text-sm">{item.time}</p>
+                  {/* <p className="text-sm">{item.duration} Minute(s)</p> */}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold">
+                    ₹{item.price.toFixed(2)}
+                  </p>
+                  <Button
+                    onClick={() => handleRemoveFromCart(item.id)}
+                    variant="ghost"
+                    className="p-2 ml-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="mt-4 p-4">
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  maxLength={9}
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  className="flex-grow"
+                />
+                <Button
+                  onClick={handleCouponSubmit}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Tag className="h-4 w-4" />
+                  Apply
+                </Button>
+              </div>
+              {couponError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription>{couponError}</AlertDescription>
+                </Alert>
+              )}
+              {isCouponApplied && (
+                <Alert className="mt-2 bg-green-50">
+                  <AlertDescription className="text-green-600">
+                    Coupon applied successfully! ₹99 discount added.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <Calculator className="h-5 w-5 mr-2 text-gray-600" />
+                  <span className="text-gray-700">Subtotal</span>
+                </div>
+                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
+                  <span className="text-gray-700">
+                    Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
+                  </span>
+                </div>
+                <span className="font-semibold">
+                  ₹{convenienceFees.toFixed(2)}
+                </span>
+              </div>
+              {isCouponApplied && (
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2 text-green-600" />
+                    <span className="text-green-600">Coupon Discount</span>
+                  </div>
+                  <span className="font-semibold text-green-600">
+                    -₹{COUPON_DISCOUNT.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="border-t pt-2 mt-2 flex justify-between items-center">
+                <span className="text-xl font-bold text-gray-900">Total</span>
+                <span className="text-xl font-bold text-blue-600">
+                  ₹{totalCost.toFixed(2)}
+                </span>
+              </div>
+              <Button
+                onClick={handleBookNow}
+                className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Book Now
               </Button>
             </div>
           </Card>
-        ))}
-      </div>
-
-      <Card className="mt-4 p-4">
-        <div className="mb-4">
-          <div className="flex items-center gap-2">
-            <Input
-              maxLength={9}
-              placeholder="Enter coupon code"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              className="flex-grow"
-            />
-            <Button 
-              onClick={handleCouponSubmit}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Tag className="h-4 w-4" />
-              Apply
-            </Button>
-          </div>
-          {couponError && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertDescription>{couponError}</AlertDescription>
-            </Alert>
-          )}
-          {isCouponApplied && (
-            <Alert className="mt-2 bg-green-50">
-              <AlertDescription className="text-green-600">
-                Coupon applied successfully! ₹99 discount added.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <Calculator className="h-5 w-5 mr-2 text-gray-600" />
-              <span className="text-gray-700">Subtotal</span>
-            </div>
-            <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
-              <span className="text-gray-700">
-                Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
-              </span>
-            </div>
-            <span className="font-semibold">₹{convenienceFees.toFixed(2)}</span>
-          </div>
-          {isCouponApplied && (
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center">
-                <Tag className="h-5 w-5 mr-2 text-green-600" />
-                <span className="text-green-600">Coupon Discount</span>
-              </div>
-              <span className="font-semibold text-green-600">
-                -₹{COUPON_DISCOUNT.toFixed(2)}
-              </span>
-            </div>
-          )}
-          <div className="border-t pt-2 mt-2 flex justify-between items-center">
-            <span className="text-xl font-bold text-gray-900">Total</span>
-            <span className="text-xl font-bold text-blue-600">
-              ₹{totalCost.toFixed(2)}
-            </span>
-          </div>
-          <Button
-            onClick={handleBookNow}
-            className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Book Now
-          </Button>
-        </div>
-      </Card>
-    </div>
       </div>
     </>
   );

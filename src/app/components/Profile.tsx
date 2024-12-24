@@ -1,4 +1,5 @@
 "use client";
+import { nhost } from "@/lib/nhost";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 
@@ -10,31 +11,25 @@ const ProfileForm = () => {
     lastName: "",
     phone: "",
     email: "",
-    gender: "",
     favoriteSports: "",
   });
 
   const [user, setUser] = useState();
   const [isSaving, setIsSaving] = useState(false);
   const [isClient, setIsClient] = useState(false);
-
+  const [token,setToken] = useState("")
   const [sportsList, setSportsList] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>("");
-  const { data: session } = useSession();
-  console.log(user?.phoneNumber)
-  
+  // const { data: session } = useSession();
+
   useEffect(() => {
-    if (user && !user.phoneNumber) {
-      toast.error("Enter Phone Number", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+    const item = localStorage.getItem("user");
+    if (item) {
+      const parsedItem = JSON.parse(item);
+      setUser(parsedItem?.user);
+      setToken(parsedItem?.accessToken)
     }
-  }, [user?.phoneNumber]);
+  }, []);
 
   // useEffect(() => {
   //   setIsClient(true);
@@ -52,17 +47,13 @@ const ProfileForm = () => {
   // }
   const fetchSportsList = async () => {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
               query MyQuery {
                 sports {
                   id
@@ -70,9 +61,8 @@ const ProfileForm = () => {
                 }
               }
             `,
-          }),
-        }
-      );
+        }),
+      });
 
       const { data, errors } = await response.json();
 
@@ -89,17 +79,15 @@ const ProfileForm = () => {
 
   const fetchUserDetails = async (userId) => {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":`Bearer ${token}`,
+          "x-hasura-role":"user",
+        },
+        body: JSON.stringify({
+          query: `
               query MyQuery($id: uuid!) {
                 user(id: $id) {
                   displayName
@@ -109,10 +97,9 @@ const ProfileForm = () => {
                 }
               }
             `,
-            variables: { id: userId },
-          }),
-        }
-      );
+          variables: { id: userId },
+        }),
+      });
 
       const { data, errors } = await response.json();
       console.log(data);
@@ -122,14 +109,13 @@ const ProfileForm = () => {
       }
       const metadata = data?.user?.metadata;
       console.log(metadata);
-      setUser(data?.user);
+      // setUser(data?.user);
       setFormData({
         firstName: data?.user?.displayName || "",
         email: data?.user?.email || "",
         phone: data?.user?.phoneNumber,
         // Ensure favoriteSports is an array, even if it's null
-        favoriteSports: metadata?.sports || [],
-        gender: "",
+        favoriteSports: metadata?.sports,
       });
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -139,17 +125,16 @@ const ProfileForm = () => {
   const saveUserDetails = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":`Bearer ${token}`,
+          
+          "x-hasura-role":"user",
+        },
+        body: JSON.stringify({
+          query: `
               mutation UpdateUser($id: uuid!, $displayName: String, $phoneNumber: String, $metadata: jsonb) {
                 updateUser(
                   pk_columns: { id: $id },
@@ -163,15 +148,14 @@ const ProfileForm = () => {
                 }
               }
             `,
-            variables: {
-              id: session.user.id,
-              displayName: formData.firstName,
-              phoneNumber: formData.phone,
-              metadata: { sports: formData.favoriteSports }, // Store as array in metadata
-            },
-          }),
-        }
-      );
+          variables: {
+            id: user?.id,
+            displayName: formData.firstName,
+            phoneNumber: formData.phone,
+            metadata: { sports: formData?.favoriteSports }, // Store as array in metadata
+          },
+        }),
+      });
 
       const { data, errors } = await response.json();
 
@@ -232,12 +216,12 @@ const ProfileForm = () => {
   };
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserDetails(session.user.id);
+    if (user?.id) {
+      fetchUserDetails(user?.id);
       fetchSportsList();
       console.log("hello");
     }
-  }, [session]);
+  }, [user]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -246,6 +230,19 @@ const ProfileForm = () => {
     }));
   };
 
+  // useEffect(() => {
+  //   // Ensure `user` exists before checking `phoneNumber`
+  //   if (user && !user.phoneNumber) {
+  //     toast.error("Enter Phone Number", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //       hideProgressBar: false,
+  //       closeOnClick: true,
+  //       pauseOnHover: true,
+  //       draggable: true,
+  //     });
+  //   }
+  // }, [user]);
   return (
     <>
       <ToastContainer />
@@ -347,7 +344,7 @@ const ProfileForm = () => {
               </div>
 
               {/* Display Selected Sports */}
-              {formData.favoriteSports.length > 0 && (
+              {/* {formData?.favoriteSports.length > 0 && (
                 <div className="mt-2">
                   <p className="text-sm text-purple-200 mb-1">
                     Selected Sports:
@@ -369,7 +366,7 @@ const ProfileForm = () => {
                     ))}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Save Button */}

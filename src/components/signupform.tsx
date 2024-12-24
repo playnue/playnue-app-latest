@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { nhost } from "@/lib/nhost";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -23,7 +25,10 @@ export function SignupForm() {
   const [message, setMessage] = useState("");
   const [number, setNumber] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
+  const accessToken = useAccessToken();
+  console.log(accessToken);
+  const userData = useUserData();
+  console.log(userData);
   // Password validation logic
   const validatePassword = (password: string) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!]).{8,20}$/;
@@ -42,62 +47,47 @@ export function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    // Final password validation before submission
+
+    // Validate password before submission
     const error = validatePassword(password);
     if (error) {
       setPasswordError(error);
       return;
     }
-  
+
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_DOMAIN}/api/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-            name: name,
-          }),
-        }
-      );
-  
-      if (res.ok) {
-        // Automatically log in the user
-        const loginRes = await signIn("credentials", {
-          redirect: false,
-          email: email,
-          password: password,
+      // Call Nhost signup
+      const result = await nhost.auth.signUp({
+        email: email,
+        password: password,
+      });
+      console.log("SignUp Response:", result);
+
+      if (result.error) {
+        // Handle errors returned by Nhost
+        toast.error(result.error.message || "Signup failed.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
-  
-        if (loginRes?.error) {
-          toast.error("Login failed. Please try logging in manually.", {
+      } else if (!result.error) {
+        // Notify the user that a verification email has been sent
+        toast.success(
+          "Signup successful! A verification email has been sent to your inbox.",
+          {
             position: "top-right",
-            autoClose: 3000,
+            autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-          });
-        } else {
-          toast.success("Logged in successfully", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 3000);
-        }
+          }
+        );
       } else {
-        toast.error("Signup failed", {
+        toast.warn("Signup successful, but further instructions are missing.", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -106,8 +96,9 @@ export function SignupForm() {
           draggable: true,
         });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      // Handle unexpected errors
+      console.error("Error during signup:", error);
       toast.error("An error occurred. Please try again.", {
         position: "top-right",
         autoClose: 3000,
@@ -118,8 +109,6 @@ export function SignupForm() {
       });
     }
   };
-
-  
 
   return (
     <>
@@ -132,6 +121,26 @@ export function SignupForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col gap-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={async () => {
+                const result = await nhost.auth.signIn({
+                  provider: "google",
+                  // redirectUrl:"" // Specify Google as the provider
+                });
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                  fill="currentColor"
+                />
+              </svg>
+              Login with Google
+            </Button>
+          </div>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
               <div className="grid gap-2">
@@ -169,11 +178,11 @@ export function SignupForm() {
               </Button>
             </div>
           </form>
-          
+
           {message && (
             <p className="mt-4 text-center text-sm text-red-600">{message}</p>
           )}
-          
+
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href={`/login`} className="underline">

@@ -9,26 +9,35 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { Download, ArrowRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Download, ArrowRight } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import Link from "next/link";
-import "../loader.css"
-import 'jspdf-autotable';
-
-
+import "../loader.css";
+import "jspdf-autotable";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 
 export default function Page() {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
+  // console.log(parsedData.accessToken);
   const [userBookings, setUserBookings] = useState([]);
   const [isClient, setIsClient] = useState(false);
+
+  const accessToken = useAccessToken();
+  const user = useUserData();
   // Function to fetch bookings
   const fetchUserBookings = async (userId) => {
     try {
@@ -36,7 +45,8 @@ export default function Page() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+          Authorization: `Bearer ${accessToken}`,
+          "X-Hasura-Role": "user",
         },
         body: JSON.stringify({
           query: `
@@ -55,14 +65,14 @@ export default function Page() {
           variables: { userId },
         }),
       });
-  
+
       const { data, errors } = await response.json();
-  
+
       if (errors) {
         console.error("GraphQL errors:", errors);
         return;
       }
-  
+
       setUserBookings(data?.bookings || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -95,32 +105,27 @@ export default function Page() {
     // Save the PDF
     doc.save(`Invoice_${booking.id}.pdf`);
   };
-  
-  
 
   const fetchCourtName = async (courtId) => {
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-"x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-            
-          },
-          body: JSON.stringify({
-            query: `
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+          "x-hasura-role": "user",
+        },
+        body: JSON.stringify({
+          query: `
               query MyQuery2($courtId: uuid!) {
                 courts(where: { id: { _eq: $courtId } }) {
                   name
                 }
               }
             `,
-            variables: { courtId },
-          }),
-        }
-      );
+          variables: { courtId },
+        }),
+      });
 
       const { data, errors } = await response.json();
 
@@ -137,26 +142,26 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserBookings(session.user.id);
+    if (user?.id) {
+      fetchUserBookings(user.id);
     }
-  }, [session]);
+  }, [user?.id]);
 
   useEffect(() => {
-      setIsClient(true);
-    }, []);
-  
-    // If not client-side, render nothing or a placeholder
-    if (!isClient) {
-      return (
-        <>
-          {/* <Navbar /> */}
-          <div className="flex items-center justify-center min-h-screen">
-            <div id="preloader"></div>
-          </div>
-        </>
-      );
-    }
+    setIsClient(true);
+  }, []);
+
+  // If not client-side, render nothing or a placeholder
+  if (!isClient) {
+    return (
+      <>
+        {/* <Navbar /> */}
+        <div className="flex items-center justify-center min-h-screen">
+          <div id="preloader"></div>
+        </div>
+      </>
+    );
+  }
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -185,7 +190,9 @@ export default function Page() {
           {userBookings.length > 0 ? (
             <>
               <CardHeader className="border-b border-gray-100">
-                <CardTitle className="text-2xl font-bold text-gray-800">Your Bookings</CardTitle>
+                <CardTitle className="text-2xl font-bold text-gray-800">
+                  Your Bookings
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="overflow-x-auto">
@@ -205,9 +212,12 @@ export default function Page() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {userBookings
-                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .sort(
+                          (a, b) =>
+                            new Date(b.created_at) - new Date(a.created_at)
+                        )
                         .map((booking) => (
-                          <tr 
+                          <tr
                             key={booking.id}
                             className="hover:bg-gray-50 transition-colors duration-150"
                           >
@@ -218,9 +228,8 @@ export default function Page() {
                               {booking?.slot?.start_at}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            ₹{booking.slot?.price.replace('$', '') || "N/A"}
+                              ₹{booking.slot?.price.replace("$", "") || "N/A"}
                             </td>
-                            
                           </tr>
                         ))}
                     </tbody>
@@ -230,18 +239,19 @@ export default function Page() {
             </>
           ) : (
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <img 
-                src="empty-cart.jpeg" 
-                alt="No bookings" 
+              <img
+                src="empty-cart.jpeg"
+                alt="No bookings"
                 className="mb-6 rounded-lg"
               />
               <CardTitle className="text-2xl font-bold text-gray-800 mb-4">
                 No Bookings Yet
               </CardTitle>
               <CardDescription className="text-gray-600 mb-6 max-w-md">
-                It seems you haven't made any bookings yet. Explore our venues and book your perfect sports court today!
+                It seems you haven't made any bookings yet. Explore our venues
+                and book your perfect sports court today!
               </CardDescription>
-              <Link 
+              <Link
                 href="/venues"
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 font-semibold"
               >

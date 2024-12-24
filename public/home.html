@@ -71,11 +71,11 @@
             <li><a href="/home.html" class="active">Home</a></li>
             <li><a href="/home.html">About</a></li>
             <!-- <li><a href="#gallery">Gallery</a></li> -->
-            <li id="dashboardButton"><a href="/user-bookings" >Dashboard</a></li>
-            <li><a href="/venues">Venues</a></li>
-            <li class="rounded-full mr-4" id="loginButton">
+            <!-- <li id="dashboardButton"><a href="/user-bookings" >Dashboard</a></li> -->
+            <li><a href="/venues">Book</a></li>
+            <!-- <li class="rounded-full mr-4" id="loginButton">
               <a href="/login">Login</a>
-            </li>
+            </li> -->
           </ul>
           <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
         </nav>
@@ -85,8 +85,9 @@
       // Function to check the session
       async function checkSession() {
         try {
-          const response = await fetch("/api/auth/session");
-          const session = await response.json();
+          // const sessi = await getSession()
+          const data = localStorage.getItem("user");
+          const session = JSON.parse(data);
 
           // If a session exists and user is logged in, hide the login button
           if (session && session.user) {

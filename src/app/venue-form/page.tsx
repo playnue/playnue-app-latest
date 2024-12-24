@@ -162,9 +162,7 @@ const MultiStepVenueForm = () => {
   const accessToken = useAccessToken();
   const user = useUserData();
   const router = useRouter();
-  if(!user){
-    router.push("/login")
-  }
+  
   const [selectedDates, setSelectedDates] = useState([]);
   // const nhost = useNhostClient();
   const [newAmenity, setNewAmenity] = useState("");

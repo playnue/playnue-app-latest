@@ -1,6 +1,6 @@
 "use client";
 import { nhost } from "@/lib/nhost";
-import { useUserData } from "@nhost/nextjs";
+import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 
 import { ToastContainer, toast } from "react-toastify";
@@ -20,8 +20,6 @@ const ProfileForm = () => {
   const [token,setToken] = useState("")
   const [sportsList, setSportsList] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>("");
-  const u = useUserData();
-  setUser(u);
   // const { data: session } = useSession();
 
   useEffect(() => {

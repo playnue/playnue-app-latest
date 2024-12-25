@@ -793,6 +793,19 @@ section,
   align-items: center;
 }
 
+.hero-img {
+  display: flex; /* Use flexbox to center */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically (if needed) */
+  text-align: center; /* Ensure inline elements like images are centered */
+}
+
+.hero-img img {
+  margin: 0 auto; /* Center inline-block images */
+  display: block; /* Remove extra spacing for inline elements */
+}
+
+
 .hero .hero-bg {
   position: absolute;
   inset: 0;

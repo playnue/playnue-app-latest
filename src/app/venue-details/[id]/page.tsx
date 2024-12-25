@@ -6,7 +6,10 @@ import { Card } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
-import "../../loader.css"
+import { useRouter } from "next/navigation";
+import "../../loader.css";
+import { parse } from "path";
+import { nhost } from "@/lib/nhost";
 interface VenueDetails {
   id: string;
   title: string;
@@ -14,7 +17,7 @@ interface VenueDetails {
   description: string;
   sports: { name: string; icon: string }[];
   amenities: string[];
-  images: string[];
+  extra_image_ids: string[];
   location: string;
   open_at: string;
   close_at: string;
@@ -26,8 +29,12 @@ const sportIcons = {
   Football: " ⚽ ",
   Basketball: " 🏀 ",
   Cricket: " 🏏 ",
+  Golf: " ⛳ ",
+  Pickleball: " 🎾 ",
   Badminton: " 🏸 ",
   Tennis: " 🎾 ",
+  BoxCricket: " 🏏 ",
+  // TableTennis: " :table "
 };
 
 const VenuePage = () => {
@@ -38,18 +45,27 @@ const VenuePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const data = localStorage.getItem("user");
+  const parsedData = JSON.parse(data);
+  const handleButtonClick = (e) => {
+    e.preventDefault(); // Prevent the default behavior of the link
+    setIsLoading(true);
+    router.push(`/book-now/${venue.id}`);
+  };
   // Fetch data from Hasura
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {
         const response = await fetch(
-          "https://local.hasura.local.nhost.run/v1/graphql",
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-hasura-admin-secret": "nhost-admin-secret",
+              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
+              // Authorization: `Bearer ${parsedData.accessToken}`,
             },
             body: JSON.stringify({
               query: `
@@ -60,10 +76,11 @@ const VenuePage = () => {
                   description
                   sports
                   amenities
-                  images
+                  image_id
                   location
                   open_at
                   close_at
+                  
                 }
               }
             `,
@@ -76,7 +93,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        console.log(data.data.venues[0].images);
+        console.log(data.data.venues[0].image_id);
         setLoading(false);
       } catch (error) {
         console.log(error);
@@ -86,22 +103,21 @@ const VenuePage = () => {
 
     fetchVenueDetails();
   }, [id]);
-
   useEffect(() => {
-      setIsClient(true);
-    }, []);
-  
-    // If not client-side, render nothing or a placeholder
-    if (!isClient) {
-      return (
-        <>
-          <Navbar />
-          <div className="flex items-center justify-center min-h-screen">
-            <div id="preloader"></div>
-          </div>
-        </>
-      );
-    }
+    setIsClient(true);
+  }, []);
+
+  // If not client-side, render nothing or a placeholder
+  if (!isClient) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div id="preloader"></div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -120,33 +136,45 @@ const VenuePage = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Link href={`/book-now/${venue.id}`}>
-              <button className="px-6 py-2 bg-green-500 text-white rounded-lg">
-                Book Now
-              </button>
-            </Link>
+            <button
+              onClick={handleButtonClick}
+              disabled={isLoading} // Disable button during loading
+              className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg ${
+                isLoading
+                  ? "bg-gray-400 cursor-not-allowed" // Disabled style
+                  : "bg-green-500 text-white" // Normal style
+              }`}
+            >
+              {isLoading ? (
+                <div className="loader w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Book Now"
+              )}
+            </button>
           </div>
         </div>
 
         {/* Image Gallery */}
-        {/* <div className="relative mb-8">
+        <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
-              src={venue?.images[currentImage]}
+              src="/playturf.jpg"
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
               onClick={() =>
-                setCurrentImage((prev) => (prev + 1) % venue.images.length)
+                setCurrentImage(
+                  (prev) => (prev + 1) % venue.extra_image_ids.length
+                )
               }
             >
               <ChevronRight className="w-6 h-6" />
             </button>
           </div>
           <div className="flex justify-center gap-2 mt-2">
-            {venue?.images?.map((_, idx) => (
+            {venue?.extra_image_ids?.map((_, idx) => (
               <button
                 key={idx}
                 className={`w-2 h-2 rounded-full ${
@@ -156,7 +184,7 @@ const VenuePage = () => {
               />
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Info Sections */}
         <div className="">
@@ -165,7 +193,9 @@ const VenuePage = () => {
             <Card className="p-4 mb-4">
               <h2 className="text-lg font-semibold mb-2">Timing</h2>
               <p>
-                {venue.open_at} - {venue.close_at}
+                {venue.open_at === "00:00:00" && venue.close_at === "00:00:00"
+                  ? "24/7"
+                  : `${venue.open_at} - ${venue.close_at}`}
               </p>
             </Card>
 
@@ -199,6 +229,13 @@ const VenuePage = () => {
             <Card className="p-4">
               <h2 className="text-lg font-semibold mb-2">About Venue</h2>
               <p>{venue.description}</p>
+            </Card>
+            <Card className="p-4">
+              <Link
+                href={`https://google.com/maps/search/?api=1&query=${venue.location}`}
+              >
+                <h2 className="text-lg font-semibold mb-2">Map</h2>
+              </Link>
             </Card>
           </div>
 

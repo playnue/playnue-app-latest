@@ -57,7 +57,7 @@
       <div
         class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between"
       >
-        <a href="index.html" class="logo d-flex align-items-center">
+        <a href="/home.html" class="logo d-flex align-items-center">
           <img
             src="logo.png"
             alt="PlayNue Logo"
@@ -68,14 +68,14 @@
 
         <nav id="navmenu" class="navmenu">
           <ul>
-            <li><a href="#hero" class="active">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#gallery">Gallery</a></li>
-            <li><a href="/user-bookings">Dashboard</a></li>
-            <li><a href="/venues">Venues</a></li>
-            <li class="rounded-full mr-4" id="loginButton">
+            <li><a href="/home.html" class="active">Home</a></li>
+            <li><a href="/home.html">About</a></li>
+            <!-- <li><a href="#gallery">Gallery</a></li> -->
+            <!-- <li id="dashboardButton"><a href="/user-bookings" >Dashboard</a></li> -->
+            <li><a href="/venues">Book</a></li>
+            <!-- <li class="rounded-full mr-4" id="loginButton">
               <a href="/login">Login</a>
-            </li>
+            </li> -->
           </ul>
           <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
         </nav>
@@ -85,14 +85,20 @@
       // Function to check the session
       async function checkSession() {
         try {
-          const response = await fetch("/api/auth/session");
-          const session = await response.json();
+          // const sessi = await getSession()
+          const data = localStorage.getItem("user");
+          const session = JSON.parse(data);
 
           // If a session exists and user is logged in, hide the login button
           if (session && session.user) {
             const loginButton = document.getElementById("loginButton");
             if (loginButton) {
               loginButton.classList.add("hidden"); // Add the 'hidden' class
+            }
+          }else{
+            const dashboardButton = document.getElementById("dashboardButton");
+            if(dashboardButton){
+              dashboardButton.classList.add("hidden")
             }
           }
         } catch (error) {
@@ -109,14 +115,14 @@
         <img src="assets/img/hero-bg-2.jpg" alt="" class="hero-bg" />
 
         <div class="container">
-          <div class="row gy-4 justify-content-between">
+          <div class="row gy-4 justify-content-center">
             <div
               class="col-lg-4 order-lg-last hero-img"
               data-aos="zoom-out"
               data-aos-delay="100"
             >
               <img
-                src="assets/img/hero-img.png"
+                src="homeimg.png"
                 class="img-fluid animated"
                 alt=""
               />
@@ -358,6 +364,21 @@
             >
               <div class="member">
                 <div class="pic">
+                  <img src="mrinal.png" alt="Abhilash" />
+                </div>
+                <div class="member-info">
+                  <h4>Mrinal Wahal</h4>
+                  <span>Technical Head</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="col-lg-3 col-md-6 col-sm-6"
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
+              <div class="member">
+                <div class="pic">
                   <img src="rahul.jpg" alt="Abhilash" />
                 </div>
                 <div class="member-info">
@@ -500,7 +521,7 @@
                 <i class="bi bi-telephone flex-shrink-0"></i>
                 <div>
                   <h3>Call Us</h3>
-                  <p>+91 xxxxxxxxxx</p>
+                  <p>+91 9044405954</p>
                 </div>
               </div>
               <!-- End Info Item -->
@@ -558,7 +579,7 @@
               <p>546, Manav Enclave, Indira Nagar,</p>
               <p>Lucknow, Uttar Pradesh - 226016</p>
               <p class="mt-3">
-                <strong>Phone:</strong> <span>+91 xxxxxxxxxx</span>
+                <strong>Phone:</strong> <span>+91 9044405954</span>
               </p>
               <p><strong>Email:</strong> <span>contact@playnue.com</span></p>
             </div>
@@ -573,11 +594,12 @@
           <div class="col-lg-2 col-md-3 footer-links">
             <h4>Useful Links</h4>
             <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">About </a></li>
-              <li><a href="#">Gallery</a></li>
-              <li><a href="#">Terms & Conditions</a></li>
+              <li><a href="/home.html">Home</a></li>
+              <li><a href="/home.html">About </a></li>
+              <!-- <li><a href="#">Gallery</a></li> -->
+              <li><a href="/terms-conditions">Terms & Conditions</a></li>
               <li><a href="/privacy-policy">Privacy policy</a></li>
+              <li><a href="/refund-policy">Refund policy</a></li>
             </ul>
           </div>
 

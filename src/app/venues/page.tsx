@@ -6,10 +6,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { nhost } from "../../lib/nhost"; // Adjust path to your Nhost client
 import { useEffect, useState } from "react";
 import { useGeolocated } from "react-geolocated";
 import Navbar from "../components/Navbar";
 import "../loader.css";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -18,7 +20,8 @@ export default function Bookings() {
   const [localVenues, setLocalVenues] = useState([]);
   const [otherVenues, setOtherVenues] = useState([]);
   const [isClient, setIsClient] = useState(false);
-
+  const accessToken = useAccessToken();
+  const userData = useUserData();
   // Geolocation hook
   const { coords, isGeolocationAvailable, isGeolocationEnabled } =
     useGeolocated({
@@ -29,7 +32,6 @@ export default function Bookings() {
     });
 
   // Ensure component only renders on client
-  
 
   // Fetch location details based on coordinates
   useEffect(() => {
@@ -64,30 +66,30 @@ export default function Bookings() {
 
   const getVenues = async () => {
     const response = await fetch(
-      "https://local.hasura.local.nhost.run/v1/graphql",
+      `${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": "nhost-admin-secret",
+          // Authorization: `Bearer ${token?.accessToken}`,
         },
         body: JSON.stringify({
           query: `
-            query {
-              venues {
-                amenities
-                close_at
-                open_at
-                sports
-                title
-                id
-                location
-                description
-                user_id
-                
-              }
+          query {
+            venues {
+              amenities
+              close_at
+              open_at
+              sports
+              title
+              id
+              location
+              description
+              user_id
+              image_id
             }
-          `,
+          }
+        `,
         }),
       }
     );
@@ -100,17 +102,31 @@ export default function Bookings() {
     }
 
     const fetchedVenues = data?.venues || [];
-    setVenues(fetchedVenues);
+    const venuesWithImages = await Promise.all(
+      fetchedVenues.map(async (venue) => {
+        if (venue.image_id) {
+          console.log("Fetching presigned URL for file:", venue.image_id);
+          const url = nhost.storage.getPublicUrl({
+            fileId: venue.image_id,
+          });
+          console.log("url: ", url);
+          console.log("expiration: ", url);
 
-    // Extract the city from the current location
+          venue.imageUrl = url;
+        }
+        return venue;
+      })
+    );
+
+    setVenues(venuesWithImages);
+
     const currentCity = location.split(",")[0].trim().toLowerCase();
 
-    // Separate venues into local and other venues
-    const localVenuesList = fetchedVenues.filter(
+    const localVenuesList = venuesWithImages.filter(
       (venue) => venue.location.toLowerCase() === currentCity
     );
 
-    const otherVenuesList = fetchedVenues.filter(
+    const otherVenuesList = venuesWithImages.filter(
       (venue) => venue.location.toLowerCase() !== currentCity
     );
 
@@ -124,14 +140,16 @@ export default function Bookings() {
     Cricket: " 🏏 ",
     Badminton: " 🏸 ",
     Tennis: " 🎾 ",
+    Pickleball: " 🎾 ",
+    Golf: " ⛳ ",
     Swimming: " 🏊 ",
+    BoxCricket:" 🏏 "
   };
 
   useEffect(() => {
     // Fetch venues when component mounts, regardless of geolocation
     getVenues();
   }, []);
-
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };
@@ -144,6 +162,7 @@ export default function Bookings() {
   };
 
   // Venue card rendering component
+
   const renderVenueCard = (item) => (
     <div
       key={item.id}
@@ -154,7 +173,7 @@ export default function Bookings() {
       onMouseLeave={() => setHoveredItem(null)}
     >
       <img
-        src={item?.images}
+        src="/playturf.jpg" // Use presigned URL or placeholder
         alt={`${item.title}'s image`}
         className="w-full h-full object-cover rounded-lg"
       />
@@ -230,11 +249,11 @@ export default function Bookings() {
             {/* First Box: Welcome Message */}
             <div className="rounded-xl bg-green-600 p-6 text-white shadow-md">
               <h2 className="text-2xl font-semibold">
-                Welcome to PlayNue in {location}!
+                Welcome to PlayNue in Lucknow!
               </h2>
               <p className="mt-4 text-sm">
                 We are excited to launch our platform in the vibrant city of{" "}
-                {location}. Explore top-rated sports venues and make your
+                Lucknow. Explore top-rated sports venues and make your
                 bookings with ease. Enjoy a hassle-free experience at the best
                 locations!
               </p>
@@ -256,7 +275,7 @@ export default function Bookings() {
             {localVenues.length > 0 && (
               <div className="p-6">
                 <h2 className="text-2xl font-bold mb-6">
-                  Venues in {location.split(",")[0]}
+                  {/* Venues in {location.split(",")[0]} */}
                 </h2>
                 <div className="grid auto-rows-min gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                   {localVenues.map(renderVenueCard)}
@@ -267,7 +286,7 @@ export default function Bookings() {
             {/* Other Venues Section */}
             {otherVenues.length > 0 && (
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-6">Other Venues</h2>
+                {/* <h2 className="text-2xl font-bold mb-6">Other Venues</h2> */}
                 <div className="grid auto-rows-min gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                   {otherVenues.map(renderVenueCard)}
                 </div>

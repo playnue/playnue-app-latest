@@ -1,18 +1,22 @@
 "use client"; // Mark the component as a client component
 import { useState } from "react";
-import { useSession } from "next-auth/react"; // Client-side session
+// import { useSession } from "next-auth/react"; // Client-side session
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import logo from "../logo.png";
-import  Sidebar  from "@/components/nav-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import sidebar from "../sidebar.png"
-import right from "../right.png"
+import Sidebar from "@/components/nav-sidebar";
+import right from "../right.png";
+import { useRouter } from "next/navigation";
+// import { access } from "fs";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function Navbar() {
-  const { data: session } = useSession(); // Get session data client-side
+  // const { data: session } = useSession(); // Get session data client-side
   const [sidebarVisible, setSidebarVisible] = useState(false); // State for sidebar visibility
-
+  
+    const router = useRouter();
+    const accessToken = useAccessToken()
+      const user = useUserData()
   // Function to toggle sidebar
   const toggleSidebar = () => {
     setSidebarVisible((prev) => !prev);
@@ -22,29 +26,26 @@ export default function Navbar() {
     <nav className="bg-black p-4 w-full relative overflow-x-hidden">
       <ul className="flex justify-between text-2xl font-bold content-center">
         <li className="flex content-center items-center">
-          {session && (
+          {user && (
             <button
               onClick={toggleSidebar}
               aria-label="Toggle Sidebar"
               className="focus:outline-none mr-4"
             >
-              <Image
-            src={right}
-            alt="sidebar Logo"
-            height={20}
-            width={20}
-          />
+              <Image src={right} alt="sidebar Logo" height={20} width={20} />
             </button>
           )}
+          <Link href={"/"}>
           <Image
             src={logo}
             alt="PlayNue Logo"
             className="h-8"
             height={30}
             width={80}
-          />
+            />
+            </Link>
         </li>
-        {!session && (
+        {!user && (
           <ul className="flex justify-between content-center">
             <li className="rounded-full mr-4">
               <Link href="/login">
@@ -60,13 +61,13 @@ export default function Navbar() {
         )}
       </ul>
 
-       <div
+      <div
         className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-transform duration-300 ${
           sidebarVisible ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{ width: "250px", zIndex: 50 }}
       >
-        <Sidebar/>
+        <Sidebar />
       </div>
       {sidebarVisible && (
         <div

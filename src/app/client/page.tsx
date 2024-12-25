@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 const Client = () => {
   const router = useRouter();
-
+  
   useEffect(() => {
     router.push('/home.html');
   }, [router]);

@@ -14,61 +14,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Profile from "../components/Profile";
 import "../loader.css"
 import Navbar from "../components/Navbar";
 export default function Page() {
-  const { data: session } = useSession();
-  const [userDetails, setUserDetails] = useState(null);
   const [isClient, setIsClient] = useState(false);
-
-  // Function to fetch user details
-  const fetchUserDetails = async (userId: string) => {
-    try {
-      const response = await fetch(
-        "https://local.hasura.local.nhost.run/v1/graphql",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-hasura-admin-secret": "nhost-admin-secret",
-          },
-          body: JSON.stringify({
-            query: `
-              query MyQuery($id: uuid!) {
-                user(id: $id) {
-                  displayName
-                  email
-                  phoneNumber
-                }
-              }
-            `,
-
-            variables: { id: userId },
-          }),
-        }
-      );
-
-      const { data, errors } = await response.json();
-
-      if (errors) {
-        console.error("GraphQL errors:", errors);
-        return;
-      }
-
-      setUserDetails(data?.user);
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserDetails(session.user.id);
-    }
-  }, [session]);
+  
   useEffect(() => {
       setIsClient(true);
     }, []);

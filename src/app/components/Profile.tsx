@@ -1,5 +1,6 @@
 "use client";
 import { nhost } from "@/lib/nhost";
+import { useAccessToken, useUserData } from "@nhost/nextjs";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 
@@ -20,14 +21,16 @@ const ProfileForm = () => {
   const [token,setToken] = useState("")
   const [sportsList, setSportsList] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>("");
+  const u = useUserData();
+  const tok = useAccessToken();
   // const { data: session } = useSession();
 
   useEffect(() => {
     const item = localStorage.getItem("user");
     if (item) {
       const parsedItem = JSON.parse(item);
-      setUser(parsedItem?.user);
-      setToken(parsedItem?.accessToken)
+      setUser(u);
+      setToken(tok)
     }
   }, []);
 

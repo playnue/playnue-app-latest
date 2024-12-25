@@ -133,20 +133,17 @@ export default function BookNow() {
   const fetchSlotsForCourt = async (courtId, selectedDate) => {
     try {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
-
-      // Modified query to also fetch bookings for the selected date and court
+  
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-            "x-hasura-role": "user",
           },
           body: JSON.stringify({
             query: `
-              query GetSlotsAndBookings($courtId: uuid!, $date: date!) {
+              query GetSlots($courtId: uuid!, $date: date!) {
                 slots(where: {
                   court_id: {_eq: $courtId},
                   date: {_eq: $date},
@@ -157,14 +154,6 @@ export default function BookNow() {
                   end_at
                   price
                 }
-                bookings(where: {
-                  slot: {
-                    court_id: {_eq: $courtId},
-                    date: {_eq: $date}
-                  }
-                }) {
-                  slot_id
-                }
               }
             `,
             variables: {
@@ -174,30 +163,21 @@ export default function BookNow() {
           }),
         }
       );
-
+  
       const responseData = await slotResponse.json();
       if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-
-      // Extract slots and bookings from the response
-      const { slots, bookings } = responseData.data;
-
-      // Create a Set of booked slot IDs for efficient lookup
-      const bookedSlotIds = new Set(bookings.map((booking) => booking.slot_id));
-
-      // Filter out booked slots
-      const availableSlots = slots.filter(
-        (slot) => !bookedSlotIds.has(slot.id)
-      );
-
+  
+      const availableSlots = responseData.data.slots;
+  
       // Sort available slots by start time
       availableSlots.sort((a, b) => {
         const timeA = convertTo24HourFormat(a.start_at);
         const timeB = convertTo24HourFormat(b.start_at);
         return timeA.localeCompare(timeB);
       });
-
+  
       setSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching slots:", error);
@@ -286,7 +266,9 @@ export default function BookNow() {
       return;
     }
     console.log("success");
-
+    if(!user){
+      router.push("/login")
+    }
     try {
       // Create order via your backend
       const orderResponse = await fetch(

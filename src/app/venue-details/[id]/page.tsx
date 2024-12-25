@@ -33,6 +33,7 @@ const sportIcons = {
   Pickleball: " 🎾 ",
   Badminton: " 🏸 ",
   Tennis: " 🎾 ",
+  BoxCricket: " 🏏 ",
   // TableTennis: " :table "
 };
 
@@ -157,7 +158,7 @@ const VenuePage = () => {
         <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
-              src={venue?.image_id}
+              src="/playturf.jpg"
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />

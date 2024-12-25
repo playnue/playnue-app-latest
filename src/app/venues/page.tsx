@@ -143,6 +143,7 @@ export default function Bookings() {
     Pickleball: " 🎾 ",
     Golf: " ⛳ ",
     Swimming: " 🏊 ",
+    BoxCricket:" 🏏 "
   };
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function Bookings() {
       onMouseLeave={() => setHoveredItem(null)}
     >
       <img
-        src={item?.imageUrl} // Use presigned URL or placeholder
+        src="/playturf.jpg" // Use presigned URL or placeholder
         alt={`${item.title}'s image`}
         className="w-full h-full object-cover rounded-lg"
       />

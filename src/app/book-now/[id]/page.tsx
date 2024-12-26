@@ -70,6 +70,8 @@ export default function BookNow() {
   const router = useRouter();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // const data = localStorage.getItem("user");
+  // const parsedData = JSON.parse(data);
 
   const accessToken = useAccessToken();
   const user = useUserData();
@@ -271,6 +273,7 @@ export default function BookNow() {
   };
 
   // const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
+  const slotId = selectedSlot.id;
 
   const handleBookNow = async () => {
     if (cart.length === 0) {
@@ -289,10 +292,11 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
-            currency: "INR",
+            slot_ids: [slotId],
           }),
         }
       );
@@ -316,14 +320,6 @@ export default function BookNow() {
       // Combine into YYYY-MM-DD format
       const formattedDate = `${year}-${month}-${day}`;
 
-      const slotId = selectedSlot.id;
-      const bookingData = {
-        slot_id: slotId,
-        rzp_id: "",
-        user_id: user.id,
-      };
-      console.log(bookingData);
-
       const options = {
         key: "rzp_test_crzs6Gnk9wGFxm", // Your Razorpay Key ID
         amount: orderData.amount, // Amount from the created order
@@ -332,46 +328,13 @@ export default function BookNow() {
         description: "Court Booking",
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
-          try {
-            // Verify payment on your backend
-            const verificationResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/payment`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: orderData.id,
-                  razorpay_signature: response.razorpay_signature,
-                  booking_details: bookingData,
-                }),
-              }
-            );
-
-            const verificationResult = await verificationResponse.json();
-
-            if (verificationResult.success) {
-              console.log("success");
-              router.push("/user-bookings");
-            } else {
-              alert("Payment verification failed");
-            }
-          } catch (error) {
-            toast.error("An error occurred during booking.", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
-          }
+          console.log("todo: add handler")
+          console.log("response", response);
+            // TODO: Add handler.
         },
         prefill: {
-          name: parsedData?.user?.name || "Guest",
-          email: parsedData?.user?.email || "guest@example.com",
+          name: user.displayName || "Guest",
+          email: user.email || "guest@example.com",
         },
         theme: {
           color: "#3399cc",

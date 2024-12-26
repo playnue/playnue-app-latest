@@ -70,8 +70,6 @@ export default function BookNow() {
   const router = useRouter();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const data = localStorage.getItem("user");
-  const parsedData = JSON.parse(data);
 
   const accessToken = useAccessToken();
   const user = useUserData();
@@ -133,6 +131,8 @@ export default function BookNow() {
   const fetchSlotsForCourt = async (courtId, selectedDate) => {
     try {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const now = new Date();
+      const currentTime = format(now, "HH:mm");
   
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
@@ -143,11 +143,18 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             query: `
-              query GetSlots($courtId: uuid!, $date: date!) {
+              query GetSlots($courtId: uuid!, $date: date!, $currentTime: time!) {
                 slots(where: {
                   court_id: {_eq: $courtId},
                   date: {_eq: $date},
-                  booked: {_eq: false}
+                  booked: {_eq: false},
+                  _or: [
+                    {date: {_gt: $date}},
+                    {_and: [
+                      {date: {_eq: $date}},
+                      {start_at: {_gt: $currentTime}}
+                    ]}
+                  ]
                 }) {
                   id
                   start_at
@@ -159,6 +166,7 @@ export default function BookNow() {
             variables: {
               courtId: courtId,
               date: formattedDate,
+              currentTime: currentTime,
             },
           }),
         }
@@ -228,6 +236,10 @@ export default function BookNow() {
     if (!selectedCourt || !selectedSlot) {
       alert("Please select a court and time slot first");
       return;
+    }
+
+    if(!user){
+      router.push("/login");
     }
 
     const selectedCourtName =

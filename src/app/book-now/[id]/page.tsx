@@ -321,7 +321,7 @@ export default function BookNow() {
       const formattedDate = `${year}-${month}-${day}`;
 
       const options = {
-        key: "rzp_test_crzs6Gnk9wGFxm", // Your Razorpay Key ID
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY, // Your Razorpay Key ID
         amount: orderData.amount, // Amount from the created order
         currency: orderData.currency,
         name: "Your Sport Venue",

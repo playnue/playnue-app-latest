@@ -135,7 +135,8 @@ export default function BookNow() {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       const now = new Date();
       const currentTime = format(now, "HH:mm");
-  
+      const today = format(now, "yyyy-MM-dd");
+      
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
@@ -145,15 +146,15 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             query: `
-              query GetSlots($courtId: uuid!, $date: date!, $currentTime: time!) {
+              query GetSlots($courtId: uuid!, $date: date!, $currentTime: time!, $today: date!) {
                 slots(where: {
                   court_id: {_eq: $courtId},
                   date: {_eq: $date},
                   booked: {_eq: false},
                   _or: [
-                    {date: {_gt: $date}},
+                    {date: {_gt: $today}},
                     {_and: [
-                      {date: {_eq: $date}},
+                      {date: {_eq: $today}},
                       {start_at: {_gt: $currentTime}}
                     ]}
                   ]
@@ -169,6 +170,7 @@ export default function BookNow() {
               courtId: courtId,
               date: formattedDate,
               currentTime: currentTime,
+              today: today,
             },
           }),
         }

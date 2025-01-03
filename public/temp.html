@@ -294,7 +294,9 @@
                 <h2>Partner with Us </h2>
                 <p class="contact-description">Have questions or need assistance? We're here to help! Drop us a message and we'll get back to you as soon as possible.</p>
                 
-                <form class="contact-form">
+                <form class="contact-form" id="contact-form"
+                onsubmit="sendEmail(event)"
+                method="post">
                     <div class="form-group">
                         <label for="name">Your Name</label>
                         <input type="text" id="name" name="name" placeholder="Enter your name" required>
@@ -437,5 +439,28 @@
     });
 });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
+     <script>
+        (function () {
+          emailjs.init("5SDFJB3Dvejs6P0n8"); // Replace with your EmailJS User ID
+        })();
+
+        function sendEmail(event) {
+          event.preventDefault();
+
+          const form = document.getElementById("contact-form");
+
+          emailjs.sendForm("service_z16dtz9", "template_4j6rkxp", form).then(
+            (response) => {
+              alert("Message sent successfully!");
+              form.reset();
+            },
+            (error) => {
+              alert("Failed to send message. Please try again.");
+              console.error("EmailJS Error:", error);
+            }
+          );
+        }
+      </script>
 </body>
 </html>

@@ -138,12 +138,13 @@ export default function Bookings() {
     Football: " ⚽ ",
     Basketball: " 🏀 ",
     Cricket: " 🏏 ",
+    Golf: " ⛳ ",
+    Pickleball: " 🎾 ",
     Badminton: " 🏸 ",
     Tennis: " 🎾 ",
-    Pickleball: " 🎾 ",
-    Golf: " ⛳ ",
-    Swimming: " 🏊 ",
-    BoxCricket:" 🏏 "
+    BoxCricket: " 🏏 ",
+    Snooker: " 🎱🥢 ",
+    Pool: "🎱🥢",
   };
 
   useEffect(() => {
@@ -253,9 +254,8 @@ export default function Bookings() {
               </h2>
               <p className="mt-4 text-sm">
                 We are excited to launch our platform in the vibrant city of{" "}
-                Lucknow. Explore top-rated sports venues and make your
-                bookings with ease. Enjoy a hassle-free experience at the best
-                locations!
+                Lucknow. Explore top-rated sports venues and make your bookings
+                with ease. Enjoy a hassle-free experience at the best locations!
               </p>
               <button
                 onClick={scrollToVenues}

@@ -34,6 +34,8 @@ const sportIcons = {
   Badminton: " 🏸 ",
   Tennis: " 🎾 ",
   BoxCricket: " 🏏 ",
+  Snooker: " 🎱🥢 ",
+  Pool:"🎱🥢"
   // TableTennis: " :table "
 };
 
@@ -162,7 +164,7 @@ const VenuePage = () => {
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />
-            <button
+            {/* <button
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full"
               onClick={() =>
                 setCurrentImage(
@@ -171,7 +173,7 @@ const VenuePage = () => {
               }
             >
               <ChevronRight className="w-6 h-6" />
-            </button>
+            </button> */}
           </div>
           <div className="flex justify-center gap-2 mt-2">
             {venue?.extra_image_ids?.map((_, idx) => (

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayNue</title>
+    <link href="logo.png" rel="icon" />
+</head>
+<body >
+    <nav>
+        <div class="logo">PLAYNUE
+        <!--<img src="logo.png" style="width:140px;height: 60px;padding-left: 30px;"/>-->
+        </div>
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" placeholder="Your Location" id="locationSearch">
+            <button>🔍</button>
+        </div>
+        <div class="city-dropdown" id="cityList">
+            <div class="city-item">Lucknow</div>
+            <!-- <div class="city-item">Delhi</div>
+            <div class="city-item">Mumbai</div>
+            <div class="city-item">Bangalore</div> -->
+        </div>
+    </div>
+        <div class="nav-links">
+            <div class="logo">
+            <a href="#home">Home</a>
+            <a href="#tournaments">Tournaments</a>
+            <a href="/venues">Book Now!</a>
+        </div>
+        </div>
+        <button class="mobile-menu-button" onclick="toggleMobileMenu()">☰</button>
+        <div class="mobile-nav" id="mobile-nav">
+            <a href="#home">Home</a>
+            <a href="#tournaments">Tournaments</a>
+            <a href="/venues">Book Now!</a>
+        </div>
+    </nav>
+
+    <main >
+        <!--Main Hero Section-->
+        <div class="hero">
+            <div class="hero-content">
+                <h1>"Find Your Game<br><span class="highlight">Book</span> Your Field."</h1>
+                <p>Book Sports Facilities conveniently and hassle-free in your city.</p>
+                <a href="/venues">
+                <button class="book-now">Book Now</button>
+                </a>
+            </div>
+            <div class="hero-image">
+                <img src="/homeimg.png" alt="AI Design Assistant">
+            </div>
+        </div>
+        <br>
+        <!--About Us Section-->
+        <section id="about">
+        <div class="features-section">
+            <div class="features-content">
+                <h2>About <span class="highlight">Us</span></h2>
+                <p class="features-description">Playnue is an online sports booking platform 
+                    designed to connect sports enthusiasts with local sports facilities, 
+                    fields, and venues. Users can browse available slots, book facilities, 
+                    and make payments conveniently through the platform. The project aims to 
+                    cater to individuals and groups looking for flexible booking options for 
+                    sports activities and events.</p>
+                
+                <div class="feature-cards">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
+                                <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <h3>Browse Available Slots</h3>
+                        <p>Find and select the best time slots for your sports activities and events.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
+                                <!-- Shield outline -->
+                                <path d="M12 3L4 7v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V7l-8-4z" />
+                                <!-- Checkmark inside shield -->
+                                <path d="M9 12l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <h3>Secure Your Booking</h3>
+                        <p>Easily make payments and confirm your reservations for a hassle-free experience.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <h3>Flexible Booking Options</h3>
+                        <p>Choose from various facilities and venues that suit your schedule and preferences.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </section>
+        <!--Venue Section-->
+        <div class="venues-section">
+            <div class="venues-content">
+                <h2>Our <span class="highlight">Venues</span></h2>
+                <p class="venues-description">Discover our premium locations perfect for your next match</p>
+                
+                <div class="venues-grid">
+                    <!-- Venue Card 1 -->
+                    <div class="venue-card">
+                        <div class="venue-image">
+                            <span class="price">₹800</span>
+                            <img src="/playturf.jpg" alt="Venue 1">
+                            <div class="venue-overlay">
+                                <h3>PlayTurf</h3>
+                                <p class="location">📍 Lucknow,Uttar Pradesh</p>
+                                <a href="/venues">
+                                    <button class="book-now">Book Now</button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Venue Card 2 -->
+                    <div class="venue-card">
+                        <div class="venue-image">
+                            <span class="price">₹900</span>
+                            
+                            <img src="/snooker.jpg" alt="Venue 2">
+                            <div class="venue-overlay">
+                                <h3>Ballers Sports Arena</h3>
+                                <p class="location">📍 Lucknow,Uttar Pradesh</p>
+                                <a href="/venues">
+                                <button class="book-now">Book Now</button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Venue Card 3 -->
+                    <div class="venue-card">
+                        <div class="venue-image">
+                            <span class="price">₹200</span>
+                            
+                            <img src="/snooker.jpg" alt="Venue 3">
+                            <div class="venue-overlay">
+                                <h3>Cue Lords:Snooker,Pool and Cafe</h3>
+                                <p class="location">📍 Lucknow,Uttar Pradesh</p>
+                                    <a href="/venues">
+                                <button class="book-now">Book Now</button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <br>
+               
+            </div>
+            <a href="/venues">
+            <button class="book-now">More Venues</button>
+            </a>
+        </div>
+        <br>
+        <br>
+        <!--Testimonial Section-->
+        <div class="testimonials-section">
+            <div class="testimonials-content">
+                <h2>What <span class="highlight">They Say</span> About Us?</h2>
+                <p class="testimonials-description">Discover what our customers have to say about their experience with our platform.</p>
+                
+                <div class="testimonials-cards">
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "What I love most is the secure payment system. The refund policy is transparent, and customer support is super responsive. Feel completely safe making advance bookings!"
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="/men_av.jpg" alt="Claude David" class="author-image">
+                            <div class="author-info">
+                                <div class="author-name">Akhil Thakur</div>
+                                <div class="author-role"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "Booking a cricket turf has never been easier! Just a few clicks and I secured my preferred slot. The instant confirmation and reminder system is fantastic."
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="/women_av.png" alt="Sarah Johnson" class="author-image">
+                            <div class="author-info">
+                                <div class="author-name">Shreya Banerjee</div>
+                                <div class="author-role"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "The website is a game-changer! I can check slot availability, schedule bookings. Perfect for last-minute team practice sessions."
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="/men_av.jpg" alt="Michael Chen" class="author-image">
+                            <div class="author-info">
+                                <div class="author-name">Abhay Singh</div>
+                                <div class="author-role"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <!--Team Section-->
+        <section id="team"></section>
+        <h2 style="font-size: xxx-large; align-items: center;text-align: center;">Our <span class="highlight">Team</span></h2>
+        
+        <div class="team-cards">
+            
+        <div class="team-member">
+            <div class="member-image">
+                <img src="/vikartan.jpg" alt="Team Member">
+            </div>
+            <div class="member-role">Co - Founder Business Development & Creative Head</div>
+            <div class="member-role">Vikartan Wahal</div>
+            <div class="social-links">
+                <!--<a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.486 0-.24-.009-.875-.013-1.716-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.647.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.022A9.606 9.606 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.29 2.747-1.022 2.747-1.022.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .27.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg></a>
+            -->
+                <a href="https://www.linkedin.com/in/vikartan-wahal-793a49105?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAABqsTR8BWxKWakOybWUfJBIhKQEpcIzXJRM&lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3BuUjvVBQGSgKnLIirsa%2FSIw%3D%3D"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></a>
+            </div>
+        </div>
+        <div class="team-member">
+            <div class="member-image">
+                <img src="/agrim.jpg" alt="Team Member">
+            </div>
+            <div class="member-role">Co - Founder Operations & IT Head</div>
+            <div class="member-role">Agrim Khandelwal</div>
+            <div class="social-links">
+                <!--<a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.486 0-.24-.009-.875-.013-1.716-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.647.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.022A9.606 9.606 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.29 2.747-1.022 2.747-1.022.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .27.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg></a>
+            -->
+                <a href="https://www.linkedin.com/in/agrimkhandelwal?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAAtc-fYBUR9CtmXmGKL_ENyavL2dFOUqYZo&lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3BJQ44oaN%2BRHimI%2F16abL2Hg%3D%3D"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></a>
+            </div>
+        </div>
+        <div class="team-member">
+            <div class="member-image">
+                <img src="/mrinal.png" alt="Team Member">
+            </div>
+            <div class="member-role">Technical Head</div>
+            <div class="member-role">Mrinal Wahal</div>
+            <div class="social-links">
+                <!--<a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.486 0-.24-.009-.875-.013-1.716-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.647.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.022A9.606 9.606 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.29 2.747-1.022 2.747-1.022.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .27.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg></a>
+            -->
+                <a href="https://www.linkedin.com/in/wahal?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAACFxf6sBiTs_X8UuRl_FKxcZSRbVKkNJM_4&lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3B9SNq7fquRGeM9AASNJzCVg%3D%3D"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></a>
+            </div>
+        </div>
+        
+        <div class="team-member">
+            <div class="member-image">
+                <img src="/rahul.jpg" alt="Team Member">
+            </div>
+            <div class="member-role">Backend Developer</div>
+            <div class="member-role">Rahul Maithani</div>
+            <div class="social-links">
+                <!--<a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.486 0-.24-.009-.875-.013-1.716-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.647.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.022A9.606 9.606 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.29 2.747-1.022 2.747-1.022.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .27.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg></a>
+            -->
+                <a href="https://www.linkedin.com/in/maithani74?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAD3xytwB44Hr-AJ7r1p0Huico-T9nLAkh8U&lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3B%2FvBvbnfIS%2FaLTSl3CGTgSg%3D%3D"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></a>
+            </div>
+        </div>
+        
+        <div class="team-member">
+            <div class="member-image">
+                <img src="/yash.jpeg" alt="Team Member">
+            </div>
+            <div class="member-role">Frontend Developer</div>
+            <div class="member-role">Yash Sachdeva</div>
+            <div class="social-links">
+                <!--<a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.486 0-.24-.009-.875-.013-1.716-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.647.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.022A9.606 9.606 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.29 2.747-1.022 2.747-1.022.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .27.18.579.688.481C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg></a>
+            -->
+                <a href="https://www.linkedin.com/in/yash-sachdeva-9214ba223/"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></a>
+            </div>
+        </div>
+        </div>
+        </section>
+        <!--Contact Section-->
+        <section class="contact-section">
+            <div class="contact-content">
+                <h2>Partner with Us </h2>
+                <p class="contact-description">Have questions or need assistance? We're here to help! Drop us a message and we'll get back to you as soon as possible.</p>
+                
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Your Email</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" placeholder="Type your message here..." required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+        </section>
+        <!--Footer Section-->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>PlayNue</h3>
+                    <p>546, Manav Enclave, Indira Nagar,<br>
+                    Lucknow, Uttar Pradesh - 226016</p>
+                    <div class="contact-info">
+                        <p><span>Phone:</span> +91 9044405954</p>
+                        <p><span>Email:</span> contact@playnue.com</p>
+                    </div>
+                    <div class="social-links">
+                        <!--
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                        </a>
+                    -->
+                        <a href="https://www.linkedin.com/company/playnue-sports/" class="social-link" aria-label="LinkedIn">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                <rect x="2" y="9" width="4" height="12"></rect>
+                                <circle cx="4" cy="4" r="2"></circle>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Useful Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="/terms-conditions">Terms & Conditions</a></li>
+                        <li><a href="/privacy-policy">Privacy policy</a></li>
+                        <li><a href="/refund-policy">Refund policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Services</h3>
+                    <ul class="footer-links">
+                        <li><a href="/venues">Book Venue</a></li>
+                        <li><a href="#">Join Tournament</a></li>
+                        <li><a href="#">Team Registration</a></li>
+                        <li><a href="#contact-section">Venue Partnership</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to our newsletter for updates and exclusive offers.</p>
+                    <form class="newsletter-form">
+                        <input type="email" 
+                               placeholder="Enter your email" 
+                               style="width: 100%; padding: 0.8rem; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.5rem; color: white;">
+                        <button type="submit" 
+                                style="width: 100%; padding: 0.8rem; background: #a855f7; color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: all 0.3s ease;">
+                            Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 PlayNue. All rights reserved.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        function toggleMobileMenu() {
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.classList.toggle('open');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('locationSearch');
+    const cityList = document.getElementById('cityList');
+    const cityItems = document.querySelectorAll('.city-item');
+
+    // Show dropdown on input focus
+    input.addEventListener('focus', function() {
+        cityList.style.display = 'block';
+    });
+
+    // Handle city selection
+    cityItems.forEach(item => {
+        item.addEventListener('click', function() {
+            input.value = this.textContent;
+            cityList.style.display = 'none';
+        });
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container')) {
+            cityList.style.display = 'none';
+        }
+    });
+
+    // Filter cities based on input
+    input.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        cityItems.forEach(item => {
+            const cityName = item.textContent.toLowerCase();
+            item.style.display = cityName.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+});
+    </script>
+</body>
+</html>

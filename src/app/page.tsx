@@ -17,7 +17,7 @@ const page = () => {
   }, [])
 
   useEffect(() => {
-    router.push('/home.html');
+    router.push('/temp.html');
   }, [router]);
 
   return null;

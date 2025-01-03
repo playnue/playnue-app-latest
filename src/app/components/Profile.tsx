@@ -3,7 +3,6 @@ import { nhost } from "@/lib/nhost";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 const ProfileForm = () => {
@@ -22,17 +21,16 @@ const ProfileForm = () => {
   const [sportsList, setSportsList] = useState<Sport[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>("");
   const u = useUserData();
+  console.log(u)
   const tok = useAccessToken();
   // const { data: session } = useSession();
 
-  useEffect(() => {
-    const item = localStorage.getItem("user");
-    if (item) {
-      const parsedItem = JSON.parse(item);
-      setUser(u);
-      setToken(tok)
-    }
-  }, []);
+  // useEffect(() => {
+  //   const item = useUserData();
+  //   if (item) {
+  //     console.log(item)
+  //   }
+  // }, []);
 
   // useEffect(() => {
   //   setIsClient(true);
@@ -86,7 +84,7 @@ const ProfileForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${token}`,
+          "Authorization":`Bearer ${tok}`,
           "x-hasura-role":"user",
         },
         body: JSON.stringify({
@@ -219,12 +217,12 @@ const ProfileForm = () => {
   };
 
   useEffect(() => {
-    if (user?.id) {
-      fetchUserDetails(user?.id);
+    if (u?.id) {
+      fetchUserDetails(u?.id);
       fetchSportsList();
       console.log("hello");
     }
-  }, [user]);
+  }, [u]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -275,7 +273,7 @@ const ProfileForm = () => {
               </label>
               <input
                 type="text"
-                value={formData.firstName}
+                value={formData.firstName || u?.displayName}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
                 className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
                 placeholder="Name"
@@ -298,7 +296,7 @@ const ProfileForm = () => {
                 />
                 <input
                   type="tel"
-                  value={formData.phone}
+                  value={formData.phone || u?.phoneNumber}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                   className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
                   placeholder="Phone number"
@@ -315,7 +313,7 @@ const ProfileForm = () => {
               </label>
               <input
                 type="email"
-                value={formData.email}
+                value={u?.email}
                 className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
                 placeholder="Email address"
                 readOnly

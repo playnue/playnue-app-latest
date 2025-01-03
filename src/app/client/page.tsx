@@ -7,7 +7,7 @@ const Client = () => {
   const router = useRouter();
   
   useEffect(() => {
-    router.push('/home.html');
+    router.push('/temp.html');
   }, [router]);
 
   return null; // Render nothing since the user is being redirected

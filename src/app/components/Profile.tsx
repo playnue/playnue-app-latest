@@ -1,51 +1,23 @@
 "use client";
-import { nhost } from "@/lib/nhost";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
-import { useSession } from "next-auth/react";
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const ProfileForm = () => {
   const [formData, setFormData] = useState({
     firstName: "",
-    lastName: "",
     phone: "",
-    email: "",
-    favoriteSports: "",
+    favoriteSports: []
   });
 
-  const [user, setUser] = useState();
   const [isSaving, setIsSaving] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const [token,setToken] = useState("")
-  const [sportsList, setSportsList] = useState<Sport[]>([]);
-  const [selectedSport, setSelectedSport] = useState<string>("");
-  const u = useUserData();
-  console.log(u)
-  const tok = useAccessToken();
-  // const { data: session } = useSession();
+  const [sportsList, setSportsList] = useState([]);
+  const [selectedSport, setSelectedSport] = useState("");
+  
+  const user = useUserData();
+  const accessToken = useAccessToken();
 
-  // useEffect(() => {
-  //   const item = useUserData();
-  //   if (item) {
-  //     console.log(item)
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   setIsClient(true);
-  // }, []);
-
-  // if (!isClient) {
-  //   return (
-  //     <>
-  //       {/* <Navbar /> */}
-  //       <div className="flex items-center justify-center min-h-screen">
-  //         <div id="preloader"></div>
-  //       </div>
-  //     </>
-  //   );
-  // }
   const fetchSportsList = async () => {
     try {
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
@@ -55,13 +27,13 @@ const ProfileForm = () => {
         },
         body: JSON.stringify({
           query: `
-              query MyQuery {
-                sports {
-                  id
-                  name
-                }
+            query GetSports {
+              sports {
+                id
+                name
               }
-            `,
+            }
+          `,
         }),
       });
 
@@ -84,39 +56,35 @@ const ProfileForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${tok}`,
-          "x-hasura-role":"user",
+          "Authorization": `Bearer ${accessToken}`,
+          "x-hasura-role": "user",
         },
         body: JSON.stringify({
           query: `
-              query MyQuery($id: uuid!) {
-                user(id: $id) {
-                  displayName
-                  email
-                  phoneNumber
-                  metadata
-                }
+            query GetUser($id: uuid!) {
+              user(id: $id) {
+                displayName
+                email
+                phoneNumber
+                metadata
               }
-            `,
+            }
+          `,
           variables: { id: userId },
         }),
       });
 
       const { data, errors } = await response.json();
-      console.log(data);
+
       if (errors) {
         console.error("GraphQL errors:", errors);
         return;
       }
-      const metadata = data?.user?.metadata;
-      console.log(metadata);
-      // setUser(data?.user);
+
       setFormData({
         firstName: data?.user?.displayName || "",
-        email: data?.user?.email || "",
-        phone: data?.user?.phoneNumber,
-        // Ensure favoriteSports is an array, even if it's null
-        favoriteSports: metadata?.sports,
+        phone: data?.user?.phoneNumber || "",
+        favoriteSports: data?.user?.metadata?.sports || []
       });
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -124,36 +92,46 @@ const ProfileForm = () => {
   };
 
   const saveUserDetails = async () => {
+    if (!formData.firstName || !formData.phone) {
+      toast.error("Name and phone number are required!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${token}`,
-          
-          "x-hasura-role":"user",
+          "Authorization": `Bearer ${accessToken}`,
+          "x-hasura-role": "user",
         },
         body: JSON.stringify({
           query: `
-              mutation UpdateUser($id: uuid!, $displayName: String, $phoneNumber: String, $metadata: jsonb) {
-                updateUser(
-                  pk_columns: { id: $id },
-                  _set: { 
-                    displayName: $displayName, 
-                    phoneNumber: $phoneNumber, 
-                    metadata: $metadata 
-                  }
-                ) {
-                  id
+            mutation UpdateUser($id: uuid!, $displayName: String!, $phoneNumber: String!, $metadata: jsonb) {
+              updateUser(
+                pk_columns: { id: $id },
+                _set: { 
+                  displayName: $displayName, 
+                  phoneNumber: $phoneNumber, 
+                  metadata: $metadata 
                 }
+              ) {
+                id
+                displayName
+                phoneNumber
+                metadata
               }
-            `,
+            }
+          `,
           variables: {
             id: user?.id,
             displayName: formData.firstName,
             phoneNumber: formData.phone,
-            metadata: { sports: formData?.favoriteSports }, // Store as array in metadata
+            metadata: { sports: formData.favoriteSports }
           },
         }),
       });
@@ -161,35 +139,21 @@ const ProfileForm = () => {
       const { data, errors } = await response.json();
 
       if (errors) {
-        console.error("GraphQL errors:", errors);
-        toast.error("Check your inputs", {
+        toast.error("Failed to update profile. Please try again.", {
           position: "top-right",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
         return;
-      } else {
-        toast.success("Details updated successful!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
       }
-    } catch (error) {
-      console.error("Error saving user details:", error);
-      toast.error("Error occured", {
+
+      toast.success("Profile updated successfully!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+      });
+    } catch (error) {
+      toast.error("An error occurred. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
       });
     } finally {
       setIsSaving(false);
@@ -198,59 +162,33 @@ const ProfileForm = () => {
 
   const addSport = () => {
     if (selectedSport && !formData.favoriteSports.includes(selectedSport)) {
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
-        favoriteSports: [...prev.favoriteSports, selectedSport],
+        favoriteSports: [...prev.favoriteSports, selectedSport]
       }));
-      setSelectedSport(""); // Reset dropdown
+      setSelectedSport("");
     }
   };
 
-  // Remove sport from favorites
   const removeSport = (sportToRemove) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      favoriteSports: prev.favoriteSports.filter(
-        (sport) => sport !== sportToRemove
-      ),
+      favoriteSports: prev.favoriteSports.filter(sport => sport !== sportToRemove)
     }));
   };
 
   useEffect(() => {
-    if (u?.id) {
-      fetchUserDetails(u?.id);
+    if (user?.id) {
+      fetchUserDetails(user.id);
       fetchSportsList();
-      console.log("hello");
     }
-  }, [u]);
+  }, [user]);
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // useEffect(() => {
-  //   // Ensure `user` exists before checking `phoneNumber`
-  //   if (user && !user.phoneNumber) {
-  //     toast.error("Enter Phone Number", {
-  //       position: "top-right",
-  //       autoClose: 3000,
-  //       hideProgressBar: false,
-  //       closeOnClick: true,
-  //       pauseOnHover: true,
-  //       draggable: true,
-  //     });
-  //   }
-  // }, [user]);
   return (
     <>
       <ToastContainer />
-
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-xl mx-auto">
-          {/* Profile Picture */}
           <div className="flex justify-center mb-8">
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-white shadow-lg overflow-hidden">
@@ -263,71 +201,65 @@ const ProfileForm = () => {
             </div>
           </div>
 
-          {/* Form Fields */}
           <div className="space-y-6">
-            {/* Name Fields */}
             <div className="space-y-1">
-              <label className="text-sm text-purple-200 flex items-center">
+              <label className="text-sm text-gray-600 flex items-center">
                 Name
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <input
                 type="text"
-                value={formData.firstName || u?.displayName}
-                onChange={(e) => handleInputChange("firstName", e.target.value)}
-                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
-                placeholder="Name"
+                value={formData.firstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-200"
+                placeholder="Enter your name"
+                required
               />
             </div>
 
-            {/* Phone Number */}
             <div className="space-y-1">
-              <label className="text-sm text-purple-200">
-                Phone No.
+              <label className="text-sm text-gray-600">
+                Phone Number
                 <span className="text-red-500 ml-1">*</span>
               </label>
-
               <div className="flex gap-2">
                 <input
                   type="text"
                   value="+91"
                   disabled
-                  className="w-16 p-3 rounded-lg bg-gray-50 border border-gray-100 text-gray-500"
+                  className="w-16 p-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-500"
                 />
                 <input
                   type="tel"
-                  value={formData.phone || u?.phoneNumber}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                  placeholder="Phone number"
-                  // disabled={!!formData.phone}
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-200"
+                  placeholder="Enter phone number"
+                  required
                 />
               </div>
             </div>
 
-            {/* Email */}
             <div className="space-y-1">
-              <label className="text-sm text-purple-200 flex items-center">
+              <label className="text-sm text-gray-600 flex items-center">
                 Email
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <input
                 type="email"
-                value={u?.email}
-                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-100"
-                placeholder="Email address"
+                value={user?.email}
+                className="w-full p-3 rounded-lg bg-gray-50 border border-gray-200"
                 readOnly
               />
             </div>
 
-            {/* Favorite Sports */}
             <div className="space-y-1">
-              <label className="text-sm text-purple-200">Favorite Sports</label>
+              <label className="text-sm text-gray-600">Favorite Sports</label>
               <div className="flex gap-2 mb-2">
                 <select
                   value={selectedSport}
                   onChange={(e) => setSelectedSport(e.target.value)}
-                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-100"
+                  className="flex-1 p-3 rounded-lg bg-gray-50 border border-gray-200"
                 >
                   <option value="">Select a Sport</option>
                   {sportsList.map((sport) => (
@@ -344,17 +276,14 @@ const ProfileForm = () => {
                 </button>
               </div>
 
-              {/* Display Selected Sports */}
-              {/* {formData?.favoriteSports.length > 0 && (
+              {formData.favoriteSports.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm text-purple-200 mb-1">
-                    Selected Sports:
-                  </p>
+                  <p className="text-sm text-gray-600 mb-1">Selected Sports:</p>
                   <div className="flex flex-wrap gap-2">
                     {formData.favoriteSports.map((sport) => (
                       <div
                         key={sport}
-                        className="bg-purple-100 px-2 py-1 rounded-full flex items-center text-sm"
+                        className="bg-gray-100 px-3 py-1 rounded-full flex items-center text-sm"
                       >
                         {sport}
                         <button
@@ -367,19 +296,16 @@ const ProfileForm = () => {
                     ))}
                   </div>
                 </div>
-              )} */}
+              )}
             </div>
 
-            {/* Save Button */}
-            <div className="mt-4">
-              <button
-                onClick={saveUserDetails}
-                className="w-full p-3 rounded-lg bg-green-600 text-white hover:bg-green-600"
-                disabled={isSaving}
-              >
-                {isSaving ? "Saving..." : "Save Details"}
-              </button>
-            </div>
+            <button
+              onClick={saveUserDetails}
+              className="w-full p-3 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:bg-green-400"
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Details"}
+            </button>
           </div>
         </div>
       </div>

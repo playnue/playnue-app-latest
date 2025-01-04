@@ -48,44 +48,96 @@ import "../../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function BookNow() {
   const { id } = useParams();
+  const router = useRouter();
+  const accessToken = useAccessToken();
+  const user = useUserData();
+
+  // Basic states
+  const [isClient, setIsClient] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cart, setCart] = useState([]);
-  const [couponCode, setCouponCode] = useState("");
-  const [isCouponApplied, setIsCouponApplied] = useState(false);
-  const [couponError, setCouponError] = useState("");
-  const VALID_COUPON = "PLAYNUE99";
-  const COUPON_DISCOUNT = 99;
-  const CONVENIENCE_FEE_PERCENTAGE = 2.36;
-  const discount = isCouponApplied ? COUPON_DISCOUNT : 0;
-  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
-  const totalCost = Math.round(subtotal + convenienceFees - discount);
   const [venue, setVenue] = useState([]);
+  const [courts, setCourts] = useState([]);
+  const [slots, setSlots] = useState([]);
+
+  // Selection states
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [duration, setDuration] = useState(60);
   const [selectedCourt, setSelectedCourt] = useState("");
-  const [courts, setCourts] = useState([]);
-  const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlots] = useState([]);
-  const router = useRouter();
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const data = localStorage.getItem("user");
-  // const parsedData = JSON.parse(data);
 
-  const accessToken = useAccessToken();
-  const user = useUserData();
+  // Coupon related states and constants
+  const [couponCode, setCouponCode] = useState("");
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
-  const [isClient, setIsClient] = useState(false);
-  const handleCouponSubmit = () => {
-    if (couponCode.trim() === VALID_COUPON) {
-      setIsCouponApplied(true);
-      setCouponError("");
+  // Constants
+  const CONVENIENCE_FEE_PERCENTAGE = 2.36;
+  const COUPONS = {
+    PLAYNUE99: {
+      discount: 99,
+      minAmount: 1199,
+      type: "fixed",
+    },
+    PLAYNUE9: {
+      discount: 9,
+      minAmount: 0,
+      type: "percentage",
+    },
+  };
+
+  // Calculations (after all required states are declared)
+  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+  const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
+
+  // Coupon handling functions
+  const calculateDiscount = () => {
+    if (!isCouponApplied) return 0;
+
+    const coupon = COUPONS[couponCode];
+    if (!coupon) return 0;
+
+    if (coupon.type === "fixed") {
+      return coupon.discount;
     } else {
-      setCouponError("Invalid coupon code");
-      setIsCouponApplied(false);
+      return (subtotal * coupon.discount) / 100;
     }
   };
+
+  const discount = calculateDiscount();
+  const totalCost = Math.round(subtotal + convenienceFees - discount);
+
+  const handleCouponSubmit = () => {
+    const coupon = COUPONS[couponCode.trim()];
+
+    if (!coupon) {
+      setCouponError("Invalid coupon code");
+      setIsCouponApplied(false);
+      return;
+    }
+
+    if (coupon.minAmount > 0 && subtotal < coupon.minAmount) {
+      setCouponError(
+        `This coupon is only valid for orders above ₹${coupon.minAmount}`
+      );
+      setIsCouponApplied(false);
+      return;
+    }
+
+    setIsCouponApplied(true);
+    setCouponError("");
+  };
+  // const handleCouponSubmit = () => {
+  //   if (couponCode.trim() === VALID_COUPON) {
+  //     setIsCouponApplied(true);
+  //     setCouponError("");
+  //   } else {
+  //     setCouponError("Invalid coupon code");
+  //     setIsCouponApplied(false);
+  //   }
+  // };
 
   const logSlotTimes = (slots, setSlots) => {
     const allSlots = [];
@@ -136,7 +188,7 @@ export default function BookNow() {
       const now = new Date();
       const currentTime = format(now, "HH:mm");
       const today = format(now, "yyyy-MM-dd");
-      
+
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
@@ -175,21 +227,21 @@ export default function BookNow() {
           }),
         }
       );
-  
+
       const responseData = await slotResponse.json();
       if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-  
+
       const availableSlots = responseData.data.slots;
-  
+
       // Sort available slots by start time
       availableSlots.sort((a, b) => {
         const timeA = convertTo24HourFormat(a.start_at);
         const timeB = convertTo24HourFormat(b.start_at);
         return timeA.localeCompare(timeB);
       });
-  
+
       setSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching slots:", error);
@@ -242,7 +294,7 @@ export default function BookNow() {
       return;
     }
 
-    if(!user){
+    if (!user) {
       router.push("/login");
     }
 
@@ -283,8 +335,8 @@ export default function BookNow() {
       return;
     }
     console.log("success");
-    if(!user){
-      router.push("/login")
+    if (!user) {
+      router.push("/login");
     }
     try {
       // Create order via your backend
@@ -294,7 +346,7 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
@@ -330,9 +382,9 @@ export default function BookNow() {
         description: "Court Booking",
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
-          console.log("todo: add handler")
+          console.log("todo: add handler");
           console.log("response", response);
-            // TODO: Add handler.
+          // TODO: Add handler.
         },
         prefill: {
           name: user.displayName || "Guest",
@@ -649,10 +701,13 @@ export default function BookNow() {
                   <AlertDescription>{couponError}</AlertDescription>
                 </Alert>
               )}
-              {isCouponApplied && (
+              {isCouponApplied && COUPONS[couponCode] && (
                 <Alert className="mt-2 bg-green-50">
                   <AlertDescription className="text-green-600">
-                    Coupon applied successfully! ₹99 discount added.
+                    Coupon applied successfully!
+                    {COUPONS[couponCode].type === "fixed"
+                      ? ` ₹${COUPONS[couponCode].discount} discount added.`
+                      : ` ${COUPONS[couponCode].discount}% discount added.`}
                   </AlertDescription>
                 </Alert>
               )}
@@ -684,7 +739,7 @@ export default function BookNow() {
                     <span className="text-green-600">Coupon Discount</span>
                   </div>
                   <span className="font-semibold text-green-600">
-                    -₹{COUPON_DISCOUNT.toFixed(2)}
+                    -₹{discount.toFixed(2)}
                   </span>
                 </div>
               )}

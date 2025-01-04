@@ -164,38 +164,62 @@ export default function Bookings() {
 
   // Venue card rendering component
 
-  const renderVenueCard = (item) => (
-    <div
-      key={item.id}
-      className={`relative aspect-[4/3] rounded-xl overflow-hidden p-4 text-black shadow-lg transition-transform duration-300 ${
-        hoveredItem === item?.id ? "scale-105" : "scale-100"
-      }`}
-      onMouseEnter={() => setHoveredItem(item?.id)}
-      onMouseLeave={() => setHoveredItem(null)}
-    >
-      <img
-        src="/playturf.jpg" // Use presigned URL or placeholder
-        alt={`${item.title}'s image`}
-        className="w-full h-full object-cover rounded-lg"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent p-4 flex flex-col justify-end">
-        <p className="text-white text-lg font-bold">{item.title}</p>
-        <p className="text-white text-sm">Rating: {item.rating} ⭐</p>
-        <div className="text-white text-xl flex gap-2">
-          {item.sports?.map((sport: string) => (
-            <span key={sport}>{sportIcons[sport] || "❓"}</span>
-          ))}
-        </div>
-        {hoveredItem === item.id && (
-          <Link href={`/venue-details/${item.id}`}>
-            <button className="mt-2 bg-green-500 text-white w-full py-1 rounded-lg shadow-md">
-              Book Now
-            </button>
-          </Link>
+  const renderVenueCard = (item) => {
+    // Function to get the correct image source based on item.id
+    const getImageSource = (id) => {
+      switch (id) {
+        case '063a2e3f-8365-40f3-8613-9613f6024d78':
+          return '/cueLords.jpg';
+        case '25d039e0-8a4d-49b1-ac06-5439c3af4a6f':
+          return '/playturf.jpg';
+        case 'dfac7e28-16d2-45ff-93d9-add6a0a006e2':
+          return '/bsa.jpg';
+        default:
+          return null;
+      }
+    };
+  
+    const imageSource = getImageSource(item.id);
+  
+    return (
+      <div
+        key={item.id}
+        className={`relative aspect-[4/3] rounded-xl overflow-hidden p-4 text-black shadow-lg transition-transform duration-300 ${
+          hoveredItem === item?.id ? "scale-105" : "scale-100"
+        }`}
+        onMouseEnter={() => setHoveredItem(item?.id)}
+        onMouseLeave={() => setHoveredItem(null)}
+      >
+        {imageSource ? (
+          <img
+            src={imageSource}
+            alt={`${item.title}'s image`}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+            <p className="text-xl font-bold text-gray-600">Coming Soon</p>
+          </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent p-4 flex flex-col justify-end">
+          <p className="text-white text-lg font-bold">{item.title}</p>
+          <p className="text-white text-sm">Rating: {item.rating} ⭐</p>
+          <div className="text-white text-xl flex gap-2">
+            {item.sports?.map((sport: string) => (
+              <span key={sport}>{sportIcons[sport] || "❓"}</span>
+            ))}
+          </div>
+          {hoveredItem === item.id && (
+            <Link href={`/venue-details/${item.id}`}>
+              <button className="mt-2 bg-green-500 text-white w-full py-1 rounded-lg shadow-md">
+                Book Now
+              </button>
+            </Link>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   useEffect(() => {
     setIsClient(true);

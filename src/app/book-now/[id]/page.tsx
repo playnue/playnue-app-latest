@@ -2,7 +2,7 @@
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
-
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,53 @@ export default function BookNow() {
   const [couponCode, setCouponCode] = useState("");
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+
+  // ... (previous code until calculateDiscount remains the same)
+
+  // Modified payment calculations
+  const isEligibleForPartialPayment = (slot) => {
+    return slot.price >= 700;
+  };
+
+  // Calculate the full amount before any discounts
+  const fullAmount = cart.reduce((sum, item) => sum + item.price, 0);
+
+  // Calculate partial payment amount if eligible
+  const calculatePartialPaymentAmount = () => {
+    if (!isPartialPayment) return fullAmount;
+
+    // Only apply partial payment to eligible slots
+    let partialAmount = 0;
+    cart.forEach((item) => {
+      if (isEligibleForPartialPayment(item)) {
+        partialAmount += item.price * 0.5;
+      } else {
+        partialAmount += item.price;
+      }
+    });
+    return partialAmount;
+  };
+
+  const amountAfterPartial = calculatePartialPaymentAmount();
+
+  // Calculate coupon discount based on the amount after partial payment
+  const calculateDiscount = () => {
+    if (!isCouponApplied) return 0;
+
+    const coupon = COUPONS[couponCode];
+    if (!coupon) return 0;
+
+    let calculatedDiscount = 0;
+    if (coupon.type === "fixed") {
+      calculatedDiscount = coupon.discount;
+    } else {
+      calculatedDiscount = (amountAfterPartial * coupon.discount) / 100;
+    }
+
+    // Apply maximum discount cap
+    return Math.min(calculatedDiscount, coupon.maxDiscount);
+  };
 
   // Constants
   const CONVENIENCE_FEE_PERCENTAGE = 2.36;
@@ -91,30 +138,25 @@ export default function BookNow() {
   };
 
   // Calculations (after all required states are declared)
-  const calculateDiscount = () => {
-    if (!isCouponApplied) return 0;
-
-    const coupon = COUPONS[couponCode];
-    if (!coupon) return 0;
-
-    let calculatedDiscount = 0;
-    if (coupon.type === "fixed") {
-      calculatedDiscount = coupon.discount;
-    } else {
-      calculatedDiscount = (subtotal * coupon.discount) / 100;
-    }
-
-    // Apply maximum discount cap
-    return Math.min(calculatedDiscount, coupon.maxDiscount);
-  };
 
   // Calculate values in the correct order
-  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const discount = calculateDiscount();
-  const discountedSubtotal = subtotal - discount;
+  const amountAfterDiscount = amountAfterPartial - discount;
   const convenienceFees =
-    discountedSubtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
-  const totalCost = Math.round(discountedSubtotal + convenienceFees);
+    amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
+  const totalCost = Math.round(amountAfterDiscount + convenienceFees);
+
+  // Calculate remaining amount for partial payment
+  const calculateRemainingAmount = () => {
+    if (!isPartialPayment) return 0;
+    let remainingAmount = 0;
+    cart.forEach((item) => {
+      if (isEligibleForPartialPayment(item)) {
+        remainingAmount += item.price * 0.5;
+      }
+    });
+    return remainingAmount;
+  };
 
   const handleCouponSubmit = () => {
     const coupon = COUPONS[couponCode.trim()];
@@ -125,7 +167,7 @@ export default function BookNow() {
       return;
     }
 
-    if (coupon.minAmount > 0 && subtotal < coupon.minAmount) {
+    if (coupon.minAmount > 0 && amountAfterPartial < coupon.minAmount) {
       setCouponError(
         `This coupon is only valid for orders above ₹${coupon.minAmount}`
       );
@@ -685,6 +727,23 @@ export default function BookNow() {
           </div>
 
           <Card className="mt-4 p-4">
+            {cart.some((item) => isEligibleForPartialPayment(item)) && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Partial Payment Available</h3>
+                    <p className="text-sm text-gray-600">
+                      Pay 50% now, rest at venue
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isPartialPayment}
+                    onCheckedChange={setIsPartialPayment}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input
@@ -724,11 +783,24 @@ export default function BookNow() {
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
                   <Calculator className="h-5 w-5 mr-2 text-gray-600" />
-                  <span className="text-gray-700">Subtotal</span>
+                  <span className="text-gray-700">Full Amount</span>
                 </div>
-                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+                <span className="font-semibold">₹{fullAmount.toFixed(2)}</span>
               </div>
-              {isCouponApplied && (
+
+              {isPartialPayment && (
+                <div className="flex justify-between items-center mb-2 text-green-600">
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2" />
+                    <span>Partial Payment Reduction</span>
+                  </div>
+                  <span className="font-semibold">
+                    -₹{(fullAmount - amountAfterPartial).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {isCouponApplied && discount > 0 && (
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <Tag className="h-5 w-5 mr-2 text-green-600" />
@@ -739,6 +811,7 @@ export default function BookNow() {
                   </span>
                 </div>
               )}
+
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
                   <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
@@ -750,17 +823,29 @@ export default function BookNow() {
                   ₹{convenienceFees.toFixed(2)}
                 </span>
               </div>
-              <div className="border-t pt-2 mt-2 flex justify-between items-center">
-                <span className="text-xl font-bold text-gray-900">Total</span>
-                <span className="text-xl font-bold text-blue-600">
-                  ₹{totalCost.toFixed(2)}
-                </span>
+
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xl font-bold text-gray-900">
+                    To Pay Now
+                  </span>
+                  <span className="text-xl font-bold text-blue-600">
+                    ₹{totalCost.toFixed(2)}
+                  </span>
+                </div>
+                {isPartialPayment && calculateRemainingAmount() > 0 && (
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>To Pay at Venue</span>
+                    <span>₹{calculateRemainingAmount().toFixed(2)}</span>
+                  </div>
+                )}
               </div>
+
               <Button
                 onClick={handleBookNow}
                 className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
               >
-                Book Now
+                {isPartialPayment ? "Pay Now" : "Book Now"}
               </Button>
             </div>
           </Card>

@@ -179,7 +179,7 @@ const TournamentDetails = () => {
 
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={handleRegistration}
+                      // onClick={handleRegistration}
                     >
                       Register & Pay Now
                     </Button>

@@ -80,34 +80,41 @@ export default function BookNow() {
       discount: 99,
       minAmount: 1199,
       type: "fixed",
+      maxDiscount: 99,
     },
     PLAYNUE9: {
       discount: 9,
       minAmount: 0,
       type: "percentage",
+      maxDiscount: 99,
     },
   };
 
   // Calculations (after all required states are declared)
-  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const convenienceFees = subtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
-
-  // Coupon handling functions
   const calculateDiscount = () => {
     if (!isCouponApplied) return 0;
 
     const coupon = COUPONS[couponCode];
     if (!coupon) return 0;
 
+    let calculatedDiscount = 0;
     if (coupon.type === "fixed") {
-      return coupon.discount;
+      calculatedDiscount = coupon.discount;
     } else {
-      return (subtotal * coupon.discount) / 100;
+      calculatedDiscount = (subtotal * coupon.discount) / 100;
     }
+
+    // Apply maximum discount cap
+    return Math.min(calculatedDiscount, coupon.maxDiscount);
   };
 
+  // Calculate values in the correct order
+  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const discount = calculateDiscount();
-  const totalCost = Math.round(subtotal + convenienceFees - discount);
+  const discountedSubtotal = subtotal - discount;
+  const convenienceFees =
+    discountedSubtotal * (CONVENIENCE_FEE_PERCENTAGE / 100);
+  const totalCost = Math.round(discountedSubtotal + convenienceFees);
 
   const handleCouponSubmit = () => {
     const coupon = COUPONS[couponCode.trim()];
@@ -721,17 +728,6 @@ export default function BookNow() {
                 </div>
                 <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
-                  <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
-                  <span className="text-gray-700">
-                    Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
-                  </span>
-                </div>
-                <span className="font-semibold">
-                  ₹{convenienceFees.toFixed(2)}
-                </span>
-              </div>
               {isCouponApplied && (
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
@@ -743,6 +739,17 @@ export default function BookNow() {
                   </span>
                 </div>
               )}
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <ShoppingCart className="h-5 w-5 mr-2 text-gray-600" />
+                  <span className="text-gray-700">
+                    Convenience Fees ({CONVENIENCE_FEE_PERCENTAGE}%)
+                  </span>
+                </div>
+                <span className="font-semibold">
+                  ₹{convenienceFees.toFixed(2)}
+                </span>
+              </div>
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
                 <span className="text-xl font-bold text-gray-900">Total</span>
                 <span className="text-xl font-bold text-blue-600">

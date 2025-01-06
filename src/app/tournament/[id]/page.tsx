@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import "../../loader.css"
+import "../../loader.css";
 import {
   Dialog,
   DialogContent,
@@ -38,17 +38,22 @@ const TournamentDetails = () => {
       image: "/playturfTournament.jpg",
       description:
         "Join the most prestigious cricket tournament in Lucknow. Teams from across the city compete for the championship title.",
-        instructions: [
-        "11 players per team",
-        "Teams must bring their own kit",
+      instructions: [
+        "Participants must be at least 14 years old at the time of registration.",
+        "Each team must consist of six and eight players.",
+        "Teams are required to provide valid identification for all players (e.g., national ID, driver’s license, or student ID) on request.",
+        "Teams must complete the registration form and submit it before 23-January-2025.",
+        "The registration fee of Rs. 2000.00 must be paid in full at the time of registration. Failure to do so will result in an incomplete registration",
+        "Once the registration is confirmed, the team is committed to participating in the Tournament.",
+        "Playturf reserves the right to refuse registration at its discretion if it believes a team does not meet the eligibility requirements.",
+        "Any changes to the team roster (player replacements) must be submitted in writing to Playturf for approval before 24-January-2025.",
       ],
       prizes: {
         first: "₹10,000",
         runnerUp: "₹3,000",
         manOfTheMatch: "₹2,000",
       },
-      registrationForm:
-        "https://docs.google.com/forms/d/e/1FAIpQLSdls1XIo6HrpkFtodFZcgrnGxcW47iKUYhyJWv8kx15xtKlqg/viewform",
+      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
     },
     {
       id: 2,
@@ -81,7 +86,7 @@ const TournamentDetails = () => {
         runnerUp: "₹1,500",
       },
       registrationForm:
-        "https://docs.google.com/forms/d/e/1FAIpQLSdls1XIo6HrpkFtodFZcgrnGxcW47iKUYhyJWv8kx15xtKlqg/viewform",
+        "https://docs.google.com/forms/d/e/1FAIpQLSfyzLAi2-3EMNMMnPxst_Bf4Hudm8KEIGvzhPwSUIGfEKINTA/viewform",
     },
   ];
 
@@ -96,33 +101,33 @@ const TournamentDetails = () => {
 
   if (!tournament) {
     return (
-              <div className="flex items-center justify-center min-h-screen">
-                <div id="preloader"></div>
-              </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div id="preloader"></div>
+      </div>
     );
   }
 
   const getPrizeBackgroundColor = (prizeKey) => {
-    switch(prizeKey) {
-      case 'first':
-        return 'bg-yellow-100';
-      case 'runnerUp':
-        return 'bg-gray-100';
-      case 'manOfTheMatch':
-        return 'bg-orange-100';
+    switch (prizeKey) {
+      case "first":
+        return "bg-yellow-100";
+      case "runnerUp":
+        return "bg-gray-100";
+      case "manOfTheMatch":
+        return "bg-orange-100";
       default:
-        return 'bg-blue-100';
+        return "bg-blue-100";
     }
   };
 
   const getPrizeTitle = (prizeKey) => {
-    switch(prizeKey) {
-      case 'first':
-        return '1st Prize';
-      case 'runnerUp':
-        return 'Runner Up';
-      case 'manOfTheMatch':
-        return 'Man of the Match';
+    switch (prizeKey) {
+      case "first":
+        return "1st Prize";
+      case "runnerUp":
+        return "Runner Up";
+      case "manOfTheMatch":
+        return "Man of the Match";
       default:
         return prizeKey;
     }
@@ -132,18 +137,21 @@ const TournamentDetails = () => {
     if (!tournament?.prizes) return null;
 
     const prizeEntries = Object.entries(tournament.prizes);
-    const gridCols = prizeEntries.length <= 3 
-      ? `grid-cols-${prizeEntries.length}` 
-      : 'grid-cols-3';
+    const gridCols =
+      prizeEntries.length <= 3
+        ? `grid-cols-${prizeEntries.length}`
+        : "grid-cols-3";
 
     return (
       <div>
         <h3 className="text-xl font-semibold mb-2">Prize Pool</h3>
         <div className={`grid ${gridCols} gap-4`}>
           {prizeEntries.map(([key, value]) => (
-            <div 
-              key={key} 
-              className={`text-center p-4 ${getPrizeBackgroundColor(key)} rounded shadow-sm transition-transform hover:scale-105`}
+            <div
+              key={key}
+              className={`text-center p-4 ${getPrizeBackgroundColor(
+                key
+              )} rounded shadow-sm transition-transform hover:scale-105`}
             >
               <p className="font-bold mb-2">{getPrizeTitle(key)}</p>
               <p className="text-lg">{value}</p>
@@ -214,7 +222,9 @@ const TournamentDetails = () => {
                       </div>
 
                       <div>
-                        <h3 className="text-xl font-semibold mb-2">Instructions</h3>
+                        <h3 className="text-xl font-semibold mb-2">
+                          Instructions
+                        </h3>
                         <ul className="list-disc list-inside space-y-1">
                           {tournament.instructions?.map((rule, index) => (
                             <li key={index}>{rule}</li>
@@ -235,7 +245,9 @@ const TournamentDetails = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-baseline gap-2">
-                        <p className="text-2xl font-bold">₹{tournament.entryFee}</p>
+                        <p className="text-2xl font-bold">
+                          ₹{tournament.entryFee}
+                        </p>
                         <p className="text-gray-600">
                           per {tournament.priceType}
                         </p>
@@ -261,9 +273,9 @@ const TournamentDetails = () => {
 
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
-                        // onClick={handleRegistration}
+                        onClick={handleRegistration}
                       >
-                        Coming soon
+                        Register and pay
                       </Button>
 
                       <div className="text-sm text-gray-500 text-center mt-4">

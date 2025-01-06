@@ -18,7 +18,7 @@ export default function Tournaments() {
       venue: "Playturf",
       teamsRegistered: 10,
       maxTeams:16,
-      status: "Comming soon",
+      status: "open",
       image: "/playturfTournament.jpg",
     },
     {
@@ -33,7 +33,7 @@ export default function Tournaments() {
       teamsRegistered: 0,
       players: 1,
       maxPlayers: 16,
-      status: "Comming soon",
+      status: "open",
       image: "/cueLords.jpg",
       description:
         "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",
@@ -178,6 +178,7 @@ export default function Tournaments() {
               <option>Cricket</option>
               <option>Football</option>
               <option>Basketball</option>
+              <option>Pool</option>
             </select>
 
             <button

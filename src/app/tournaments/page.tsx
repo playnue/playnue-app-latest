@@ -17,9 +17,9 @@ export default function Tournaments() {
       startDate: "2025-01-25",
       venue: "Playturf",
       teamsRegistered: 10,
-      maxTeams:16,
+      maxTeams: 16,
       status: "open",
-      image: "/playturfTournament.jpg",
+      image: "/playturfT.jpg",
     },
     {
       id: 2,
@@ -176,8 +176,6 @@ export default function Tournaments() {
             >
               <option>All Sports</option>
               <option>Cricket</option>
-              <option>Football</option>
-              <option>Basketball</option>
               <option>Pool</option>
             </select>
 
@@ -273,7 +271,17 @@ export default function Tournaments() {
                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>Entry Fee: ₹{tournament.entryFee}</span>
+                    {tournament.id === 1 ? (
+                      <span>
+                        Entry Fee:{" "}
+                        <span className="line-through">
+                          ₹{tournament.entryFee}
+                        </span>{" "}
+                        <span className="text-blue-600">₹1950</span>
+                      </span>
+                    ) : (
+                      <span>Entry Fee: ₹{tournament.entryFee}</span>
+                    )}
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">

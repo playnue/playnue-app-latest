@@ -25,17 +25,17 @@ const TournamentDetails = () => {
       id: 1,
       name: "Cricket Tournament",
       sport: "Cricket",
-      area: "B-1/130 SECTOR-G ALIGANJ LUCKNOW NEAR COLD-STORAGE (GULAB VATIKA",
+      area: "B-1/130 SECTOR-G ALIGANJ LUCKNOW NEAR COLD-STORAGE (GULAB VATIKA)",
       entryFee: 2000,
       startDate: "2025-01-25",
       endDate: "2025-01-26",
       venue: "Playturf",
-      teamsRegistered: 10,
+      teamsRegistered: 8,
       players: 11,
       maxTeams: 16,
       priceType: "team",
       status: "open",
-      image: "/playturfTournament.jpg",
+      image: "/playturfT.jpg",
       description:
         "Join the most prestigious cricket tournament in Lucknow. Teams from across the city compete for the championship title.",
       instructions: [
@@ -51,7 +51,7 @@ const TournamentDetails = () => {
       prizes: {
         first: "₹10,000",
         runnerUp: "₹3,000",
-        manOfTheMatch: "₹2,000",
+        manOfTheTournament: "₹2,000",
       },
       registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
     },
@@ -113,7 +113,7 @@ const TournamentDetails = () => {
         return "bg-yellow-100";
       case "runnerUp":
         return "bg-gray-100";
-      case "manOfTheMatch":
+      case "manOfTheTournament":
         return "bg-orange-100";
       default:
         return "bg-blue-100";
@@ -126,11 +126,45 @@ const TournamentDetails = () => {
         return "1st Prize";
       case "runnerUp":
         return "Runner Up";
-      case "manOfTheMatch":
-        return "Man of the Match";
+      case "manOfTheTournament":
+        return "Man of the Tournament";
       default:
         return prizeKey;
     }
+  };
+
+  const renderPriceDisplay = () => {
+    if (tournament.id === 1) {
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold line-through text-gray-500">
+              ₹{tournament.entryFee}
+            </p>
+            <p className="text-2xl font-bold text-blue-600">
+              ₹1950
+            </p>
+            <p className="text-gray-600">
+              per {tournament.priceType}
+            </p>
+          </div>
+          <p className="text-sm text-green-600">
+            1 Pc Playnue Official Merchandise Free
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-baseline gap-2">
+        <p className="text-2xl font-bold text-blue-600">
+          ₹{tournament.entryFee}
+        </p>
+        <p className="text-gray-600">
+          per {tournament.priceType}
+        </p>
+      </div>
+    );
   };
 
   const renderPrizes = () => {
@@ -144,21 +178,21 @@ const TournamentDetails = () => {
 
     return (
       <div>
-        <h3 className="text-xl font-semibold mb-2">Prize Pool</h3>
-        <div className={`grid ${gridCols} gap-4`}>
-          {prizeEntries.map(([key, value]) => (
-            <div
-              key={key}
-              className={`text-center p-4 ${getPrizeBackgroundColor(
-                key
-              )} rounded shadow-sm transition-transform hover:scale-105`}
-            >
-              <p className="font-bold mb-2">{getPrizeTitle(key)}</p>
-              <p className="text-lg">{value}</p>
-            </div>
-          ))}
-        </div>
+      <h3 className="text-xl font-semibold mb-2">Prize Pool</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Object.entries(tournament.prizes).map(([key, value]) => (
+          <div
+            key={key}
+            className={`text-center p-4 ${getPrizeBackgroundColor(
+              key
+            )} rounded shadow-sm transition-transform hover:scale-105`}
+          >
+            <p className="font-bold mb-2">{getPrizeTitle(key)}</p>
+            <p className="text-lg">{value}</p>
+          </div>
+        ))}
       </div>
+    </div>
     );
   };
 
@@ -244,14 +278,7 @@ const TournamentDetails = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-2xl font-bold">
-                          ₹{tournament.entryFee}
-                        </p>
-                        <p className="text-gray-600">
-                          per {tournament.priceType}
-                        </p>
-                      </div>
+                    {renderPriceDisplay()}
                       <div>
                         <p className="text-gray-600">Teams Registered</p>
                         <p className="font-semibold">
@@ -275,7 +302,7 @@ const TournamentDetails = () => {
                         className="w-full bg-blue-600 hover:bg-blue-700"
                         onClick={handleRegistration}
                       >
-                        Register and pay
+                        Register and Pay
                       </Button>
 
                       <div className="text-sm text-gray-500 text-center mt-4">

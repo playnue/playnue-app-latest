@@ -18,6 +18,7 @@ import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
+import { useUserData } from "@nhost/nextjs";
 import {
   Sidebar,
   SidebarContent,
@@ -65,13 +66,67 @@ const data = {
 export default function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const user = useUserData();
+  
+  // Check if user has seller role
+  const isSeller = user?.defaultRole=="seller";
+  console.log(isSeller)
+  const baseNavItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: SquareTerminal,
+      isActive: true,
+    },
+    {
+      title: "My Bookings",
+      url: "/user-bookings",
+      icon: Bot,
+    }
+  ];
+
+  // Create venue navigation items based on role
+  const venueNavItem = isSeller ? {
+    title: "Venue",
+    url: "#",
+    icon: BookOpen,
+    items: [
+      {
+        title: "Venue Details",
+        url: "#",
+      },
+      {
+        title: "Courts",
+        url: "#",
+      },
+      {
+        title: "Slots",
+        url: "#",
+      },
+    ],
+  } : {
+    title: "Venues",
+    url: "/venues",
+    icon: BookOpen,
+  };
+
+  // Combine the navigation items
+  const navItems = [...baseNavItems, venueNavItem];
+
+  const teams = [
+    {
+      name: "Playnue",
+      logo: GalleryVerticalEnd,
+      plan: "Enterprise",
+    },
+  ];
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navItems} />
       </SidebarContent>
       <SidebarFooter>
         <button

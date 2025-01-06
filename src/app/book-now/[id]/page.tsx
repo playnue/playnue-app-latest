@@ -283,12 +283,17 @@ export default function BookNow() {
       }
 
       const availableSlots = responseData.data.slots;
-
-      // Sort available slots by start time
       availableSlots.sort((a, b) => {
-        const timeA = convertTo24HourFormat(a.start_at);
-        const timeB = convertTo24HourFormat(b.start_at);
-        return timeA.localeCompare(timeB);
+        // Parse hours and minutes from start_at times
+        const [hoursA, minutesA] = a.start_at.split(":");
+        const [hoursB, minutesB] = b.start_at.split(":");
+
+        // Compare hours first
+        if (hoursA !== hoursB) {
+          return hoursA - hoursB;
+        }
+        // If hours are same, compare minutes
+        return minutesA - minutesB;
       });
 
       setSlots(availableSlots);

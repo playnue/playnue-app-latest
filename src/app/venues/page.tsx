@@ -319,8 +319,8 @@ export default function Bookings() {
 
             {/* No Venues Found */}
             {localVenues.length === 0 && otherVenues.length === 0 && (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-xl text-gray-500">No venues found</p>
+              <div className="flex items-center justify-center min-h-screen">
+                <div id="preloader"></div>
               </div>
             )}
           </div>

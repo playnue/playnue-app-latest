@@ -18,8 +18,40 @@ export default function Tournaments() {
       venue: "Playturf",
       teamsRegistered: 10,
       maxTeams:16,
-      status: "open",
+      status: "Comming soon",
       image: "/playturfTournament.jpg",
+    },
+    {
+      id: 2,
+      name: "8 Ball Pool Tournament",
+      sport: "Pool",
+      area: "JC Guest House 8 no chauraha, Nirala Nagar near Regrant Hotel, Lucknow, Uttar Pradesh 226020",
+      entryFee: 500,
+      startDate: "2025-01-19",
+      endDate: "2025-01-19",
+      venue: "Cue Lords: Snooker, Pool and Cafe",
+      teamsRegistered: 0,
+      players: 1,
+      maxPlayers: 16,
+      status: "Comming soon",
+      image: "/cueLords.jpg",
+      description:
+        "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",
+      Instructions: [
+        "Registration Closes on 15th January 2024",
+        "Draw will be shared on 16th January 2024",
+        "Reporting and entry must be 15 minutes prior to your timings",
+        "Participants reporting late will be automatically  disqualified",
+        "Tournament Governed by the house rules",
+        "Umpire decision is last and final decision",
+        "All players shall participate in good sportsmanship",
+      ],
+      prizes: {
+        first: "₹2,500",
+        runnerUp: "₹1,500",
+      },
+      registrationForm:
+        "https://docs.google.com/forms/d/e/1FAIpQLSdls1XIo6HrpkFtodFZcgrnGxcW47iKUYhyJWv8kx15xtKlqg/viewform",
     },
     // {
     //   id: 2,
@@ -107,9 +139,11 @@ export default function Tournaments() {
       case "open":
         return { text: "Registrations Open", class: "bg-green-500" };
       case "last_call":
-        return { text: "Last 2 Days", class: "bg-yellow-500" };
+        return { text: "Last 2 Days=", class: "bg-yellow-500" };
       case "closed":
         return { text: "Registration Closed", class: "bg-red-500" };
+      case "Comming soon":
+        return { text: "Coming soon", class: "bg-blue-500" };
       default:
         return { text: "Unknown", class: "bg-gray-500" };
     }
@@ -120,7 +154,7 @@ export default function Tournaments() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <div className="relative h-64 bg-gradient-to-r from-blue-600 to-blue-800">
+        <div className="relative h-64 bg-gradient-to-r from-black to-black">
           <div className="container mx-auto px-4 h-full flex items-center">
             <div className="text-white">
               <h1 className="text-4xl font-bold mb-2">Tournaments</h1>
@@ -146,21 +180,9 @@ export default function Tournaments() {
               <option>Basketball</option>
             </select>
 
-            <select
-              name="area"
-              value={filters.area}
-              onChange={handleFilterChange}
-              className="px-4 py-2 border rounded-md"
-            >
-              <option>All Areas</option>
-              <option>Gomti Nagar</option>
-              <option>Hazratganj</option>
-              <option>Indira Nagar</option>
-            </select>
-
             <button
               onClick={applyFilters}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+              className="bg-black text-white px-6 py-2 rounded-md hover:bg-black"
             >
               Filter
             </button>
@@ -250,7 +272,7 @@ export default function Tournaments() {
                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>Entry Fee: ₹{tournament.entryFee}/team</span>
+                    <span>Entry Fee: ₹{tournament.entryFee}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">

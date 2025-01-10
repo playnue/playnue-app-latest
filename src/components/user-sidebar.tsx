@@ -69,7 +69,7 @@ export default function AppSidebar({
   const user = useUserData();
   
   // Check if user has seller role
-  const isSeller = user?.defaultRole=="seller";
+  const isSeller = user?.defaultRole=="admin";
   console.log(isSeller)
   const baseNavItems = [
     {

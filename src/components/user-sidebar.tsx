@@ -93,15 +93,11 @@ export default function AppSidebar({
     items: [
       {
         title: "Venue Details",
-        url: "#",
+        url: "/venue",
       },
       {
         title: "Courts",
-        url: "#",
-      },
-      {
-        title: "Slots",
-        url: "#",
+        url: "/courts&slots",
       },
     ],
   } : {
@@ -133,7 +129,6 @@ export default function AppSidebar({
           onClick={async () => {
             try {
               await nhost.auth.signOut();
-              localStorage.removeItem("user")
               // Optionally, you can redirect the user after signing out
               window.location.href = "/login"; // or use your routing method to navigate to the login page
             } catch (error) {

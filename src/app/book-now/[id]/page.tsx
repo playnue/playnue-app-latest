@@ -436,8 +436,24 @@ export default function BookNow() {
         description: "Court Booking",
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
-          console.log("todo: add handler");
-          console.log("response", response);
+          try {
+            // Wait for a short delay to allow the webhook to process
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // Clear cart and redirect
+            setCart([]);
+            // Navigate to bookings page
+            router.push("/user-bookings");
+          } catch (error) {
+            console.error("Error handling payment success:", error);
+            toast.error(
+              "Booking confirmed but unable to redirect. Please check your bookings.",
+              {
+                position: "top-right",
+                autoClose: 5000,
+              }
+            );
+          }
           // TODO: Add handler.
         },
         prefill: {

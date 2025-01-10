@@ -20,11 +20,19 @@ const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
   navMain: [
     {
-      title: "Seller",
+      title: "Admin",
       items: [
         {
           title: "Add seller",
           url: "/add-seller",
+        },
+        {
+          title: "Edit Price",
+          url: "/admin/edit-price",
+        },
+        {
+          title: "Manage Booking",
+          url: "/courts&slots",
         },
       ],
     },

@@ -22,10 +22,22 @@ const AdminCourtManagement = () => {
   const [expandedCourt, setExpandedCourt] = useState(null);
   const accessToken = useAccessToken();
 
+  
   const formatDate = (date) => {
     if (!date) return "";
+    // Create a new date object and adjust for timezone
     const d = new Date(date);
-    return d.toISOString().split('T')[0];
+    // Get year, month, and day components
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    // Return in YYYY-MM-DD format
+    return `${year}-${month}-${day}`;
+  };
+  const handleDateSelect = (date) => {
+    // Create a new date at midnight in local timezone
+    const localDate = new Date(date.setHours(0, 0, 0, 0));
+    setSelectedDate(localDate);
   };
 
   // Fetch all venues first
@@ -266,7 +278,7 @@ const AdminCourtManagement = () => {
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={setSelectedDate}
+                  onSelect={handleDateSelect}
                   className="rounded-md border"
                 />
               </div>

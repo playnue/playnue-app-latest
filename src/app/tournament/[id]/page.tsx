@@ -73,8 +73,8 @@ const TournamentDetails = () => {
       description:
         "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",
       instructions: [
-        "Registration Closes on 15th January 2024",
-        "Draw will be shared on 16th January 2024",
+        "Registration Closes on 20th January 2024",
+        // "Draw will be shared on 2th January 2024",
         "Reporting and entry must be 15 minutes prior to your timings",
         "Participants reporting late will be automatically  disqualified",
         "Tournament Governed by the house rules",

@@ -199,6 +199,9 @@ export default function Page() {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50">
+                        {/* <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
+                          Booking Id
+                        </th> */}
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 tracking-wider">
                           Booking Date
                         </th>
@@ -221,6 +224,9 @@ export default function Page() {
                             key={booking.id}
                             className="hover:bg-gray-50 transition-colors duration-150"
                           >
+                            {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                              {booking.id}
+                            </td> */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                               {booking.slot.date}
                             </td>

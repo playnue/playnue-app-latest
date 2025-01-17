@@ -352,6 +352,7 @@ export default function BookNow() {
       router.push("/login");
     }
 
+    console.log("Selected slot data:", selectedSlot);
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
     const selectedSlotPrice = parseFloat(
@@ -360,12 +361,14 @@ export default function BookNow() {
 
     const newBooking = {
       id: Date.now(),
+      slotId: selectedSlot.id,
       time: formatTimeRange(selectedSlot.start_at, selectedSlot.end_at),
       duration: duration,
       court: selectedCourtName,
       price: selectedSlotPrice,
     };
 
+    console.log("New booking object:", newBooking)
     setCart([...cart, newBooking]);
   };
   const handleRemoveFromCart = (id) => {
@@ -394,6 +397,8 @@ export default function BookNow() {
     }
     try {
       // Create order via your backend
+      const slotIds = cart.map(item => item.slotId);
+      console.log(slotIds)
       const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
@@ -404,7 +409,7 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
-            slot_ids: [slotId],
+            slot_ids: slotIds,
           }),
         }
       );
@@ -696,6 +701,7 @@ export default function BookNow() {
                           selectedSlot?.id === slot.id ? "default" : "outline"
                         }
                         onClick={() => {
+                          console.log("Selected slot:", slot);
                           setSelectedTime(
                             formatTimeRange(slot.start_at, slot.end_at)
                           );

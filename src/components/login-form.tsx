@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Button } from "@/components/ui/button";
 import { nhost } from "../lib/nhost";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -16,58 +17,99 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Navbar from "@/app/components/Navbar";
+import { useAuthenticationStatus } from "@nhost/nextjs";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuthenticationStatus();
 
-  const handleCredentialsLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    // Check if user is already authenticated
+    if (!isLoading && isAuthenticated) {
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        router.push(decodeURIComponent(returnUrl));
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [isAuthenticated, isLoading, searchParams, router]);
 
-    // Clear any previous errors
-    setError("");
-
-    // Call NextAuth's signIn with credentials
-    const result = await nhost.auth.signIn({
-      email: email,
-      password: password,
-    });
-    console.log(result);
-    const user = result?.session;
-    // console.log("Access Token:", token);
-
-    // Store the token in localStorage or cookies for use in future requests
-    localStorage.setItem("user", JSON.stringify(user));
-
-    if (result?.error) {
-      // Display error toast
-      toast.error("Invalid credentials", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+  const handleRedirectAfterLogin = () => {
+    const returnUrl = searchParams.get('returnUrl');
+    if (returnUrl) {
+      window.location.href = decodeURIComponent(returnUrl);
     } else {
-      // Display success toast
-
-      // Redirect user on success after a short delay
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 3000);
+      window.location.href = "/dashboard";
     }
   };
 
-  const handleGoogleLogin = () => {
-    signIn("google"); // Replace "google" with your Google provider ID
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const result = await nhost.auth.signIn({
+        email: email,
+        password: password,
+      });
+      
+      const user = result?.session;
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (result?.error) {
+        toast.error("Invalid credentials", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      } else {
+        toast.success("Login successful", {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
+        // Use the new redirect handler
+        
+      }
+    } catch (error) {
+      toast.error("An error occurred during login", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await nhost.auth.signIn({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + (searchParams.get('returnUrl') || '/dashboard')
+        }
+      });
+    } catch (error) {
+      toast.error("An error occurred during Google login", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
   };
 
   return (
     <>
       <ToastContainer />
-      {/* <Navbar/> */}
       <Card className="mx-auto max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
@@ -80,12 +122,7 @@ export function LoginForm() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={async () => {
-                const result = await nhost.auth.signIn({
-                  provider: "google",
-                  // redirectUrl:"" // Specify Google as the provider
-                });
-              }}
+              onClick={handleGoogleLogin}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path
@@ -131,14 +168,6 @@ export function LoginForm() {
               <Button type="submit" className="w-full">
                 Login
               </Button>
-              {/* <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleLogin}
-              >
-                Login with Google
-              </Button> */}
             </div>
           </form>
           <div className="mt-4 text-center text-sm">

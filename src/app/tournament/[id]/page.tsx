@@ -5,6 +5,8 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAccessToken, useAuthenticationStatus, useUserData } from "@nhost/nextjs";
 import "../../loader.css";
 import {
   Dialog,
@@ -18,8 +20,10 @@ import Navbar from "@/app/components/Navbar";
 const TournamentDetails = () => {
   const { id } = useParams();
   const [tournament, setTournament] = useState(null);
-
-  // Sample tournament data remains the same
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuthenticationStatus();
+  const user = useUserData();
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const allTournaments = [
     {
       id: 1,
@@ -65,7 +69,7 @@ const TournamentDetails = () => {
       endDate: "2025-01-26",
       venue: "Cue Lords: Snooker, Pool and Cafe",
       priceType: "player",
-      teamsRegistered: 0,
+      teamsRegistered: 10,
       players: 1,
       maxTeams: 16,
       status: "Coming Soon",
@@ -89,23 +93,55 @@ const TournamentDetails = () => {
         "https://docs.google.com/forms/d/e/1FAIpQLSfyzLAi2-3EMNMMnPxst_Bf4Hudm8KEIGvzhPwSUIGfEKINTA/viewform",
     },
   ];
-
+  
   useEffect(() => {
-    const foundTournament = allTournaments.find((t) => t.id === parseInt(id));
-    setTournament(foundTournament || null);
-  }, [id]);
+    // Only check auth status after initial loading is complete
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        const currentPath = window.location.pathname;
+        const searchParams = window.location.search;
+        const fullPath = `${currentPath}${searchParams}`;
+        const returnUrl = encodeURIComponent(fullPath);
+        router.push(`/login?returnUrl=${returnUrl}`);
+        return;
+      }
 
-  const handleRegistration = () => {
-    window.open(tournament.registrationForm, "_blank");
-  };
+      // Load tournament data only if authenticated
+      const foundTournament = allTournaments.find((t) => t.id === parseInt(id));
+      setTournament(foundTournament || null);
+    }
+  }, [isAuthenticated, isLoading, id, router]);
 
-  if (!tournament) {
+  // Show loading state while authentication is being checked
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div id="preloader"></div>
       </div>
     );
   }
+
+  // If not authenticated, don't render anything (redirection will happen in useEffect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // If no tournament found after loading
+  if (!tournament) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Tournament not found</p>
+      </div>
+    );
+  }
+ 
+
+  
+
+  const handleRegistration = () => {
+    window.open(tournament.registrationForm, "_blank");
+  };
+
 
   const getPrizeBackgroundColor = (prizeKey) => {
     switch (prizeKey) {
@@ -141,12 +177,8 @@ const TournamentDetails = () => {
             <p className="text-2xl font-bold line-through text-gray-500">
               ₹{tournament.entryFee}
             </p>
-            <p className="text-2xl font-bold text-blue-600">
-              ₹1950
-            </p>
-            <p className="text-gray-600">
-              per {tournament.priceType}
-            </p>
+            <p className="text-2xl font-bold text-blue-600">₹1950</p>
+            <p className="text-gray-600">per {tournament.priceType}</p>
           </div>
           <p className="text-sm text-green-600">
             1 Pc Playnue Official Merchandise Free
@@ -160,9 +192,7 @@ const TournamentDetails = () => {
         <p className="text-2xl font-bold text-blue-600">
           ₹{tournament.entryFee}
         </p>
-        <p className="text-gray-600">
-          per {tournament.priceType}
-        </p>
+        <p className="text-gray-600">per {tournament.priceType}</p>
       </div>
     );
   };
@@ -178,21 +208,21 @@ const TournamentDetails = () => {
 
     return (
       <div>
-      <h3 className="text-xl font-semibold mb-2">Prize Pool</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(tournament.prizes).map(([key, value]) => (
-          <div
-            key={key}
-            className={`text-center p-4 ${getPrizeBackgroundColor(
-              key
-            )} rounded shadow-sm transition-transform hover:scale-105`}
-          >
-            <p className="font-bold mb-2">{getPrizeTitle(key)}</p>
-            <p className="text-lg">{value}</p>
-          </div>
-        ))}
+        <h3 className="text-xl font-semibold mb-2">Prize Pool</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.entries(tournament.prizes).map(([key, value]) => (
+            <div
+              key={key}
+              className={`text-center p-4 ${getPrizeBackgroundColor(
+                key
+              )} rounded shadow-sm transition-transform hover:scale-105`}
+            >
+              <p className="font-bold mb-2">{getPrizeTitle(key)}</p>
+              <p className="text-lg">{value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
     );
   };
 
@@ -278,7 +308,7 @@ const TournamentDetails = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                    {renderPriceDisplay()}
+                      {renderPriceDisplay()}
                       <div>
                         <p className="text-gray-600">Teams Registered</p>
                         <p className="font-semibold">

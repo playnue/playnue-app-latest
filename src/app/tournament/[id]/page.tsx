@@ -95,23 +95,27 @@ const TournamentDetails = () => {
   ];
   
   useEffect(() => {
-    // Only check auth status after initial loading is complete
+    // Check authentication status after initial load
     if (!isLoading) {
       if (!isAuthenticated) {
+        // Get the full current URL path and search parameters
         const currentPath = window.location.pathname;
         const searchParams = window.location.search;
         const fullPath = `${currentPath}${searchParams}`;
         const returnUrl = encodeURIComponent(fullPath);
+        
+        // Redirect to login with return URL
         router.push(`/login?returnUrl=${returnUrl}`);
         return;
       }
 
-      // Load tournament data only if authenticated
-      const foundTournament = allTournaments.find((t) => t.id === parseInt(id));
+      // Only load tournament data if authenticated
+      const foundTournament = allTournaments.find(
+        (t) => t.id === parseInt(id)
+      );
       setTournament(foundTournament || null);
     }
   }, [isAuthenticated, isLoading, id, router]);
-
   // Show loading state while authentication is being checked
   if (isLoading) {
     return (

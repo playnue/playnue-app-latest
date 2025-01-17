@@ -16,9 +16,19 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navbar from "@/app/components/Navbar";
 import { useAuthenticationStatus } from "@nhost/nextjs";
 import React, { Suspense } from "react";
+
+// Helper function to validate and format redirect URL
+const getValidRedirectUrl = (returnUrl: string | null, origin: string) => {
+  if (!returnUrl) return `${origin}/dashboard`;
+  
+  // Ensure returnUrl starts with a forward slash
+  const formattedUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+  
+  // Construct full URL
+  return `${origin}${formattedUrl}`;
+};
 
 function LoginFormContent() {
   const [email, setEmail] = useState("");
@@ -71,6 +81,7 @@ function LoginFormContent() {
           position: "top-right",
           autoClose: 2000,
         });
+        handleRedirectAfterLogin();
       }
     } catch (error) {
       toast.error("An error occurred during login", {
@@ -82,13 +93,22 @@ function LoginFormContent() {
 
   const handleGoogleLogin = async () => {
     try {
+      const returnUrl = searchParams.get("returnUrl");
+      
       const result = await nhost.auth.signIn({
-        provider: "google",
+        provider: 'google',
         options: {
-          redirectTo:
-            window.location.origin + (searchParams.get("returnUrl") || "/dashboard"),
-        },
+          // Pass the returnUrl as state parameter
+          state: returnUrl ? encodeURIComponent(returnUrl) : undefined
+        }
       });
+  
+      if (result?.error) {
+        toast.error("Google login failed", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     } catch (error) {
       toast.error("An error occurred during Google login", {
         position: "top-right",

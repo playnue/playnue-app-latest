@@ -18,8 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Navbar from "@/app/components/Navbar";
 import { useAuthenticationStatus } from "@nhost/nextjs";
+import React, { Suspense } from "react";
 
-export function LoginForm() {
+function LoginFormContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,19 +29,18 @@ export function LoginForm() {
   const { isAuthenticated, isLoading } = useAuthenticationStatus();
 
   useEffect(() => {
-    // Check if user is already authenticated
     if (!isLoading && isAuthenticated) {
-      const returnUrl = searchParams.get('returnUrl');
+      const returnUrl = searchParams.get("returnUrl");
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     }
   }, [isAuthenticated, isLoading, searchParams, router]);
 
   const handleRedirectAfterLogin = () => {
-    const returnUrl = searchParams.get('returnUrl');
+    const returnUrl = searchParams.get("returnUrl");
     if (returnUrl) {
       window.location.href = decodeURIComponent(returnUrl);
     } else {
@@ -57,7 +57,7 @@ export function LoginForm() {
         email: email,
         password: password,
       });
-      
+
       const user = result?.session;
       localStorage.setItem("user", JSON.stringify(user));
 
@@ -65,23 +65,12 @@ export function LoginForm() {
         toast.error("Invalid credentials", {
           position: "top-right",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
       } else {
         toast.success("Login successful", {
           position: "top-right",
           autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
-
-        // Use the new redirect handler
-        
       }
     } catch (error) {
       toast.error("An error occurred during login", {
@@ -96,8 +85,9 @@ export function LoginForm() {
       const result = await nhost.auth.signIn({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + (searchParams.get('returnUrl') || '/dashboard')
-        }
+          redirectTo:
+            window.location.origin + (searchParams.get("returnUrl") || "/dashboard"),
+        },
       });
     } catch (error) {
       toast.error("An error occurred during Google login", {
@@ -179,5 +169,13 @@ export function LoginForm() {
         </CardContent>
       </Card>
     </>
+  );
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }

@@ -21,7 +21,7 @@ import React, { Suspense } from "react";
 
 // Helper function to validate and format redirect URL
 const getValidRedirectUrl = (returnUrl: string | null, origin: string) => {
-  if (!returnUrl) return `${origin}/dashboard`;
+  if (!returnUrl) return `${origin}/`;
   
   // Ensure returnUrl starts with a forward slash
   const formattedUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
@@ -44,7 +44,7 @@ function LoginFormContent() {
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
-        router.push("/dashboard");
+        router.push("/");
       }
     }
   }, [isAuthenticated, isLoading, searchParams, router]);
@@ -54,7 +54,7 @@ function LoginFormContent() {
     if (returnUrl) {
       window.location.href = decodeURIComponent(returnUrl);
     } else {
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     }
   };
 

@@ -163,11 +163,9 @@ export default function SellerBookingsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50">
+                        
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
-                          Venue
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
-                          Court
+                          Sports
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
                           Customer ID
@@ -189,9 +187,6 @@ export default function SellerBookingsPage() {
                           key={booking.id}
                           className="hover:bg-gray-50 transition-colors duration-150"
                         >
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {booking.venue_name}
-                          </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
                             {booking.court_name}
                           </td>

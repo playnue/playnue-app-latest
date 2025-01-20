@@ -74,7 +74,12 @@ export default function BookNow() {
   const [couponError, setCouponError] = useState("");
   const [isPartialPayment, setIsPartialPayment] = useState(false);
 
-  // ... (previous code until calculateDiscount remains the same)
+  // lolaylty points
+  const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState(0);
+  const [pointsToEarn, setPointsToEarn] = useState(0);
+  const calculateLoyaltyPoints = (amount) => {
+    return Math.floor(amount / 100); // 1 point per ₹100
+  };
 
   // Modified payment calculations
   const isEligibleForPartialPayment = (slot) => {
@@ -368,7 +373,7 @@ export default function BookNow() {
       price: selectedSlotPrice,
     };
 
-    console.log("New booking object:", newBooking)
+    console.log("New booking object:", newBooking);
     setCart([...cart, newBooking]);
   };
   const handleRemoveFromCart = (id) => {
@@ -397,8 +402,8 @@ export default function BookNow() {
     }
     try {
       // Create order via your backend
-      const slotIds = cart.map(item => item.slotId);
-      console.log(slotIds)
+      const slotIds = cart.map((item) => item.slotId);
+      console.log(slotIds);
       const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
@@ -443,9 +448,46 @@ export default function BookNow() {
         handler: async function (response) {
           try {
             // Wait for a short delay to allow the webhook to process
+            const newPoints = currentLoyaltyPoints + pointsToEarn;
+            const updateResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                  query: `
+                    mutation UpdateUserMetadata {
+                      updateUser(
+                        pk_columns: {id: "${user.id}"}, 
+                        _set: {metadata: {loyaltyPoints: ${newPoints}}}
+                      ) {
+                        id
+                      }
+                    }
+                  `,
+                }),
+              }
+            );
+
+            if (!updateResponse.ok) {
+              throw new Error("Failed to update loyalty points");
+            }
+
+            // Wait for webhook processing
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
-            // Clear cart and redirect
+            // Show success message and clear cart
+            toast.success(
+              `Booking confirmed! Earned ${pointsToEarn} loyalty points!`,
+              {
+                position: "top-right",
+                autoClose: 3000,
+              }
+            );
+
             setCart([]);
             // Navigate to bookings page
             router.push("/user-bookings");
@@ -571,6 +613,48 @@ export default function BookNow() {
     fetchVenueDetails();
     fetchCourtDetails();
   }, [id]);
+
+  useEffect(() => {
+    const fetchUserPoints = async () => {
+      if (!user || !accessToken) return;
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              query: `
+                query GetUserMetadata {
+                  users(where: {id: {_eq: "${user.id}"}}) {
+                    metadata
+                  }
+                }
+              `,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        const userMetadata = data.data.users[0]?.metadata || {};
+        setCurrentLoyaltyPoints(userMetadata.loyaltyPoints || 0);
+      } catch (error) {
+        console.error("Error fetching loyalty points:", error);
+      }
+    };
+
+    fetchUserPoints();
+  }, [user, accessToken]);
+
+  // Add this useEffect to calculate points to earn based on cart total
+  useEffect(() => {
+    const points = calculateLoyaltyPoints(totalCost);
+    setPointsToEarn(points);
+  }, [totalCost]);
 
   useEffect(() => {
     if (selectedCourt) {
@@ -771,6 +855,28 @@ export default function BookNow() {
               </div>
             )}
 
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-700">
+                    Loyalty Points
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    Current Balance: {currentLoyaltyPoints} points
+                  </p>
+                  {pointsToEarn > 0 && (
+                    <p className="text-sm text-green-600">
+                      You'll earn: +{pointsToEarn} points
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-600">
+                    1 point per ₹100 spent
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input

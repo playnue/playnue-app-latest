@@ -544,6 +544,7 @@ export default function BookNow() {
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
           try {
+            console.log(response)
             // Handle points redemption first (if any)
             if (isRedeemingPoints && pointsToRedeem > 0) {
               await updateUserLoyaltyPoints(-pointsToRedeem); // Negative value for deduction

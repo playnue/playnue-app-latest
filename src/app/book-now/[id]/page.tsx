@@ -75,10 +75,22 @@ export default function BookNow() {
   const [isPartialPayment, setIsPartialPayment] = useState(false);
 
   // lolaylty points
-  const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState(0);
-  const [pointsToEarn, setPointsToEarn] = useState(0);
+  const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState();
+  const [pointsToEarn, setPointsToEarn] = useState();
   const calculateLoyaltyPoints = (amount) => {
     return Math.floor(amount / 100); // 1 point per ₹100
+  };
+
+  const [pointsToRedeem, setPointsToRedeem] = useState();
+  const [isRedeemingPoints, setIsRedeemingPoints] = useState(false);
+  const POINTS_TO_RUPEES_RATIO = 1;
+
+  const calculateLoyaltyDiscount = () => {
+    if (!isRedeemingPoints || pointsToRedeem <= 0) return 0;
+    return Math.min(
+      pointsToRedeem * POINTS_TO_RUPEES_RATIO,
+      amountAfterPartial // Can't redeem more than the total amount
+    );
   };
 
   // Modified payment calculations
@@ -145,11 +157,98 @@ export default function BookNow() {
   // Calculations (after all required states are declared)
 
   // Calculate values in the correct order
+  const loyaltyDiscount = calculateLoyaltyDiscount();
+  const amountAfterLoyalty = amountAfterPartial - loyaltyDiscount;
   const discount = calculateDiscount();
-  const amountAfterDiscount = amountAfterPartial - discount;
-  const convenienceFees =
-    amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
+  const amountAfterDiscount = amountAfterLoyalty - discount;
+  const convenienceFees = amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
   const totalCost = Math.round(amountAfterDiscount + convenienceFees);
+  const handlePointsRedemption = (value) => {
+    const points = Math.min(
+      Math.max(0, parseInt(value) || 0),
+      currentLoyaltyPoints
+    );
+    setPointsToRedeem(points);
+  };
+
+  const updateUserLoyaltyPoints = async (pointsChange) => {
+    if (!user || !accessToken) return;
+
+    try {
+      // First, fetch current metadata
+      const getCurrentMetadata = await fetch(
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            query: `
+              query GetUserMetadata {
+                users(where: {id: {_eq: "${user.id}"}}) {
+                  metadata
+                }
+              }
+            `,
+          }),
+        }
+      );
+
+      const currentData = await getCurrentMetadata.json();
+      const currentMetadata = currentData.data.users[0]?.metadata || {};
+      
+      // Calculate new loyalty points value
+      const currentPoints = currentMetadata.loyaltyPoints || 0;
+      const newPoints = Math.max(0, currentPoints + pointsChange); // Ensure points don't go below 0
+
+      // Prepare updated metadata
+      const updatedMetadata = {
+        ...currentMetadata,
+        loyaltyPoints: newPoints
+      };
+
+      // Update the metadata
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            query: `
+              mutation UpdateUserMetadata($userId: uuid!, $metadata: jsonb!) {
+                updateUser(pk_columns: {id: $userId}, _set: {metadata: $metadata}) {
+                  id
+                  metadata
+                }
+              }
+            `,
+            variables: {
+              userId: user.id,
+              metadata: updatedMetadata
+            }
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.errors) {
+        throw new Error("Failed to update loyalty points");
+      }
+      
+      // Update the local state
+      setCurrentLoyaltyPoints(newPoints);
+      
+    } catch (error) {
+      console.error("Error updating loyalty points:", error);
+      toast.error("Failed to update loyalty points balance");
+    }
+  };
+
 
   // Calculate remaining amount for partial payment
   const calculateRemainingAmount = () => {
@@ -397,24 +496,22 @@ export default function BookNow() {
       return;
     }
     console.log("success");
-    if (!user) {
-      router.push("/login");
+    if(!user){
+      router.push("/login")
     }
     try {
       // Create order via your backend
-      const slotIds = cart.map((item) => item.slotId);
-      console.log(slotIds);
       const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            "Authorization": `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
-            slot_ids: slotIds,
+            slot_ids: [slotId],
           }),
         }
       );
@@ -447,61 +544,25 @@ export default function BookNow() {
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
           try {
-            // Wait for a short delay to allow the webhook to process
-            const newPoints = currentLoyaltyPoints + pointsToEarn;
-            const updateResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL}`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify({
-                  query: `
-                    mutation UpdateUserMetadata {
-                      updateUser(
-                        pk_columns: {id: "${user.id}"}, 
-                        _set: {metadata: {loyaltyPoints: ${newPoints}}}
-                      ) {
-                        id
-                      }
-                    }
-                  `,
-                }),
-              }
-            );
-
-            if (!updateResponse.ok) {
-              throw new Error("Failed to update loyalty points");
+            // Handle points redemption first (if any)
+            if (isRedeemingPoints && pointsToRedeem > 0) {
+              await updateUserLoyaltyPoints(-pointsToRedeem); // Negative value for deduction
+              toast.success(`Successfully redeemed ${pointsToRedeem} points!`);
             }
 
-            // Wait for webhook processing
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            // Then handle points earned from the purchase
+            if (pointsToEarn > 0) {
+              await updateUserLoyaltyPoints(pointsToEarn); // Positive value for addition
+              toast.success(`Earned ${pointsToEarn} new loyalty points!`);
+            }
 
-            // Show success message and clear cart
-            toast.success(
-              `Booking confirmed! Earned ${pointsToEarn} loyalty points!`,
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-
-            setCart([]);
-            // Navigate to bookings page
+            // Handle the rest of your booking logic here
+            toast.success("Booking successful!");
             router.push("/user-bookings");
           } catch (error) {
-            console.error("Error handling payment success:", error);
-            toast.error(
-              "Booking confirmed but unable to redirect. Please check your bookings.",
-              {
-                position: "top-right",
-                autoClose: 5000,
-              }
-            );
+            console.error("Error in payment handler:", error);
+            toast.error("There was an issue processing your booking");
           }
-          // TODO: Add handler.
         },
         prefill: {
           name: user.displayName || "Guest",
@@ -854,29 +915,52 @@ export default function BookNow() {
                 </div>
               </div>
             )}
-
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-blue-700">
-                    Loyalty Points
-                  </h3>
-                  <p className="text-sm text-blue-600">
-                    Current Balance: {currentLoyaltyPoints} points
+             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-blue-700">Loyalty Points</h3>
+                <p className="text-sm text-blue-600">
+                  Current Balance: {currentLoyaltyPoints} points
+                </p>
+                {pointsToEarn > 0 && (
+                  <p className="text-sm text-green-600">
+                    You'll earn: +{pointsToEarn} points
                   </p>
-                  {pointsToEarn > 0 && (
-                    <p className="text-sm text-green-600">
-                      You'll earn: +{pointsToEarn} points
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-600">
-                    1 point per ₹100 spent
-                  </p>
-                </div>
+                )}
               </div>
+              {currentLoyaltyPoints >= 100 && (
+                <Switch
+                  checked={isRedeemingPoints}
+                  onCheckedChange={(checked) => {
+                    setIsRedeemingPoints(checked);
+                    if (!checked) setPointsToRedeem(0);
+                  }}
+                />
+              )}
             </div>
+            
+            {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
+              <div className="mt-4">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Points to redeem"
+                    value={pointsToRedeem}
+                    onChange={(e) => handlePointsRedemption(e.target.value)}
+                    max={currentLoyaltyPoints}
+                    min={0}
+                    className="flex-grow"
+                  />
+                  <p className="text-sm text-gray-600">
+                    ≈ ₹{(pointsToRedeem * POINTS_TO_RUPEES_RATIO).toFixed(2)}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  Each point is worth ₹{POINTS_TO_RUPEES_RATIO.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input
@@ -913,37 +997,47 @@ export default function BookNow() {
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <Calculator className="h-5 w-5 mr-2 text-gray-600" />
+                <span className="text-gray-700">Full Amount</span>
+              </div>
+              <span className="font-semibold">₹{fullAmount.toFixed(2)}</span>
+            </div>
+
+            {isPartialPayment && (
+              <div className="flex justify-between items-center mb-2 text-green-600">
+                <div className="flex items-center">
+                  <Tag className="h-5 w-5 mr-2" />
+                  <span>Partial Payment Reduction</span>
+                </div>
+                <span className="font-semibold">
+                  -₹{(fullAmount - amountAfterPartial).toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {isRedeemingPoints && loyaltyDiscount > 0 && (
+              <div className="flex justify-between items-center mb-2 text-purple-600">
+                <div className="flex items-center">
+                  <Tag className="h-5 w-5 mr-2" />
+                  <span>Loyalty Points Discount</span>
+                </div>
+                <span className="font-semibold">-₹{loyaltyDiscount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {isCouponApplied && discount > 0 && (
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
-                  <Calculator className="h-5 w-5 mr-2 text-gray-600" />
-                  <span className="text-gray-700">Full Amount</span>
+                  <Tag className="h-5 w-5 mr-2 text-green-600" />
+                  <span className="text-green-600">Coupon Discount</span>
                 </div>
-                <span className="font-semibold">₹{fullAmount.toFixed(2)}</span>
+                <span className="font-semibold text-green-600">
+                  -₹{discount.toFixed(2)}
+                </span>
               </div>
-
-              {isPartialPayment && (
-                <div className="flex justify-between items-center mb-2 text-green-600">
-                  <div className="flex items-center">
-                    <Tag className="h-5 w-5 mr-2" />
-                    <span>Partial Payment Reduction</span>
-                  </div>
-                  <span className="font-semibold">
-                    -₹{(fullAmount - amountAfterPartial).toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {isCouponApplied && discount > 0 && (
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
-                    <Tag className="h-5 w-5 mr-2 text-green-600" />
-                    <span className="text-green-600">Coupon Discount</span>
-                  </div>
-                  <span className="font-semibold text-green-600">
-                    -₹{discount.toFixed(2)}
-                  </span>
-                </div>
-              )}
+            )}
 
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">

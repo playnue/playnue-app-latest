@@ -77,12 +77,8 @@ export default function BookNow() {
   // lolaylty points
   const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState();
   const [pointsToEarn, setPointsToEarn] = useState();
-  const calculateLoyaltyDiscount = () => {
-    if (!isRedeemingPoints || !pointsToRedeem || pointsToRedeem < 100) return 0;
-    return Math.min(
-      pointsToRedeem * POINTS_TO_RUPEES_RATIO,
-      amountAfterPartial // Can't redeem more than the total amount
-    );
+  const calculateLoyaltyPoints = (amount) => {
+    return Math.floor(amount / 100); // 1 point per ₹100
   };
 
   const [pointsToRedeem, setPointsToRedeem] = useState();
@@ -90,7 +86,7 @@ export default function BookNow() {
   const POINTS_TO_RUPEES_RATIO = 1;
 
   const calculateLoyaltyDiscount = () => {
-    if (!isRedeemingPoints || pointsToRedeem <= 0) return 0;
+    if (!isRedeemingPoints || !pointsToRedeem || pointsToRedeem < 100) return 0;
     return Math.min(
       pointsToRedeem * POINTS_TO_RUPEES_RATIO,
       amountAfterPartial // Can't redeem more than the total amount

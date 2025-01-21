@@ -161,14 +161,26 @@ export default function BookNow() {
   const amountAfterLoyalty = amountAfterPartial - loyaltyDiscount;
   const discount = calculateDiscount();
   const amountAfterDiscount = amountAfterLoyalty - discount;
-  const convenienceFees = amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
+  const convenienceFees =
+    amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
   const totalCost = Math.round(amountAfterDiscount + convenienceFees);
   const handlePointsRedemption = (value) => {
-    const points = Math.min(
-      Math.max(0, parseInt(value) || 0),
-      currentLoyaltyPoints
-    );
-    setPointsToRedeem(points);
+    const inputValue = value === "0" ? "" : value;
+    if (!inputValue) {
+      setPointsToRedeem("");
+      return;
+    }
+
+    // Convert to number for validation
+    const points = parseInt(inputValue) || 0;
+    if (points < 100) {
+      setPointsToRedeem(inputValue); // Keep the input value for UX
+      return;
+    }
+
+    // Apply maximum limit based on available points
+    const finalPoints = Math.min(points, currentLoyaltyPoints);
+    setPointsToRedeem(finalPoints);
   };
 
   const updateUserLoyaltyPoints = async (pointsChange) => {
@@ -198,7 +210,7 @@ export default function BookNow() {
 
       const currentData = await getCurrentMetadata.json();
       const currentMetadata = currentData.data.users[0]?.metadata || {};
-      
+
       // Calculate new loyalty points value
       const currentPoints = currentMetadata.loyaltyPoints || 0;
       const newPoints = Math.max(0, currentPoints + pointsChange); // Ensure points don't go below 0
@@ -206,20 +218,18 @@ export default function BookNow() {
       // Prepare updated metadata
       const updatedMetadata = {
         ...currentMetadata,
-        loyaltyPoints: newPoints
+        loyaltyPoints: newPoints,
       };
 
       // Update the metadata
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            query: `
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: `
               mutation UpdateUserMetadata($userId: uuid!, $metadata: jsonb!) {
                 updateUser(pk_columns: {id: $userId}, _set: {metadata: $metadata}) {
                   id
@@ -227,28 +237,25 @@ export default function BookNow() {
                 }
               }
             `,
-            variables: {
-              userId: user.id,
-              metadata: updatedMetadata
-            }
-          }),
-        }
-      );
+          variables: {
+            userId: user.id,
+            metadata: updatedMetadata,
+          },
+        }),
+      });
 
       const data = await response.json();
       if (data.errors) {
         throw new Error("Failed to update loyalty points");
       }
-      
+
       // Update the local state
       setCurrentLoyaltyPoints(newPoints);
-      
     } catch (error) {
       console.error("Error updating loyalty points:", error);
       toast.error("Failed to update loyalty points balance");
     }
   };
-
 
   // Calculate remaining amount for partial payment
   const calculateRemainingAmount = () => {
@@ -496,8 +503,8 @@ export default function BookNow() {
       return;
     }
     console.log("success");
-    if(!user){
-      router.push("/login")
+    if (!user) {
+      router.push("/login");
     }
     try {
       // Create order via your backend
@@ -507,7 +514,7 @@ export default function BookNow() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
@@ -544,7 +551,7 @@ export default function BookNow() {
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
           try {
-            console.log(response)
+            console.log(response);
             // Handle points redemption first (if any)
             if (isRedeemingPoints && pointsToRedeem > 0) {
               await updateUserLoyaltyPoints(-pointsToRedeem); // Negative value for deduction
@@ -916,52 +923,55 @@ export default function BookNow() {
                 </div>
               </div>
             )}
-             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-blue-700">Loyalty Points</h3>
-                <p className="text-sm text-blue-600">
-                  Current Balance: {currentLoyaltyPoints} points
-                </p>
-                {pointsToEarn > 0 && (
-                  <p className="text-sm text-green-600">
-                    You'll earn: +{pointsToEarn} points
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-700">
+                    Loyalty Points
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    Current Balance: {currentLoyaltyPoints} points
                   </p>
+                  {pointsToEarn > 0 && (
+                    <p className="text-sm text-green-600">
+                      You'll earn: +{pointsToEarn} points
+                    </p>
+                  )}
+                </div>
+                {currentLoyaltyPoints >= 100 && (
+                  <Switch
+                    checked={isRedeemingPoints}
+                    onCheckedChange={(checked) => {
+                      setIsRedeemingPoints(checked);
+                      if (!checked) setPointsToRedeem("");
+                    }}
+                  />
                 )}
               </div>
-              {currentLoyaltyPoints >= 100 && (
-                <Switch
-                  checked={isRedeemingPoints}
-                  onCheckedChange={(checked) => {
-                    setIsRedeemingPoints(checked);
-                    if (!checked) setPointsToRedeem(0);
-                  }}
-                />
-              )}
-            </div>
-            
-            {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
-              <div className="mt-4">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Points to redeem"
-                    value={pointsToRedeem}
-                    onChange={(e) => handlePointsRedemption(e.target.value)}
-                    max={currentLoyaltyPoints}
-                    min={0}
-                    className="flex-grow"
-                  />
-                  <p className="text-sm text-gray-600">
-                    ≈ ₹{(pointsToRedeem * POINTS_TO_RUPEES_RATIO).toFixed(2)}
+
+              {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Minimum 100 points"
+                      value={pointsToRedeem}
+                      onChange={(e) => handlePointsRedemption(e.target.value)}
+                      max={currentLoyaltyPoints}
+                      min={100}
+                      className="flex-grow"
+                    />
+                    <p className="text-sm text-gray-600">
+                      ≈ ₹{(pointsToRedeem * POINTS_TO_RUPEES_RATIO).toFixed(2)}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Minimum redemption: 100 points (₹
+                    {(100 * POINTS_TO_RUPEES_RATIO).toFixed(2)})
                   </p>
                 </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  Each point is worth ₹{POINTS_TO_RUPEES_RATIO.toFixed(2)}
-                </p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input
@@ -998,47 +1008,49 @@ export default function BookNow() {
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center">
-                <Calculator className="h-5 w-5 mr-2 text-gray-600" />
-                <span className="text-gray-700">Full Amount</span>
-              </div>
-              <span className="font-semibold">₹{fullAmount.toFixed(2)}</span>
-            </div>
-
-            {isPartialPayment && (
-              <div className="flex justify-between items-center mb-2 text-green-600">
-                <div className="flex items-center">
-                  <Tag className="h-5 w-5 mr-2" />
-                  <span>Partial Payment Reduction</span>
-                </div>
-                <span className="font-semibold">
-                  -₹{(fullAmount - amountAfterPartial).toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            {isRedeemingPoints && loyaltyDiscount > 0 && (
-              <div className="flex justify-between items-center mb-2 text-purple-600">
-                <div className="flex items-center">
-                  <Tag className="h-5 w-5 mr-2" />
-                  <span>Loyalty Points Discount</span>
-                </div>
-                <span className="font-semibold">-₹{loyaltyDiscount.toFixed(2)}</span>
-              </div>
-            )}
-
-            {isCouponApplied && discount > 0 && (
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">
-                  <Tag className="h-5 w-5 mr-2 text-green-600" />
-                  <span className="text-green-600">Coupon Discount</span>
+                  <Calculator className="h-5 w-5 mr-2 text-gray-600" />
+                  <span className="text-gray-700">Full Amount</span>
                 </div>
-                <span className="font-semibold text-green-600">
-                  -₹{discount.toFixed(2)}
-                </span>
+                <span className="font-semibold">₹{fullAmount.toFixed(2)}</span>
               </div>
-            )}
+
+              {isPartialPayment && (
+                <div className="flex justify-between items-center mb-2 text-green-600">
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2" />
+                    <span>Partial Payment Reduction</span>
+                  </div>
+                  <span className="font-semibold">
+                    -₹{(fullAmount - amountAfterPartial).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {isRedeemingPoints && loyaltyDiscount > 0 && (
+                <div className="flex justify-between items-center mb-2 text-purple-600">
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2" />
+                    <span>Loyalty Points Discount</span>
+                  </div>
+                  <span className="font-semibold">
+                    -₹{loyaltyDiscount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {isCouponApplied && discount > 0 && (
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center">
+                    <Tag className="h-5 w-5 mr-2 text-green-600" />
+                    <span className="text-green-600">Coupon Discount</span>
+                  </div>
+                  <span className="font-semibold text-green-600">
+                    -₹{discount.toFixed(2)}
+                  </span>
+                </div>
+              )}
 
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center">

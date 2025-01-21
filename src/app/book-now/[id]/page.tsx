@@ -77,8 +77,12 @@ export default function BookNow() {
   // lolaylty points
   const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState();
   const [pointsToEarn, setPointsToEarn] = useState();
-  const calculateLoyaltyPoints = (amount) => {
-    return Math.floor(amount / 100); // 1 point per ₹100
+  const calculateLoyaltyDiscount = () => {
+    if (!isRedeemingPoints || !pointsToRedeem || pointsToRedeem < 100) return 0;
+    return Math.min(
+      pointsToRedeem * POINTS_TO_RUPEES_RATIO,
+      amountAfterPartial // Can't redeem more than the total amount
+    );
   };
 
   const [pointsToRedeem, setPointsToRedeem] = useState();
@@ -164,8 +168,12 @@ export default function BookNow() {
   const convenienceFees =
     amountAfterDiscount * (CONVENIENCE_FEE_PERCENTAGE / 100);
   const totalCost = Math.round(amountAfterDiscount + convenienceFees);
+
   const handlePointsRedemption = (value) => {
+    // Convert input to number, defaulting to empty string if 0
     const inputValue = value === "0" ? "" : value;
+    
+    // If the input is empty, set points to redeem to empty string
     if (!inputValue) {
       setPointsToRedeem("");
       return;
@@ -173,14 +181,13 @@ export default function BookNow() {
 
     // Convert to number for validation
     const points = parseInt(inputValue) || 0;
-    if (points < 100) {
-      setPointsToRedeem(inputValue); // Keep the input value for UX
-      return;
+    
+    // Allow typing numbers less than 100 but don't apply the discount
+    if (points <= currentLoyaltyPoints) {
+      setPointsToRedeem(points);
+    } else {
+      setPointsToRedeem(currentLoyaltyPoints);
     }
-
-    // Apply maximum limit based on available points
-    const finalPoints = Math.min(points, currentLoyaltyPoints);
-    setPointsToRedeem(finalPoints);
   };
 
   const updateUserLoyaltyPoints = async (pointsChange) => {
@@ -924,54 +931,56 @@ export default function BookNow() {
               </div>
             )}
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-blue-700">
-                    Loyalty Points
-                  </h3>
-                  <p className="text-sm text-blue-600">
-                    Current Balance: {currentLoyaltyPoints} points
-                  </p>
-                  {pointsToEarn > 0 && (
-                    <p className="text-sm text-green-600">
-                      You'll earn: +{pointsToEarn} points
-                    </p>
-                  )}
-                </div>
-                {currentLoyaltyPoints >= 100 && (
-                  <Switch
-                    checked={isRedeemingPoints}
-                    onCheckedChange={(checked) => {
-                      setIsRedeemingPoints(checked);
-                      if (!checked) setPointsToRedeem("");
-                    }}
-                  />
-                )}
-              </div>
-
-              {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
-                <div className="mt-4">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Minimum 100 points"
-                      value={pointsToRedeem}
-                      onChange={(e) => handlePointsRedemption(e.target.value)}
-                      max={currentLoyaltyPoints}
-                      min={100}
-                      className="flex-grow"
-                    />
-                    <p className="text-sm text-gray-600">
-                      ≈ ₹{(pointsToRedeem * POINTS_TO_RUPEES_RATIO).toFixed(2)}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Minimum redemption: 100 points (₹
-                    {(100 * POINTS_TO_RUPEES_RATIO).toFixed(2)})
-                  </p>
-                </div>
-              )}
-            </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-blue-700">Loyalty Points</h3>
+          <p className="text-sm text-blue-600">
+            Current Balance: {currentLoyaltyPoints} points
+          </p>
+          {pointsToEarn > 0 && (
+            <p className="text-sm text-green-600">
+              You'll earn: +{pointsToEarn} points
+            </p>
+          )}
+        </div>
+        {currentLoyaltyPoints >= 100 && (
+          <Switch
+            checked={isRedeemingPoints}
+            onCheckedChange={(checked) => {
+              setIsRedeemingPoints(checked);
+              if (!checked) setPointsToRedeem("");
+            }}
+          />
+        )}
+      </div>
+      
+      {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
+        <div className="mt-4">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="Minimum 100 points"
+              value={pointsToRedeem}
+              onChange={(e) => handlePointsRedemption(e.target.value)}
+              max={currentLoyaltyPoints}
+              min={0}
+              className="flex-grow"
+            />
+            <p className="text-sm text-gray-600">
+              ≈ ₹{((pointsToRedeem >= 100 ? pointsToRedeem : 0) * POINTS_TO_RUPEES_RATIO).toFixed(2)}
+            </p>
+          </div>
+          {pointsToRedeem > 0 && pointsToRedeem < 100 && (
+            <p className="text-xs text-red-600 mt-1">
+              Minimum 100 points required for redemption
+            </p>
+          )}
+          <p className="text-xs text-gray-600 mt-1">
+            Minimum redemption: 100 points (₹{(100 * POINTS_TO_RUPEES_RATIO).toFixed(2)})
+          </p>
+        </div>
+      )}
+    </div>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input

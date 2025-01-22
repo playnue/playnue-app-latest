@@ -35,7 +35,8 @@ const sportIcons = {
   Tennis: " 🎾 ",
   BoxCricket: " 🏏 ",
   Snooker: " 🎱🥢 ",
-  Pool:"🎱🥢"
+  Pool:"🎱",
+  LawnTennis:"🎾"
   // TableTennis: " :table "
 };
 

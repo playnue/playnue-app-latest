@@ -145,6 +145,7 @@ export default function Bookings() {
     BoxCricket: " 🏏 ",
     Snooker: " 🎱🥢 ",
     Pool: "🎱🥢",
+    LawnTennis:" 🎾 "
   };
 
   useEffect(() => {
@@ -178,6 +179,10 @@ export default function Bookings() {
           return "/playerTown.jpg";
         case "cb9162ae-c5c2-44a9-ab6a-8c496f253a34":
           return "/playerTown.jpg";
+        case "de83245f-6326-4373-9a54-d3137bd1a125":
+          return "/lpg.jpg";
+        case "36b6825d-ba31-4a8f-aa06-5dfd0ec71e8e":
+          return "/lpg.jpg";
 
         default:
           return null;

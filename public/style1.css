@@ -1198,15 +1198,13 @@ nav {
 
 .ticker {
     display: flex;
-    white-space: nowrap;
     animation: ticker 20s linear infinite;
+    white-space: nowrap;
 }
 
 .ticker-content {
     display: flex;
     align-items: center;
-    /* Double the content for seamless loop */
-    padding-right: 100%;
 }
 
 .ticker-content span {
@@ -1217,6 +1215,7 @@ nav {
     font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    flex-shrink: 0;
 }
 
 .ticker-wrapper:hover .ticker {
@@ -1232,10 +1231,6 @@ nav {
     }
 }
 
-/* Add smooth acceleration/deceleration when pausing */
-.ticker {
-    transition: animation-play-state 0.2s ease;
-}
 
 /* Main Content Adjustment */
 main {
@@ -1335,7 +1330,7 @@ main {
     }
 
     .ticker {
-        animation-duration: 7s; /* Faster on mobile */
+        animation-duration: 7s; /* Slowed down for mobile */
     }
     
     .ticker-content span {

@@ -44,7 +44,7 @@ function LoginFormContent() {
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
-        router.push("/");
+        router.push("/tournaments");
       }
     }
   }, [isAuthenticated, isLoading, searchParams, router]);
@@ -54,7 +54,7 @@ function LoginFormContent() {
     if (returnUrl) {
       window.location.href = decodeURIComponent(returnUrl);
     } else {
-      window.location.href = "/";
+      window.location.href = "/tournaments";
     }
   };
 

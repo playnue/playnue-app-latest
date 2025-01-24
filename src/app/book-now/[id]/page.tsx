@@ -351,7 +351,7 @@ export default function BookNow() {
       const now = new Date();
       const currentTime = format(now, "HH:mm");
       const today = format(now, "yyyy-MM-dd");
-
+  
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
@@ -361,7 +361,7 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             query: `
-              query GetSlots($courtId: uuid!, $date: date!, $currentTime: time!, $today: date!) {
+              query GetSlots($courtId: uuid!, $date: date!, $currentTime: time!, $fiveMinBuffer: time!, $today: date!) {
                 slots(where: {
                   court_id: {_eq: $courtId},
                   date: {_eq: $date},
@@ -370,7 +370,8 @@ export default function BookNow() {
                     {date: {_gt: $today}},
                     {_and: [
                       {date: {_eq: $today}},
-                      {start_at: {_gt: $currentTime}}
+                      {start_at: {_gt: $currentTime}},
+                      {start_at: {_gt: $fiveMinBuffer}}
                     ]}
                   ]
                 }) {
@@ -385,36 +386,48 @@ export default function BookNow() {
               courtId: courtId,
               date: formattedDate,
               currentTime: currentTime,
+              fiveMinBuffer: calculateFiveMinBuffer(currentTime),
               today: today,
             },
           }),
         }
       );
-
+  
       const responseData = await slotResponse.json();
       if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-
+  
       const availableSlots = responseData.data.slots;
       availableSlots.sort((a, b) => {
-        // Parse hours and minutes from start_at times
         const [hoursA, minutesA] = a.start_at.split(":");
         const [hoursB, minutesB] = b.start_at.split(":");
-
-        // Compare hours first
+  
         if (hoursA !== hoursB) {
           return hoursA - hoursB;
         }
-        // If hours are same, compare minutes
         return minutesA - minutesB;
       });
-
+  
       setSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching slots:", error);
       setSlots([]);
     }
+  };
+  
+  // Helper function to calculate 5 minutes before the current time
+  const calculateFiveMinBuffer = (currentTime) => {
+    const [hours, minutes] = currentTime.split(":").map(Number);
+    let bufferedMinutes = minutes + 5;
+    let bufferedHours = hours;
+  
+    if (bufferedMinutes >= 60) {
+      bufferedHours += 1;
+      bufferedMinutes -= 60;
+    }
+  
+    return `${String(bufferedHours).padStart(2, '0')}:${String(bufferedMinutes).padStart(2, '0')}`;
   };
 
   const formatTimeRange = (startTime, endTime) => {

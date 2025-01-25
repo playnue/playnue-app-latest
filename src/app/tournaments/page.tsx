@@ -33,7 +33,7 @@ export default function Tournaments() {
       teamsRegistered: 10,
       players: 1,
       maxPlayers: 16,
-      status: "open",
+      status: "closed",
       image: "/cueLords.jpg",
       description:
         "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",

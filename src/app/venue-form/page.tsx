@@ -159,10 +159,11 @@ const MultiStepVenueForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [courtId, setCourtId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [quickCourts, setQuickCourts] = useState([{ name: "", price: "" }]);
   const accessToken = useAccessToken();
   const user = useUserData();
   const router = useRouter();
-  
+
   const [selectedDates, setSelectedDates] = useState([]);
   // const nhost = useNhostClient();
   const [newAmenity, setNewAmenity] = useState("");
@@ -216,6 +217,30 @@ const MultiStepVenueForm = () => {
     },
   ]);
 
+  const addQuickCourtRow = () => {
+    setQuickCourts([...quickCourts, { name: "", price: "" }]);
+  };
+
+  const removeQuickCourtRow = (index) => {
+    setQuickCourts(quickCourts.filter((_, i) => i !== index));
+  };
+
+  const generateCourtSlots = () => {
+    const generatedCourts = quickCourts.map((court) => ({
+      name: court.name,
+      slots: [
+        {
+          timeSlots: Array.from({ length: 24 }, (_, hour) => ({
+            startTime: `${hour.toString().padStart(2, "0")}:00`,
+            endTime: `${(hour + 1).toString().padStart(2, "0")}:00`,
+            price: court.price,
+          })),
+        },
+      ],
+    }));
+
+    setCourts(generatedCourts);
+  };
   const handleSlotTimeChange = (index, field, value) => {
     const newSlots = [...slots];
     newSlots[index] = {
@@ -271,36 +296,35 @@ const MultiStepVenueForm = () => {
   const uploadImages = async (e) => {
     const file = e.target.files[0];
     setIsUploading(true);
-  
+
     try {
-      const {fileMetadata, error  } = await nhost.storage.upload({
+      const { fileMetadata, error } = await nhost.storage.upload({
         file,
         headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "X-Hasura-role": "seller"
-        }
+          Authorization: `Bearer ${accessToken}`,
+          "X-Hasura-role": "seller",
+        },
       });
       console.log("Access token available:");
-      console.log(fileMetadata)
+      console.log(fileMetadata);
       if (error) {
         console.error("Nhost upload error:", error);
         throw error;
       }
-  
+
       if (!fileMetadata) {
         throw new Error("No file metadata received");
       }
-  
+
       console.log("Upload successful:", fileMetadata);
-  
-      setVenue(prev => ({
+
+      setVenue((prev) => ({
         ...prev,
-        image_id: fileMetadata.id
+        image_id: fileMetadata.id,
       }));
-  
     } catch (error) {
       console.error("Full error details:", error);
-      alert(`Upload failed: ${error.message || 'Internal server error'}`);
+      alert(`Upload failed: ${error.message || "Internal server error"}`);
     } finally {
       setIsUploading(false);
     }
@@ -420,7 +444,7 @@ const MultiStepVenueForm = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          "Authorization":`Bearer ${accessToken}`
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             query: courtsMutation,
@@ -465,7 +489,7 @@ const MultiStepVenueForm = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-          "Authorization":`Bearer ${accessToken}`
+              Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
               query: slotsMutation,
@@ -551,7 +575,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ query: mutation, variables }),
       });
@@ -666,7 +690,7 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           query: mutation,
@@ -769,8 +793,8 @@ const MultiStepVenueForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization":`Bearer ${accessToken}`,
-          "x-hasura-role":"seller",
+          Authorization: `Bearer ${accessToken}`,
+          "x-hasura-role": "seller",
         },
         body: JSON.stringify({
           query: `
@@ -1091,7 +1115,48 @@ const MultiStepVenueForm = () => {
                   </p>
                 </div>
               </div>
-
+              <div className="border p-4 rounded-lg bg-gray-50 mt-4">
+  <h3 className="text-lg font-semibold mb-4">Quick Court Generation</h3>
+  {quickCourts.map((court, index) => (
+    <div key={index} className="flex gap-2 mb-2">
+      <Input
+        placeholder="Court Name"
+        value={court.name}
+        onChange={(e) => {
+          const newQuickCourts = [...quickCourts];
+          newQuickCourts[index].name = e.target.value;
+          setQuickCourts(newQuickCourts);
+        }}
+      />
+      <Input
+        type="number"
+        placeholder="Price/Hour"
+        value={court.price}
+        onChange={(e) => {
+          const newQuickCourts = [...quickCourts];
+          newQuickCourts[index].price = e.target.value;
+          setQuickCourts(newQuickCourts);
+        }}
+      />
+      {quickCourts.length > 1 && (
+        <Button 
+          onClick={() => removeQuickCourtRow(index)} 
+          variant="destructive"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  ))}
+  <div className="flex gap-2 mt-2">
+    <Button onClick={addQuickCourtRow} type="button">
+      <Plus className="w-4 h-4 mr-2" /> Add Court
+    </Button>
+    <Button onClick={generateCourtSlots} type="button" variant="secondary">
+      Generate 24-Hour Slots
+    </Button>
+  </div>
+</div>
               {/* Right column: Courts management */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">

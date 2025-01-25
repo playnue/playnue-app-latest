@@ -156,7 +156,7 @@ export default function BookNow() {
       discount: 26,
       minAmount: 0,
       type: "percentage",
-      maxDiscount: 26,
+      maxDiscount: 500,
     },
   };
 

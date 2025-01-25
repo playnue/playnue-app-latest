@@ -18,7 +18,7 @@ export default function Tournaments() {
       venue: "Playturf",
       teamsRegistered: 8,
       maxTeams: 16,
-      status: "open",
+      status: "closed",
       image: "/playturfT.jpg",
     },
     {
@@ -33,7 +33,7 @@ export default function Tournaments() {
       teamsRegistered: 10,
       players: 1,
       maxPlayers: 16,
-      status: "closed",
+      status: "open",
       image: "/cueLords.jpg",
       description:
         "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",

@@ -145,7 +145,8 @@ export default function Bookings() {
     BoxCricket: " 🏏 ",
     Snooker: " 🎱🥢 ",
     Pool: "🎱🥢",
-    LawnTennis:" 🎾 "
+    LawnTennis:" 🎾 ",
+    PS4:"🎮",
   };
 
   useEffect(() => {

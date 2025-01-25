@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nhost } from "@/lib/nhost";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
-
 export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

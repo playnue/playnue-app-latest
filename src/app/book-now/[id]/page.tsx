@@ -999,7 +999,7 @@ export default function BookNow() {
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input
-                  maxLength={9}
+                  maxLength={10}
                   placeholder="Enter coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}

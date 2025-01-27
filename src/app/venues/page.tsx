@@ -186,7 +186,7 @@ export default function Bookings() {
           return "/lpg.jpg";
 
         default:
-          return null;
+          return "/comingSoon.jpeg";
       }
     };
 

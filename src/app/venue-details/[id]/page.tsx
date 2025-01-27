@@ -49,10 +49,9 @@ const VenuePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const [image,setImage] = useState();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const data = localStorage.getItem("user");
-  const parsedData = JSON.parse(data);
   const handleButtonClick = (e) => {
     e.preventDefault(); // Prevent the default behavior of the link
     setIsLoading(true);
@@ -97,6 +96,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
+        setImage(data.data.venues[0].id)
         console.log(data.data.venues[0].image_id);
         setLoading(false);
       } catch (error) {
@@ -107,6 +107,31 @@ const VenuePage = () => {
 
     fetchVenueDetails();
   }, [id]);
+
+  const getImageSource = (id) => {
+    switch (id) {
+      case "063a2e3f-8365-40f3-8613-9613f6024d78":
+        return "/cueLords.jpg";
+      case "25d039e0-8a4d-49b1-ac06-5439c3af4a6f":
+        return "/playturf.jpg";
+      case "dfac7e28-16d2-45ff-93d9-add6a0a006e2":
+        return "/bsa.jpg";
+      case "d718a6cf-e982-42cf-b383-825134db21f6":
+        return "/playerTown.jpg";
+      case "cb9162ae-c5c2-44a9-ab6a-8c496f253a34":
+        return "/playerTown.jpg";
+      case "de83245f-6326-4373-9a54-d3137bd1a125":
+        return "/lpg.jpg";
+      case "36b6825d-ba31-4a8f-aa06-5dfd0ec71e8e":
+        return "/lpg.jpg";
+
+      default:
+        return null;
+    }
+  };
+
+  const imageSource = getImageSource(image);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -162,7 +187,7 @@ const VenuePage = () => {
         <div className="relative mb-8">
           <div className="relative h-60 overflow-hidden rounded-lg">
             <img
-              src="/playturf.jpg"
+              src={imageSource}
               alt={`Venue image ${currentImage + 1}`}
               className="w-full h-full object-cover"
             />

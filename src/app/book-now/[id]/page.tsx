@@ -152,12 +152,6 @@ export default function BookNow() {
       type: "percentage",
       maxDiscount: 99,
     },
-    REPUBLIC26: {
-      discount: 26,
-      minAmount: 0,
-      type: "percentage",
-      maxDiscount: 500,
-    },
   };
 
   // Calculations (after all required states are declared)

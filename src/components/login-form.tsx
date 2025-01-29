@@ -41,20 +41,64 @@ function LoginFormContent() {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const returnUrl = searchParams.get("returnUrl");
+      console.log(returnUrl)
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
-        router.push("/tournaments");
+        router.push("/dashbaord");
       }
     }
   }, [isAuthenticated, isLoading, searchParams, router]);
 
   const handleRedirectAfterLogin = () => {
     const returnUrl = searchParams.get("returnUrl");
+    const origin = window.location.origin;
+    
     if (returnUrl) {
-      window.location.href = decodeURIComponent(returnUrl);
+      // Decode the URL and ensure it starts with a forward slash
+      const decodedUrl = decodeURIComponent(returnUrl);
+      const validUrl = decodedUrl.startsWith('/') ? decodedUrl : `/${decodedUrl}`;
+      console.log(validUrl)
+      // Construct full URL with origin
+      const fullUrl = `${origin}${validUrl}`;
+      
+      // Validate that the URL belongs to your domain
+      if (fullUrl.startsWith(origin)) {
+        window.location.href = validUrl;
+      } else {
+        window.location.href = '/dashboard';
+      }
     } else {
-      window.location.href = "/tournaments";
+      window.location.href = '/dashboard';
+    }
+  };
+  
+  // Update Google login handler to preserve returnUrl
+  const handleGoogleLogin = async () => {
+    try {
+      const returnUrl = searchParams.get("returnUrl");
+      
+      const result = await nhost.auth.signIn({
+        provider: 'google',
+        options: {
+          // Pass the returnUrl as state parameter
+          redirectTo: returnUrl ? 
+            `${window.location.origin}${decodeURIComponent(returnUrl)}` : 
+            window.location.origin
+        }
+      });
+  
+      if (result?.error) {
+        toast.error("Google login failed", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    } catch (error) {
+      toast.error("An error occurred during Google login", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -91,31 +135,6 @@ function LoginFormContent() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      const returnUrl = searchParams.get("returnUrl");
-      
-      const result = await nhost.auth.signIn({
-        provider: 'google',
-        options: {
-          // Pass the returnUrl as state parameter
-          state: returnUrl ? encodeURIComponent(returnUrl) : undefined
-        }
-      });
-  
-      if (result?.error) {
-        toast.error("Google login failed", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    } catch (error) {
-      toast.error("An error occurred during Google login", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
 
   return (
     <>

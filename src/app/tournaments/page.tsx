@@ -33,7 +33,7 @@ export default function Tournaments() {
       teamsRegistered: 10,
       players: 1,
       maxPlayers: 16,
-      status: "open",
+      status: "closed",
       image: "/cueLords.jpg",
       description:
         "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",
@@ -288,17 +288,16 @@ export default function Tournaments() {
                       {tournament.teamsRegistered} teams registered
                     </span>
                     <Link href={`/tournament/${tournament.id}`}>
-                      <button
-                        className={`${
-                          tournament.status === "closed"
-                            ? "bg-gray-600 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700"
-                        } text-white px-4 py-2 rounded`}
-                      >
-                        {tournament.status === "closed"
-                          ? "Closed"
-                          : "View Details"}
-                      </button>
+                    <button
+  disabled={tournament.status === "closed"}
+  className={`${
+    tournament.status === "closed"
+      ? "bg-gray-600 cursor-not-allowed"
+      : "bg-blue-600 hover:bg-blue-700"
+  } text-white px-4 py-2 rounded`}
+>
+  {tournament.status === "closed" ? "Closed" : "View Details"}
+</button>
                     </Link>
                   </div>
                 </div>

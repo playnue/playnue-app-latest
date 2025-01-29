@@ -51,6 +51,15 @@ export default function BookNow() {
   const router = useRouter();
   const accessToken = useAccessToken();
   const user = useUserData();
+  console.log(user)
+
+  useEffect(() => {
+    if (!user) {
+      // Encode the current path to handle special characters
+      const currentPath = encodeURIComponent(window.location.pathname);
+      router.push(`/login?returnUrl=${currentPath}`);
+    }
+  }, [user, router]);
 
   // Basic states
   const [isClient, setIsClient] = useState(false);
@@ -152,6 +161,12 @@ export default function BookNow() {
       type: "percentage",
       maxDiscount: 99,
     },
+    PLAYNUE50: {
+      discount: 50,
+      minAmount: 800,
+      type: "percentage",
+      maxDiscount: 1000, // Setting a reasonable maximum discount cap
+    }
   };
 
   // Calculations (after all required states are declared)
@@ -475,9 +490,7 @@ export default function BookNow() {
       return;
     }
 
-    if (!user) {
-      router.push("/login");
-    }
+    
 
     console.log("Selected slot data:", selectedSlot);
     const selectedCourtName =

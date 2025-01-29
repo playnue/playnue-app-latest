@@ -9,6 +9,10 @@ import {
   Plane,
   MoreHorizontal,
   HelpCircle,
+  Trophy,
+  MapPin,
+  LogOut,
+  LayoutDashboard,
   MessageSquare,
 } from "lucide-react";
 // import { useSession } from "next-auth/react";
@@ -34,11 +38,16 @@ export default function Sidebar() {
     {
       // title: "Platform",
       items: [
-        { name: "Play", href: "/venues", icon: <Monitor size={18} /> },
+        { name: "Play", href: "/venues", icon: <MapPin  size={18} /> },
         {
           name: "Dashboard",
           href: "/dashboard",
-          icon: <Building2 size={18} />,
+          icon: <LayoutDashboard  size={18} />,
+        },
+        {
+          name: "Tournaments",
+          href: "/tournament",
+          icon: <Trophy  size={18} />,
         },
       ],
     },
@@ -98,12 +107,14 @@ export default function Sidebar() {
 
       {/* User Profile */}
       <div className="flex items-center gap-2 p-2 mt-2 rounded hover:bg-gray-800 cursor-pointer">
-        <div className="w-8 h-8 rounded bg-gradient-to-r from-purple-500 to-pink-500" />
-        <div className="flex-1" onClick={handleSignout}>
-          <p className="text-sm">{user?.displayName}</p>
-          <p className="text-xs text-gray-500">Logout</p>
-        </div>
-      </div>
+  <div className="w-8 h-8 rounded bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+    <LogOut size={18} className="text-white" /> 
+  </div>
+  <div className="flex-1" onClick={handleSignout}>
+    <p className="text-sm">{user?.displayName}</p>
+    <p className="text-xs text-gray-500">Logout</p>
+  </div>
+</div>
     </div>
   );
 }

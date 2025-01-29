@@ -50,7 +50,7 @@ export default function Bookings() {
           const city = data.city || data.City || data.cityName;
           const state = data.region || data.regionName || data.region_name;
           const country = data.country_name || data.country || data.Country;
-
+          console.log(city);
           if (city && state && country) {
             setLocation(`${city}, ${state}, ${country}`);
             break;

@@ -20,17 +20,20 @@ import { useAuthenticationStatus } from "@nhost/nextjs";
 import React, { Suspense } from "react";
 
 const getValidRedirectUrl = (returnUrl: string | null) => {
-  if (!returnUrl) return '/dashboard';
+  // If no returnUrl is provided, return null to let Nhost use its default redirect
+  if (!returnUrl) return null;
   
-  // Decode the URL if it's encoded
-  const decodedUrl = decodeURIComponent(returnUrl);
-  
-  // Ensure the path starts with a forward slash
-  if (!decodedUrl.startsWith('/')) {
-    return `/${decodedUrl}`;
+  try {
+    // Decode the URL if it's encoded
+    const decodedUrl = decodeURIComponent(returnUrl);
+    
+    // Only use the pathname without any query parameters
+    const url = new URL(decodedUrl, window.location.origin);
+    return url.pathname;
+  } catch (error) {
+    console.error('Error processing redirect URL:', error);
+    return null;
   }
-  
-  return decodedUrl;
 };
 
 export const useAuth = () => {
@@ -40,18 +43,22 @@ export const useAuth = () => {
   const handleGoogleLogin = async () => {
     try {
       const returnUrl = searchParams.get("returnUrl");
-      const validRedirectPath = getValidRedirectUrl(returnUrl);
-      
+      const options: any = {};
+
+      const redirectPath = getValidRedirectUrl(returnUrl);
+      if (redirectPath) {
+        // Only set redirectTo if we have a valid path
+        options.redirectTo = redirectPath;
+      }
+
       const result = await nhost.auth.signIn({
         provider: 'google',
-        options: {
-          // Only pass the path portion for redirectTo
-          redirectTo: validRedirectPath
-        }
+        options
       });
 
       if (result?.error) {
-        toast.error("Google login failed", {
+        console.error("Google login error:", result.error);
+        toast.error("Google login failed: " + result.error.message, {
           position: "top-right",
           autoClose: 3000,
         });
@@ -65,15 +72,19 @@ export const useAuth = () => {
     }
   };
 
-  const handleRedirectAfterLogin = () => {
+  const handleSuccessfulLogin = () => {
     const returnUrl = searchParams.get("returnUrl");
-    const validRedirectPath = getValidRedirectUrl(returnUrl);
-    router.push(validRedirectPath);
+    if (returnUrl) {
+      const decodedUrl = decodeURIComponent(returnUrl);
+      router.push(decodedUrl.startsWith('/') ? decodedUrl : `/${decodedUrl}`);
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   return {
     handleGoogleLogin,
-    handleRedirectAfterLogin
+    handleSuccessfulLogin
   };
 };
 

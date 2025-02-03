@@ -19,15 +19,62 @@ import { Label } from "@/components/ui/label";
 import { useAuthenticationStatus } from "@nhost/nextjs";
 import React, { Suspense } from "react";
 
-// Helper function to validate and format redirect URL
-const getValidRedirectUrl = (returnUrl: string | null, origin: string) => {
-  if (!returnUrl) return `${origin}/`;
+const getValidRedirectUrl = (returnUrl: string | null) => {
+  if (!returnUrl) return '/dashboard';
   
-  // Ensure returnUrl starts with a forward slash
-  const formattedUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+  // Decode the URL if it's encoded
+  const decodedUrl = decodeURIComponent(returnUrl);
   
-  // Construct full URL
-  return `${origin}${formattedUrl}`;
+  // Ensure the path starts with a forward slash
+  if (!decodedUrl.startsWith('/')) {
+    return `/${decodedUrl}`;
+  }
+  
+  return decodedUrl;
+};
+
+export const useAuth = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const handleGoogleLogin = async () => {
+    try {
+      const returnUrl = searchParams.get("returnUrl");
+      const validRedirectPath = getValidRedirectUrl(returnUrl);
+      
+      const result = await nhost.auth.signIn({
+        provider: 'google',
+        options: {
+          // Only pass the path portion for redirectTo
+          redirectTo: validRedirectPath
+        }
+      });
+
+      if (result?.error) {
+        toast.error("Google login failed", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("An error occurred during Google login", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleRedirectAfterLogin = () => {
+    const returnUrl = searchParams.get("returnUrl");
+    const validRedirectPath = getValidRedirectUrl(returnUrl);
+    router.push(validRedirectPath);
+  };
+
+  return {
+    handleGoogleLogin,
+    handleRedirectAfterLogin
+  };
 };
 
 function LoginFormContent() {
@@ -37,7 +84,7 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthenticationStatus();
-
+  const { handleGoogleLogin } = useAuth();
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const returnUrl = searchParams.get("returnUrl");
@@ -74,33 +121,33 @@ function LoginFormContent() {
   };
   
   // Update Google login handler to preserve returnUrl
-  const handleGoogleLogin = async () => {
-    try {
-      const returnUrl = searchParams.get("returnUrl");
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     const returnUrl = searchParams.get("returnUrl");
       
-      const result = await nhost.auth.signIn({
-        provider: 'google',
-        options: {
-          // Pass the returnUrl as state parameter
-          redirectTo: returnUrl ? 
-            `${window.location.origin}${decodeURIComponent(returnUrl)}` : 
-            window.location.origin
-        }
-      });
+  //     const result = await nhost.auth.signIn({
+  //       provider: 'google',
+  //       options: {
+  //         // Pass the returnUrl as state parameter
+  //         redirectTo: returnUrl ? 
+  //           `${window.location.origin}${decodeURIComponent(returnUrl)}` : 
+  //           window.location.origin
+  //       }
+  //     });
   
-      if (result?.error) {
-        toast.error("Google login failed", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    } catch (error) {
-      toast.error("An error occurred during Google login", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
+  //     if (result?.error) {
+  //       toast.error("Google login failed", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     toast.error("An error occurred during Google login", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
+  //   }
+  // };
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();

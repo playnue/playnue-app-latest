@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { useAccessToken } from '@nhost/nextjs';
 
 const PlayTurfSlotGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDates, setSelectedDates] = useState([]);
   const { toast } = useToast();
+  const accessToken = useAccessToken();
 
   // PlayTurf's venue and court IDs (replace with actual IDs)
   const PLAYTURF_VENUE_ID = "25d039e0-8a4d-49b1-ac06-5439c3af4a6f";
-  const PLAYTURF_COURT_ID = "a55c082b-8358-4ce4-9ceb-0687bf9d65db";
+  const PLAYTURF_COURT_ID = "c1b8314a-f4f0-4ed3-8f86-9e8f2bc2d711";
 
   const generateSlots = (dates) => {
     const slots = [];
@@ -87,7 +89,8 @@ const PlayTurfSlotGenerator = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-hasura-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET,
+          Authorization: `Bearer ${accessToken}`,
+          "x-hasura-role":"role"
         },
         body: JSON.stringify({
           query: mutation,

@@ -184,7 +184,10 @@ export default function Bookings() {
           return "/lpg.jpg";
         case "36b6825d-ba31-4a8f-aa06-5dfd0ec71e8e":
           return "/lpg.jpg";
-
+        case "9e0ebacb-1667-4e23-ac6e-628fe534b08b":
+          return "/dugouto.jpg";
+        case "e252f954-548c-4463-bbaf-e3323475fd6f":
+          return "/gj.jpg";
         default:
           return "/comingSoon.jpeg";
       }

@@ -13,23 +13,23 @@ const PlayTurfSlotGenerator = () => {
   const { toast } = useToast();
   const accessToken = useAccessToken();
 
-  // PlayTurf's venue and court IDs (replace with actual IDs)
   const PLAYTURF_VENUE_ID = "25d039e0-8a4d-49b1-ac06-5439c3af4a6f";
-  const PLAYTURF_COURT_ID = "c1b8314a-f4f0-4ed3-8f86-9e8f2bc2d711";
+  const PLAYTURF_COURT_ID = "843be214-e083-46cb-8422-04166cf3791f";
 
   const generateSlots = (dates) => {
     const slots = [];
 
-    // Generate slots for each selected date
     dates.forEach(date => {
       // 5 AM to 5 PM slots (₹1000)
       for (let hour = 5; hour < 17; hour++) {
         slots.push({
           court_id: PLAYTURF_COURT_ID,
+          venue_id: PLAYTURF_VENUE_ID, // Added venue_id
           start_at: `${hour.toString().padStart(2, '0')}:00:00`,
           end_at: `${(hour + 1).toString().padStart(2, '0')}:00:00`,
           price: 1000,
-          date: date.toISOString().split('T')[0]
+          date: date.toISOString().split('T')[0],
+          status: 'available' // Added status
         });
       }
 
@@ -37,19 +37,23 @@ const PlayTurfSlotGenerator = () => {
       for (let hour = 17; hour < 24; hour++) {
         slots.push({
           court_id: PLAYTURF_COURT_ID,
+          venue_id: PLAYTURF_VENUE_ID,
           start_at: `${hour.toString().padStart(2, '0')}:00:00`,
           end_at: `${(hour + 1).toString().padStart(2, '0')}:00:00`,
           price: 1200,
-          date: date.toISOString().split('T')[0]
+          date: date.toISOString().split('T')[0],
+          status: 'available'
         });
       }
       for (let hour = 0; hour < 5; hour++) {
         slots.push({
           court_id: PLAYTURF_COURT_ID,
+          venue_id: PLAYTURF_VENUE_ID,
           start_at: `${hour.toString().padStart(2, '0')}:00:00`,
           end_at: `${(hour + 1).toString().padStart(2, '0')}:00:00`,
           price: 1200,
-          date: date.toISOString().split('T')[0]
+          date: date.toISOString().split('T')[0],
+          status: 'available'
         });
       }
     });
@@ -70,6 +74,11 @@ const PlayTurfSlotGenerator = () => {
     setIsLoading(true);
     try {
       const slots = generateSlots(selectedDates);
+      
+      // Debug logging
+      console.log('Generated slots:', slots[0]); // Log first slot for debugging
+      console.log('Access token:', accessToken); // Log token for debugging
+      console.log('GraphQL URL:', process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL);
 
       const mutation = `
         mutation InsertPlayTurfSlots($objects: [slots_insert_input!]!) {
@@ -77,10 +86,15 @@ const PlayTurfSlotGenerator = () => {
             objects: $objects,
             on_conflict: {
               constraint: slots_pkey,
-              update_columns: [price]
+              update_columns: [price, status]
             }
           ) {
             affected_rows
+            returning {
+              id
+              court_id
+              date
+            }
           }
         }
       `;
@@ -90,7 +104,7 @@ const PlayTurfSlotGenerator = () => {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-          "x-hasura-role":"seller"
+          "x-hasura-role": "seller"
         },
         body: JSON.stringify({
           query: mutation,
@@ -100,7 +114,11 @@ const PlayTurfSlotGenerator = () => {
 
       const result = await response.json();
 
+      // Debug logging for response
+      console.log('GraphQL response:', result);
+
       if (result.errors) {
+        console.error('Detailed error:', JSON.stringify(result.errors, null, 2));
         throw new Error(result.errors[0].message);
       }
 
@@ -111,6 +129,13 @@ const PlayTurfSlotGenerator = () => {
 
     } catch (error) {
       console.error('Error generating slots:', error);
+      // Log the full error object
+      console.error('Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+      
       toast({
         title: "Error",
         description: error.message || "Failed to generate slots. Please try again.",
@@ -185,3 +210,11 @@ const PlayTurfSlotGenerator = () => {
 };
 
 export default PlayTurfSlotGenerator;
+
+
+
+
+
+
+
+

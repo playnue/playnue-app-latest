@@ -35,9 +35,9 @@ const sportIcons = {
   Tennis: " 🎾 ",
   BoxCricket: " 🏏 ",
   Snooker: " 🎱🥢 ",
-  Pool:"🎱",
-  PS4:"🎮",
-  LawnTennis:"🎾"
+  Pool: "🎱",
+  PS4: "🎮",
+  LawnTennis: "🎾",
   // TableTennis: " :table "
 };
 
@@ -49,7 +49,7 @@ const VenuePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const [image,setImage] = useState();
+  const [image, setImage] = useState();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const handleButtonClick = (e) => {
@@ -96,7 +96,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        setImage(data.data.venues[0].id)
+        setImage(data.data.venues[0].id);
         console.log(data.data.venues[0].image_id);
         setLoading(false);
       } catch (error) {
@@ -124,7 +124,10 @@ const VenuePage = () => {
         return "/lpg.jpg";
       case "36b6825d-ba31-4a8f-aa06-5dfd0ec71e8e":
         return "/lpg.jpg";
-
+      case "9e0ebacb-1667-4e23-ac6e-628fe534b08b":
+        return "/dugouti.jpg";
+      case "e252f954-548c-4463-bbaf-e3323475fd6f":
+        return "/gj.jpg";
       default:
         return null;
     }

@@ -103,7 +103,7 @@ function LoginFormContent() {
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
       } else {
-        router.push("/dashbaord");
+        router.push("/dashboard");
       }
     }
   }, [isAuthenticated, isLoading, searchParams, router]);

@@ -26,10 +26,10 @@ const data = {
           title: "Add seller",
           url: "/add-seller",
         },
-        {
-          title: "Edit Price",
-          url: "/admin/edit-price",
-        },
+        // {
+        //   title: "Edit Price",
+        //   url: "/admin/edit-price",
+        // },
         {
           title: "Manage Booking",
           url: "/courts&slots",

@@ -149,12 +149,7 @@ export default function BookNow() {
   // Constants
   const CONVENIENCE_FEE_PERCENTAGE = 2.36;
   const COUPONS = {
-    PLAYNUE99: {
-      discount: 99,
-      minAmount: 1199,
-      type: "fixed",
-      maxDiscount: 99,
-    },
+    
     PLAYNUE9: {
       discount: 9,
       minAmount: 0,

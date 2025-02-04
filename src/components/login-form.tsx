@@ -44,8 +44,8 @@ export const useAuth = () => {
     try {
       const returnUrl = searchParams.get("returnUrl");
       const options: any = {};
-
       const redirectPath = getValidRedirectUrl(returnUrl);
+      console.log()
       if (redirectPath) {
         // Only set redirectTo if we have a valid path
         options.redirectTo = redirectPath;

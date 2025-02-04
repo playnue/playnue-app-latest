@@ -90,7 +90,7 @@ const PlayTurfSlotGenerator = () => {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-          "x-hasura-role":"role"
+          "x-hasura-role":"seller"
         },
         body: JSON.stringify({
           query: mutation,

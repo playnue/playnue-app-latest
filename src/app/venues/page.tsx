@@ -147,6 +147,7 @@ export default function Bookings() {
     Pool: "🎱🥢",
     LawnTennis:" 🎾 ",
     PS4:"🎮",
+    Cricket_Net:"🏏"
   };
 
   useEffect(() => {

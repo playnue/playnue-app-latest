@@ -149,18 +149,19 @@ export default function BookNow() {
   // Constants
   const CONVENIENCE_FEE_PERCENTAGE = 2.36;
   const COUPONS = {
-    
     PLAYNUE9: {
       discount: 9,
       minAmount: 0,
       type: "percentage",
       maxDiscount: 99,
+      // No validVenues property means it's valid for all venues
     },
-    PLAYNUE60: {
-      discount: 60,
+    PLAYNUE50: {
+      discount: 50,
       minAmount: 900,
       type: "percentage",
       maxDiscount: 5000,
+      validVenues: ["3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d"] // Only valid for this specific venue
     }
   };
 
@@ -284,13 +285,20 @@ export default function BookNow() {
 
   const handleCouponSubmit = () => {
     const coupon = COUPONS[couponCode.trim()];
-
+  
     if (!coupon) {
       setCouponError("Invalid coupon code");
       setIsCouponApplied(false);
       return;
     }
-
+  
+    // Check venue restriction only if the coupon has validVenues property
+    if (coupon.validVenues && !coupon.validVenues.includes(id)) {
+      setCouponError("This coupon is not valid for this venue");
+      setIsCouponApplied(false);
+      return;
+    }
+  
     if (coupon.minAmount > 0 && amountAfterPartial < coupon.minAmount) {
       setCouponError(
         `This coupon is only valid for orders above ₹${coupon.minAmount}`
@@ -298,7 +306,7 @@ export default function BookNow() {
       setIsCouponApplied(false);
       return;
     }
-
+  
     setIsCouponApplied(true);
     setCouponError("");
   };

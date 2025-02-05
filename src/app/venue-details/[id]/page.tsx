@@ -128,6 +128,8 @@ const VenuePage = () => {
         return "/dugouti.jpg";
       case "e252f954-548c-4463-bbaf-e3323475fd6f":
         return "/gj.jpg";
+        case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
+          return "/dbi.jpg";
       default:
         return null;
     }

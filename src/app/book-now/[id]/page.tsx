@@ -155,6 +155,12 @@ export default function BookNow() {
       minAmount: 0,
       type: "percentage",
       maxDiscount: 99,
+    },
+    PLAYNUE60: {
+      discount: 60,
+      minAmount: 900,
+      type: "percentage",
+      maxDiscount: 5000,
     }
   };
 

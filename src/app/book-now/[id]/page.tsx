@@ -51,7 +51,7 @@ export default function BookNow() {
   const router = useRouter();
   const accessToken = useAccessToken();
   const user = useUserData();
-  console.log(user)
+  console.log(user);
 
   useEffect(() => {
     if (!user) {
@@ -78,6 +78,8 @@ export default function BookNow() {
   const [selectedSlot, setSelectedSlots] = useState([]);
 
   // Coupon related states and constants
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [activeCoupon, setActiveCoupon] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState("");
@@ -132,36 +134,59 @@ export default function BookNow() {
   const calculateDiscount = () => {
     if (!isCouponApplied) return 0;
 
-    const coupon = COUPONS[couponCode];
+    const coupon = availableCoupons.find(
+      (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
+    );
     if (!coupon) return 0;
 
     let calculatedDiscount = 0;
-    if (coupon.type === "fixed") {
-      calculatedDiscount = coupon.discount;
-    } else {
-      calculatedDiscount = (amountAfterPartial * coupon.discount) / 100;
+    if (coupon.type === 1) {
+      // Percentage discount
+      calculatedDiscount = (amountAfterPartial * coupon.value) / 100;
+    } else if (coupon.type === 2) {
+      // Fixed amount discount
+      calculatedDiscount = coupon.value;
     }
 
-    // Apply maximum discount cap
-    return Math.min(calculatedDiscount, coupon.maxDiscount);
+    return calculatedDiscount;
   };
 
   // Constants
   const CONVENIENCE_FEE_PERCENTAGE = 2.36;
-  const COUPONS = {
-    PLAYNUE9: {
-      discount: 9,
-      minAmount: 0,
-      type: "percentage",
-      maxDiscount: 99,
-      // No validVenues property means it's valid for all venues
-    },
-    PLAYNUE50: {
-      discount: 50,
-      minAmount: 900,
-      type: "percentage",
-      maxDiscount: 5000,
-      validVenues: ["3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d"] // Only valid for this specific venue
+  const fetchCoupons = async () => {
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
+              query GetCoupons {
+                coupons {
+                  id
+                  name
+                  description
+                  type
+                  value
+                  end_at
+                  for_user_ids
+                  slot_ids
+                  court_ids
+                  venue_ids
+                }
+              }
+            `,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.errors) {
+        throw new Error("Failed to fetch coupons");
+      }
+      setAvailableCoupons(data.data.coupons);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
     }
   };
 
@@ -179,7 +204,7 @@ export default function BookNow() {
   const handlePointsRedemption = (value) => {
     // Convert input to number, defaulting to empty string if 0
     const inputValue = value === "0" ? "" : value;
-    
+
     // If the input is empty, set points to redeem to empty string
     if (!inputValue) {
       setPointsToRedeem("");
@@ -188,7 +213,7 @@ export default function BookNow() {
 
     // Convert to number for validation
     const points = parseInt(inputValue) || 0;
-    
+
     // Allow typing numbers less than 100 but don't apply the discount
     if (points <= currentLoyaltyPoints) {
       setPointsToRedeem(points);
@@ -284,30 +309,55 @@ export default function BookNow() {
   };
 
   const handleCouponSubmit = () => {
-    const coupon = COUPONS[couponCode.trim()];
+    const coupon = availableCoupons.find(
+      (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
+    );
   
     if (!coupon) {
       setCouponError("Invalid coupon code");
       setIsCouponApplied(false);
+      setActiveCoupon(null);
       return;
     }
   
-    // Check venue restriction only if the coupon has validVenues property
-    if (coupon.validVenues && !coupon.validVenues.includes(id)) {
+    // Convert the end_at timestamp to UTC
+    const expirationDate = new Date(coupon.end_at);
+    const currentDate = new Date();
+  
+    // Log both dates for debugging
+    // console.log('Expiration Date (UTC):', expirationDate.toISOString());
+    // console.log('Current Date (UTC):', currentDate.toISOString());
+    // console.log('Is expired:', currentDate > expirationDate);
+  
+    // // Compare UTC timestamps
+    // if (currentDate.getTime() > expirationDate.getTime()) {
+    //   setCouponError("This coupon has expired");
+    //   setIsCouponApplied(false);
+    //   setActiveCoupon(null);
+    //   return;
+    // }
+  
+    // Check venue restriction if venue_ids is not empty
+    if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
       setCouponError("This coupon is not valid for this venue");
       setIsCouponApplied(false);
+      setActiveCoupon(null);
       return;
     }
   
-    if (coupon.minAmount > 0 && amountAfterPartial < coupon.minAmount) {
-      setCouponError(
-        `This coupon is only valid for orders above ₹${coupon.minAmount}`
-      );
+    // Check court restriction if court_ids is not empty
+    if (
+      coupon.court_ids?.length > 0 &&
+      !cart.some((item) => coupon.court_ids.includes(item.courtId))
+    ) {
+      setCouponError("This coupon is not valid for selected courts");
       setIsCouponApplied(false);
+      setActiveCoupon(null);
       return;
     }
   
     setIsCouponApplied(true);
+    setActiveCoupon(coupon);
     setCouponError("");
   };
   // const handleCouponSubmit = () => {
@@ -369,7 +419,7 @@ export default function BookNow() {
       const now = new Date();
       const currentTime = format(now, "HH:mm");
       const today = format(now, "yyyy-MM-dd");
-  
+
       const slotResponse = await fetch(
         process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
         {
@@ -410,42 +460,44 @@ export default function BookNow() {
           }),
         }
       );
-  
+
       const responseData = await slotResponse.json();
       if (responseData.errors) {
         throw new Error("Failed to fetch slots data");
       }
-  
+
       const availableSlots = responseData.data.slots;
       availableSlots.sort((a, b) => {
         const [hoursA, minutesA] = a.start_at.split(":");
         const [hoursB, minutesB] = b.start_at.split(":");
-  
+
         if (hoursA !== hoursB) {
           return hoursA - hoursB;
         }
         return minutesA - minutesB;
       });
-  
+
       setSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching slots:", error);
       setSlots([]);
     }
   };
-  
+
   // Helper function to calculate 5 minutes before the current time
   const calculateFiveMinBuffer = (currentTime) => {
     const [hours, minutes] = currentTime.split(":").map(Number);
     let bufferedMinutes = minutes + 5;
     let bufferedHours = hours;
-  
+
     if (bufferedMinutes >= 60) {
       bufferedHours += 1;
       bufferedMinutes -= 60;
     }
-  
-    return `${String(bufferedHours).padStart(2, '0')}:${String(bufferedMinutes).padStart(2, '0')}`;
+
+    return `${String(bufferedHours).padStart(2, "0")}:${String(
+      bufferedMinutes
+    ).padStart(2, "0")}`;
   };
 
   const formatTimeRange = (startTime, endTime) => {
@@ -492,8 +544,6 @@ export default function BookNow() {
       alert("Please select a court and time slot first");
       return;
     }
-
-    
 
     console.log("Selected slot data:", selectedSlot);
     const selectedCourtName =
@@ -551,6 +601,7 @@ export default function BookNow() {
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
             slot_ids: [slotId],
+            payment_type: isPartialPayment ? 1 : 2,
           }),
         }
       );
@@ -642,6 +693,9 @@ export default function BookNow() {
     return endDate.toTimeString().slice(0, 5); // Format as HH:mm
   };
 
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {
@@ -956,56 +1010,63 @@ export default function BookNow() {
               </div>
             )}
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-blue-700">Loyalty Points</h3>
-          <p className="text-sm text-blue-600">
-            Current Balance: {currentLoyaltyPoints} points
-          </p>
-          {pointsToEarn > 0 && (
-            <p className="text-sm text-green-600">
-              You'll earn: +{pointsToEarn} points
-            </p>
-          )}
-        </div>
-        {currentLoyaltyPoints >= 100 && (
-          <Switch
-            checked={isRedeemingPoints}
-            onCheckedChange={(checked) => {
-              setIsRedeemingPoints(checked);
-              if (!checked) setPointsToRedeem("");
-            }}
-          />
-        )}
-      </div>
-      
-      {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
-        <div className="mt-4">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              placeholder="Minimum 100 points"
-              value={pointsToRedeem}
-              onChange={(e) => handlePointsRedemption(e.target.value)}
-              max={currentLoyaltyPoints}
-              min={0}
-              className="flex-grow"
-            />
-            <p className="text-sm text-gray-600">
-              ≈ ₹{((pointsToRedeem >= 100 ? pointsToRedeem : 0) * POINTS_TO_RUPEES_RATIO).toFixed(2)}
-            </p>
-          </div>
-          {pointsToRedeem > 0 && pointsToRedeem < 100 && (
-            <p className="text-xs text-red-600 mt-1">
-              Minimum 100 points required for redemption
-            </p>
-          )}
-          <p className="text-xs text-gray-600 mt-1">
-            Minimum redemption: 100 points (₹{(100 * POINTS_TO_RUPEES_RATIO).toFixed(2)})
-          </p>
-        </div>
-      )}
-    </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-700">
+                    Loyalty Points
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    Current Balance: {currentLoyaltyPoints} points
+                  </p>
+                  {pointsToEarn > 0 && (
+                    <p className="text-sm text-green-600">
+                      You'll earn: +{pointsToEarn} points
+                    </p>
+                  )}
+                </div>
+                {currentLoyaltyPoints >= 100 && (
+                  <Switch
+                    checked={isRedeemingPoints}
+                    onCheckedChange={(checked) => {
+                      setIsRedeemingPoints(checked);
+                      if (!checked) setPointsToRedeem("");
+                    }}
+                  />
+                )}
+              </div>
+
+              {isRedeemingPoints && currentLoyaltyPoints >= 100 && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Minimum 100 points"
+                      value={pointsToRedeem}
+                      onChange={(e) => handlePointsRedemption(e.target.value)}
+                      max={currentLoyaltyPoints}
+                      min={0}
+                      className="flex-grow"
+                    />
+                    <p className="text-sm text-gray-600">
+                      ≈ ₹
+                      {(
+                        (pointsToRedeem >= 100 ? pointsToRedeem : 0) *
+                        POINTS_TO_RUPEES_RATIO
+                      ).toFixed(2)}
+                    </p>
+                  </div>
+                  {pointsToRedeem > 0 && pointsToRedeem < 100 && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Minimum 100 points required for redemption
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-600 mt-1">
+                    Minimum redemption: 100 points (₹
+                    {(100 * POINTS_TO_RUPEES_RATIO).toFixed(2)})
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <Input
@@ -1024,18 +1085,19 @@ export default function BookNow() {
                   Apply
                 </Button>
               </div>
+              
               {couponError && (
                 <Alert variant="destructive" className="mt-2">
                   <AlertDescription>{couponError}</AlertDescription>
                 </Alert>
               )}
-              {isCouponApplied && COUPONS[couponCode] && (
+              {isCouponApplied && activeCoupon && (
                 <Alert className="mt-2 bg-green-50">
                   <AlertDescription className="text-green-600">
                     Coupon applied successfully!
-                    {COUPONS[couponCode].type === "fixed"
-                      ? ` ₹${COUPONS[couponCode].discount} discount added.`
-                      : ` ${COUPONS[couponCode].discount}% discount added.`}
+                    {activeCoupon.type === 1
+                      ? ` ${activeCoupon.value}% discount added.`
+                      : ` ₹${activeCoupon.value} discount added.`}
                   </AlertDescription>
                 </Alert>
               )}

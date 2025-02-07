@@ -11,7 +11,7 @@ const QuickSlotGenerator = () => {
   const accessToken = useAccessToken();
 
   const PLAYTURF_VENUE_ID = "25d039e0-8a4d-49b1-ac06-5439c3af4a6f";
-  const PLAYTURF_COURT_ID = "843be214-e083-46cb-8422-04166cf3791f";
+  const PLAYTURF_COURT_ID = "c1b8314a-f4f0-4ed3-8f86-9e8f2bc2d711";
 
   const generateDates = () => {
     const dates = [];

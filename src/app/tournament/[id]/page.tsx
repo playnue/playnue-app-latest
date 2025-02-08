@@ -89,7 +89,7 @@ const TournamentDetails = () => {
         runnerUp: "₹3,000",
         topScorer: "₹1,000"
       },
-      registrationForm: "https://www.playnue.com/tournaments"
+      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
     }
   ];
   

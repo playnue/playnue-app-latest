@@ -61,48 +61,36 @@ const TournamentDetails = () => {
     },
     {
       id: 2,
-      name: "8 Ball Pool Tournament",
-      sport: "Pool",
-      area: "JC Guest House 8 no chauraha, Nirala Nagar near Regrant Hotel, Lucknow, Uttar Pradesh 226020",
-      entryFee: 500,
-      startDate: "2025-01-26",
-      endDate: "2025-01-26",
-      venue: "Cue Lords: Snooker, Pool and Cafe",
-      priceType: "player",
-      teamsRegistered: 10,
-      players: 1,
+      name: "Football Tournament",
+      sport: "Football",
+      area: "Plot no.700 amar shaheed path near eldeco express plaza road, eldeco udyaan-2 south city lucknow 226025",
+      entryFee: 2500,
+      startDate: "2025-03-08",
+      endDate: "2025-03-09",
+      venue: "Player's Town- South City",
+      teamsRegistered: 0,
+      players: 6,
       maxTeams: 16,
-      status: "Coming Soon",
-      image: "/cueLords.jpg",
-      description:
-        "Join the most prestigious 8 Ball Pool tournament in Lucknow. Players from across the city compete for the championship title.",
-        instructions: [
-          "Registration Closes on 25th January 2024",
-          "Reporting and entry must be 15 minutes prior to your timings",
-          "Participants reporting late will be automatically disqualified",
-          "Fouls:",
-          "- If a player commits a foul, their turn ends and their opponent gets ball-in-hand",
-          "- Common fouls include:",
-          "  * Pocketing the cue ball",
-          "  * Hitting the cue ball more than once",
-          "  * Hitting a ball off the table",
-          "  * Not contacting a ball from the player's group first",
-          "  * Not attempting to contact a ball",
-          "  * Not hitting a rail after contact with the object ball",
-          "Winning the Game:",
-          "- A player wins by pocketing the 8 ball after clearing their group",
-          "- Pocketing the 8 ball while clearing your group results in a win",
-          "Tournament Governed by World Pool-Billiard Association (WPA) rules",
-          "Umpire decision is last and final decision",
-          "All players shall participate in good sportsmanship"
-        ],
+      priceType: "team",
+      status: "open",
+      image: "footballtournament.jpg",
+      description: "Here's to a fantastic football tournament! May every match be filled with excitement and fair play",
+      instructions: [
+        "Maximum Participants: 16 teams",
+        "Total Players: 6+2 per team",
+        "Tournament Governed by House Rules",
+        "Registration fee includes refreshments",
+        "Pre-registration is mandatory through official website",
+        "Teams must arrive on time for their scheduled matches",
+        "All players must follow fair play guidelines"
+      ],
       prizes: {
-        first: "₹2,500",
-        runnerUp: "₹1,500",
+        first: "₹8,000",
+        runnerUp: "₹3,000",
+        topScorer: "₹1,000"
       },
-      registrationForm:
-        "https://docs.google.com/forms/d/e/1FAIpQLSfyzLAi2-3EMNMMnPxst_Bf4Hudm8KEIGvzhPwSUIGfEKINTA/viewform",
-    },
+      registrationForm: "https://www.playnue.com/tournaments"
+    }
   ];
   
   useEffect(() => {

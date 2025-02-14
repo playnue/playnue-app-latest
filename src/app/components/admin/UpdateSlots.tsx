@@ -111,7 +111,7 @@ const [endDate, setEndDate] = useState(() => {
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          // Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

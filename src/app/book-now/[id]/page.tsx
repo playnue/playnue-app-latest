@@ -162,21 +162,22 @@ export default function BookNow() {
         },
         body: JSON.stringify({
           query: `
-              query GetCoupons {
-                coupons {
-                  id
-                  name
-                  description
-                  type
-                  value
-                  end_at
-                  for_user_ids
-                  slot_ids
-                  court_ids
-                  venue_ids
-                }
+            query GetCoupons {
+              coupons {
+                id
+                name
+                description
+                type
+                value
+                end_at
+                for_user_ids
+                slot_ids
+                court_ids
+                venue_ids
+                min_cart_value
               }
-            `,
+            }
+          `,
         }),
       });
 
@@ -312,31 +313,25 @@ export default function BookNow() {
     const coupon = availableCoupons.find(
       (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
     );
-  
+
     if (!coupon) {
       setCouponError("Invalid coupon code");
       setIsCouponApplied(false);
       setActiveCoupon(null);
       return;
     }
-  
-    // Convert the end_at timestamp to UTC
-    const expirationDate = new Date(coupon.end_at);
-    const currentDate = new Date();
-  
-    // Log both dates for debugging
-    // console.log('Expiration Date (UTC):', expirationDate.toISOString());
-    // console.log('Current Date (UTC):', currentDate.toISOString());
-    // console.log('Is expired:', currentDate > expirationDate);
-  
-    // // Compare UTC timestamps
-    // if (currentDate.getTime() > expirationDate.getTime()) {
-    //   setCouponError("This coupon has expired");
-    //   setIsCouponApplied(false);
-    //   setActiveCoupon(null);
-    //   return;
-    // }
-  
+
+    // Check minimum cart value requirement
+    const currentCartValue = amountAfterPartial; // Use the amount after partial payment if applicable
+    if (currentCartValue < coupon.min_cart_value) {
+      setCouponError(
+        `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`
+      );
+      setIsCouponApplied(false);
+      setActiveCoupon(null);
+      return;
+    }
+
     // Check venue restriction if venue_ids is not empty
     if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
       setCouponError("This coupon is not valid for this venue");
@@ -344,7 +339,7 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-  
+
     // Check court restriction if court_ids is not empty
     if (
       coupon.court_ids?.length > 0 &&
@@ -355,7 +350,7 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-  
+
     setIsCouponApplied(true);
     setActiveCoupon(coupon);
     setCouponError("");
@@ -1085,7 +1080,7 @@ export default function BookNow() {
                   Apply
                 </Button>
               </div>
-              
+
               {couponError && (
                 <Alert variant="destructive" className="mt-2">
                   <AlertDescription>{couponError}</AlertDescription>

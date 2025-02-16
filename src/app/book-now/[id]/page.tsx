@@ -69,6 +69,7 @@ export default function BookNow() {
   const [venue, setVenue] = useState([]);
   const [courts, setCourts] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [activeDiscount, setActiveDiscount] = useState("none");
 
   // Selection states
   const [selectedTime, setSelectedTime] = useState("");
@@ -96,6 +97,19 @@ export default function BookNow() {
   const [isRedeemingPoints, setIsRedeemingPoints] = useState(false);
   const POINTS_TO_RUPEES_RATIO = 1;
 
+  const handlePartialPaymentChange = (checked) => {
+    if (checked) {
+      setActiveDiscount("partial");
+      setIsCouponApplied(false);
+      setCouponCode("");
+      setCouponError("");
+      setActiveCoupon(null);
+    } else {
+      setActiveDiscount("none");
+    }
+    setIsPartialPayment(checked);
+  };
+
   const calculateLoyaltyDiscount = () => {
     if (!isRedeemingPoints || !pointsToRedeem || pointsToRedeem < 100) return 0;
     return Math.min(
@@ -114,7 +128,7 @@ export default function BookNow() {
 
   // Calculate partial payment amount if eligible
   const calculatePartialPaymentAmount = () => {
-    if (!isPartialPayment) return fullAmount;
+    if (!isPartialPayment || activeDiscount !== "partial") return fullAmount;
 
     // Only apply partial payment to eligible slots
     let partialAmount = 0;
@@ -322,7 +336,7 @@ export default function BookNow() {
     }
 
     // Check minimum cart value requirement
-    const currentCartValue = amountAfterPartial; // Use the amount after partial payment if applicable
+    const currentCartValue = fullAmount; // Use full amount since partial payment can't be active
     if (currentCartValue < coupon.min_cart_value) {
       setCouponError(
         `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`
@@ -351,6 +365,9 @@ export default function BookNow() {
       return;
     }
 
+    // Disable partial payment when applying coupon
+    setIsPartialPayment(false);
+    setActiveDiscount("coupon");
     setIsCouponApplied(true);
     setActiveCoupon(coupon);
     setCouponError("");
@@ -364,7 +381,13 @@ export default function BookNow() {
   //     setIsCouponApplied(false);
   //   }
   // };
-
+  const handleRemoveCoupon = () => {
+    setIsCouponApplied(false);
+    setActiveCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+    setActiveDiscount("none");
+  };
   const logSlotTimes = (slots, setSlots) => {
     const allSlots = [];
 
@@ -996,10 +1019,16 @@ export default function BookNow() {
                     <p className="text-sm text-gray-600">
                       Pay 50% now, rest at venue
                     </p>
+                    {activeDiscount === "coupon" && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Note: Cannot be combined with coupon
+                      </p>
+                    )}
                   </div>
                   <Switch
                     checked={isPartialPayment}
-                    onCheckedChange={setIsPartialPayment}
+                    onCheckedChange={handlePartialPaymentChange}
+                    disabled={activeDiscount === "coupon"}
                   />
                 </div>
               </div>
@@ -1070,16 +1099,35 @@ export default function BookNow() {
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   className="flex-grow"
+                  disabled={activeDiscount === "partial"}
                 />
-                <Button
-                  onClick={handleCouponSubmit}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Tag className="h-4 w-4" />
-                  Apply
-                </Button>
+                {!isCouponApplied ? (
+                  <Button
+                    onClick={handleCouponSubmit}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    disabled={activeDiscount === "partial"}
+                  >
+                    <Tag className="h-4 w-4" />
+                    Apply
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleRemoveCoupon}
+                    variant="outline"
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </Button>
+                )}
               </div>
+
+              {activeDiscount === "partial" && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Coupons cannot be used with partial payment
+                </p>
+              )}
 
               {couponError && (
                 <Alert variant="destructive" className="mt-2">

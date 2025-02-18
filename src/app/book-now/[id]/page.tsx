@@ -146,22 +146,30 @@ export default function BookNow() {
 
   // Calculate coupon discount based on the amount after partial payment
   const calculateDiscount = () => {
-    if (!isCouponApplied) return 0;
-
-    const coupon = availableCoupons.find(
-      (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
-    );
-    if (!coupon) return 0;
-
-    let calculatedDiscount = 0;
-    if (coupon.type === 1) {
-      // Percentage discount
-      calculatedDiscount = (amountAfterPartial * coupon.value) / 100;
-    } else if (coupon.type === 2) {
-      // Fixed amount discount
-      calculatedDiscount = coupon.value;
+    if (!isCouponApplied || !activeCoupon) return 0;
+  
+    let eligibleAmount = amountAfterPartial;
+    
+    // If coupon has court restrictions, only apply to eligible courts
+    if (activeCoupon.court_ids?.length > 0) {
+      eligibleAmount = cart.reduce((sum, item) => {
+        const courtId = courts.find(court => court.name === item.court)?.id;
+        if (courtId && activeCoupon.court_ids.includes(courtId)) {
+          return sum + item.price;
+        }
+        return sum;
+      }, 0);
     }
-
+  
+    let calculatedDiscount = 0;
+    if (activeCoupon.type === 1) {
+      // Percentage discount
+      calculatedDiscount = (eligibleAmount * activeCoupon.value) / 100;
+    } else if (activeCoupon.type === 2) {
+      // Fixed amount discount
+      calculatedDiscount = Math.min(activeCoupon.value, eligibleAmount);
+    }
+  
     return calculatedDiscount;
   };
 
@@ -327,14 +335,14 @@ export default function BookNow() {
     const coupon = availableCoupons.find(
       (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
     );
-  
+
     if (!coupon) {
       setCouponError("Invalid coupon code");
       setIsCouponApplied(false);
       setActiveCoupon(null);
       return;
     }
-  
+
     // Check minimum cart value requirement
     const currentCartValue = fullAmount;
     if (currentCartValue < coupon.min_cart_value) {
@@ -345,7 +353,7 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-  
+
     // Check venue restriction if venue_ids is not empty
     if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
       setCouponError("This coupon is not valid for this venue");
@@ -353,7 +361,7 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-  
+
     // Check court restriction if court_ids is not empty
     if (coupon.court_ids?.length > 0) {
       // Check if any item in the cart has a court that matches the coupon's court_ids
@@ -361,7 +369,7 @@ export default function BookNow() {
         const courtId = courts.find((court) => court.name === item.court)?.id;
         return courtId && coupon.court_ids.includes(courtId);
       });
-  
+
       if (!hasValidCourt) {
         setCouponError("This coupon is not valid for selected courts");
         setIsCouponApplied(false);
@@ -369,7 +377,7 @@ export default function BookNow() {
         return;
       }
     }
-  
+
     // Disable partial payment when applying coupon
     setIsPartialPayment(false);
     setActiveDiscount("coupon");
@@ -392,6 +400,11 @@ export default function BookNow() {
     setCouponCode("");
     setCouponError("");
     setActiveDiscount("none");
+  };
+  const handleCourtChange = (courtId) => {
+    setSelectedCourt(courtId);
+    setSelectedTime(""); // Reset selected time
+    setSelectedSlots([]); // Reset selected slots
   };
   const logSlotTimes = (slots, setSlots) => {
     const allSlots = [];
@@ -739,15 +752,24 @@ export default function BookNow() {
   
     // Check court restriction
     if (coupon.court_ids?.length > 0) {
-      const hasValidCourt = cart.some((item) => {
+      // For each item in cart, check if it's eligible for the coupon
+      const cartItems = cart.map(item => {
         const courtId = courts.find(court => court.name === item.court)?.id;
-        return courtId && coupon.court_ids.includes(courtId);
+        return {
+          ...item,
+          isEligible: courtId && coupon.court_ids.includes(courtId)
+        };
       });
-      
-      if (!hasValidCourt) {
+  
+      // Calculate total eligible amount
+      const eligibleAmount = cartItems
+        .filter(item => item.isEligible)
+        .reduce((sum, item) => sum + item.price, 0);
+  
+      if (eligibleAmount === 0) {
         return {
           isValid: false,
-          message: "This coupon is not valid for selected courts"
+          message: "This coupon is not valid for any courts in your cart"
         };
       }
     }
@@ -760,13 +782,16 @@ export default function BookNow() {
   useEffect(() => {
     // Skip if no coupon is applied
     if (!isCouponApplied || !activeCoupon) return;
-  
+
     // Validate coupon against current cart contents
     const validation = validateCouponForCurrentCart(activeCoupon);
-    
+
     if (!validation.isValid) {
       handleRemoveCoupon();
-      toast.warning(validation.message || "Coupon has been removed as it's no longer valid for the current selection");
+      toast.warning(
+        validation.message ||
+          "Coupon has been removed as it's no longer valid for the current selection"
+      );
     }
   }, [cart]);
   useEffect(() => {
@@ -935,7 +960,7 @@ export default function BookNow() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Court</label>
-            <Select onValueChange={setSelectedCourt}>
+            <Select onValueChange={handleCourtChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Court" />
               </SelectTrigger>

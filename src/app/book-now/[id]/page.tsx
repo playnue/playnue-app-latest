@@ -358,7 +358,7 @@ export default function BookNow() {
     if (coupon.court_ids?.length > 0) {
       // Check if any item in the cart has a court that matches the coupon's court_ids
       const hasValidCourt = cart.some((item) => {
-        const courtId = courts.find(court => court.name === item.court)?.id;
+        const courtId = courts.find((court) => court.name === item.court)?.id;
         return courtId && coupon.court_ids.includes(courtId);
       });
   
@@ -723,12 +723,18 @@ export default function BookNow() {
     // Check minimum cart value
     const currentCartValue = cart.reduce((sum, item) => sum + item.price, 0);
     if (currentCartValue < coupon.min_cart_value) {
-      return false;
+      return {
+        isValid: false,
+        message: `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`
+      };
     }
   
     // Check venue restriction
     if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
-      return false;
+      return {
+        isValid: false,
+        message: "This coupon is not valid for this venue"
+      };
     }
   
     // Check court restriction
@@ -739,22 +745,28 @@ export default function BookNow() {
       });
       
       if (!hasValidCourt) {
-        return false;
+        return {
+          isValid: false,
+          message: "This coupon is not valid for selected courts"
+        };
       }
     }
   
-    return true;
+    return {
+      isValid: true,
+      message: ""
+    };
   };
   useEffect(() => {
     // Skip if no coupon is applied
     if (!isCouponApplied || !activeCoupon) return;
   
     // Validate coupon against current cart contents
-    const isValid = validateCouponForCurrentCart(activeCoupon);
+    const validation = validateCouponForCurrentCart(activeCoupon);
     
-    if (!isValid) {
+    if (!validation.isValid) {
       handleRemoveCoupon();
-      toast.warning("Coupon has been removed as it's no longer valid for the current selection");
+      toast.warning(validation.message || "Coupon has been removed as it's no longer valid for the current selection");
     }
   }, [cart]);
   useEffect(() => {

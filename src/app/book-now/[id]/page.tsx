@@ -719,6 +719,44 @@ export default function BookNow() {
   useEffect(() => {
     fetchCoupons();
   }, []);
+  const validateCouponForCurrentCart = (coupon) => {
+    // Check minimum cart value
+    const currentCartValue = cart.reduce((sum, item) => sum + item.price, 0);
+    if (currentCartValue < coupon.min_cart_value) {
+      return false;
+    }
+  
+    // Check venue restriction
+    if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
+      return false;
+    }
+  
+    // Check court restriction
+    if (coupon.court_ids?.length > 0) {
+      const hasValidCourt = cart.some((item) => {
+        const courtId = courts.find(court => court.name === item.court)?.id;
+        return courtId && coupon.court_ids.includes(courtId);
+      });
+      
+      if (!hasValidCourt) {
+        return false;
+      }
+    }
+  
+    return true;
+  };
+  useEffect(() => {
+    // Skip if no coupon is applied
+    if (!isCouponApplied || !activeCoupon) return;
+  
+    // Validate coupon against current cart contents
+    const isValid = validateCouponForCurrentCart(activeCoupon);
+    
+    if (!isValid) {
+      handleRemoveCoupon();
+      toast.warning("Coupon has been removed as it's no longer valid for the current selection");
+    }
+  }, [cart]);
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {

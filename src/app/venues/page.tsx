@@ -191,6 +191,8 @@ export default function Bookings() {
           return "/gj.jpg";
         case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
           return "/dbo.jpg";
+        case "2775568b-4776-4f51-a0c0-6b24646624b4":
+          return "/ppo.jpg";
         default:
           return "/comingSoon.jpeg";
       }

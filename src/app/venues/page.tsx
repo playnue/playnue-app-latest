@@ -145,9 +145,9 @@ export default function Bookings() {
     BoxCricket: " 🏏 ",
     Snooker: " 🎱🥢 ",
     Pool: "🎱🥢",
-    LawnTennis:" 🎾 ",
-    PS4:"🎮",
-    Cricket_Net:"🏏"
+    LawnTennis: " 🎾 ",
+    PS4: "🎮",
+    Cricket_Net: "🏏",
   };
 
   useEffect(() => {
@@ -201,40 +201,60 @@ export default function Bookings() {
     const imageSource = getImageSource(item.id);
 
     return (
-      <div
-        key={item.id}
-        className={`relative aspect-[4/3] rounded-xl overflow-hidden p-4 text-black shadow-lg transition-transform duration-300 ${
-          hoveredItem === item?.id ? "scale-105" : "scale-100"
-        }`}
-        onMouseEnter={() => setHoveredItem(item?.id)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
-        {imageSource ? (
-          <img
-            src={imageSource}
-            alt={`${item.title}'s image`}
-            className="w-full h-full object-cover rounded-lg"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-            <p className="text-xl font-bold text-gray-600">Coming Soon</p>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent p-4 flex flex-col justify-end">
-          <p className="text-white text-lg font-bold">{item.title}</p>
-          <p className="text-white text-sm">Rating: {item.rating} ⭐</p>
-          <div className="text-white text-xl flex gap-2">
-            {item.sports?.map((sport: string) => (
-              <span key={sport}>{sportIcons[sport] || "❓"}</span>
-            ))}
-          </div>
-          {hoveredItem === item.id && (
-            <Link href={`/venue-details/${item.id}`}>
-              <button className="mt-2 bg-green-500 text-white w-full py-1 rounded-lg shadow-md">
-                Book Now
-              </button>
-            </Link>
+      <div className="venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+        {/* Image Section */}
+        <div className="h-64 overflow-hidden">
+          {imageSource ? (
+            <img
+              src={imageSource}
+              alt={`${item.title}`}
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+              <p className="text-xl font-bold text-gray-400">Coming Soon</p>
+            </div>
           )}
+        </div>
+
+        {/* Compact Content Section */}
+        <div className="venue-content p-4 transition-transform duration-300">
+          {/* Title and Location */}
+          <div className="mb-2">
+            <h3 className="text-xl font-semibold text-white">{item.title}</h3>
+            <div className="flex items-center text-sm text-gray-400">
+              <span className="mr-1">📍</span>
+              <span className="capitalize">{item.location}</span>
+            </div>
+          </div>
+
+          {/* Timing - if available in API */}
+          {item.open_at && item.close_at && (
+            <div className="text-gray-400 text-xs mb-2">
+              ⏰{" "}
+              {item.open_at === "00:00:00" && item.close_at === "00:00:00"
+                ? "24/7"
+                : `${item.open_at} - ${item.close_at}`}
+            </div>
+          )}
+
+          {/* Sports - if available in API */}
+          {item.sports && item.sports.length > 0 && (
+            <div className="flex gap-1 mb-3">
+              {item.sports.map((sport) => (
+                <span key={sport} className="text-lg" title={sport}>
+                  {sportIcons[sport] || "❓"}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Book Now Button */}
+          <Link href={`/venue-details/${item.id}`}>
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              Book Now
+            </button>
+          </Link>
         </div>
       </div>
     );
@@ -282,69 +302,52 @@ export default function Bookings() {
     <>
       <Navbar />
       {/* <div id="preloader"></div> Add Preloader */}
-      <SidebarInset>
-        <header className="flex h-16 items-center px-4">
-          <h1 className="text-2xl font-bold text-black-600">
-            PlayNue - Venues
-          </h1>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* First Box: Welcome Message */}
-            <div className="rounded-xl bg-green-600 p-6 text-white shadow-md">
-              <h2 className="text-2xl font-semibold">
-                Welcome to PlayNue in Lucknow!
-              </h2>
-              <p className="mt-4 text-sm">
-                We are excited to launch our platform in the vibrant city of{" "}
-                Lucknow. Explore top-rated sports venues and make your bookings
-                with ease. Enjoy a hassle-free experience at the best locations!
-              </p>
-              <button
-                onClick={scrollToVenues}
-                className="mt-4 bg-white text-green-600 py-2 px-4 rounded-lg shadow-md hover:bg-gray-100"
-              >
-                Explore Venues Below
+      <div className="min-h-screen bg-gray-900">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Our <span className="text-purple-500">Venues</span>
+            </h1>
+            <p className="text-gray-400">
+              Discover our premium locations perfect for your next match
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="max-w-md mx-auto mb-8">
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Your Location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full bg-gray-800 text-white border-gray-700 rounded-lg pl-10 pr-4 py-2"
+              />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                🔍
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {venues.map(renderVenueCard)}
+          </div>
+
+          {venues.length === 0 && (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div id="preloader"></div>
+            </div>
+          )}
+
+          {venues.length > 0 && (
+            <div className="text-center mt-8">
+              <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                More Venues
               </button>
             </div>
-
-            {/* Second Box: City Info & Map */}
-          </div>
-          <div
-            id="venues-section"
-            className="min-h-[250vh] flex-1 rounded-xl bg-muted/50 md:min-h-min"
-          >
-            {/* Local Venues Section */}
-            {localVenues.length > 0 && (
-              <div className="p-6">
-                <h2 className="text-2xl font-bold mb-6">
-                  {/* Venues in {location.split(",")[0]} */}
-                </h2>
-                <div className="grid auto-rows-min gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                  {localVenues.map(renderVenueCard)}
-                </div>
-              </div>
-            )}
-
-            {/* Other Venues Section */}
-            {otherVenues.length > 0 && (
-              <div className="p-6">
-                {/* <h2 className="text-2xl font-bold mb-6">Other Venues</h2> */}
-                <div className="grid auto-rows-min gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                  {otherVenues.map(renderVenueCard)}
-                </div>
-              </div>
-            )}
-
-            {/* No Venues Found */}
-            {localVenues.length === 0 && otherVenues.length === 0 && (
-              <div className="flex items-center justify-center min-h-screen">
-                <div id="preloader"></div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </SidebarInset>
+      </div>
     </>
   );
 }

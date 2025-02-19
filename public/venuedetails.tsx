@@ -2,26 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { useRouter } from "next/navigation";
 import "../../loader.css";
-import { parse } from "path";
 import { nhost } from "@/lib/nhost";
+
 interface VenueDetails {
   id: string;
   title: string;
   address: string;
   description: string;
-  sports: { name: string; icon: string }[];
+  sports: string[];
   amenities: string[];
   extra_image_ids: string[];
   location: string;
   open_at: string;
   close_at: string;
-  rating?: number; // Optional fields can be added based on available data
+  rating?: number;
   reviews?: number;
 }
 
@@ -35,41 +34,33 @@ const sportIcons = {
   Tennis: " 🎾 ",
   BoxCricket: " 🏏 ",
   Snooker: " 🎱🥢 ",
-  Pool: "🎱",
-  PS4: "🎮",
-  LawnTennis: "🎾",
-  Cricket_Net:"🏏"
-  // TableTennis: " :table "
+  Pool: "🎱🥢"
 };
 
 const VenuePage = () => {
   const { id } = useParams();
-  console.log(id);
   const [venue, setVenue] = useState<VenueDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const [image, setImage] = useState();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const handleButtonClick = (e) => {
-    e.preventDefault(); // Prevent the default behavior of the link
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    router.push(`/book-now/${venue.id}`);
+    router.push(`/book-now/${venue?.id}`);
   };
-  // Fetch data from Hasura
+
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL!,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              // Authorization: `Bearer ${parsedData.accessToken}`,
             },
             body: JSON.stringify({
               query: `
@@ -84,7 +75,6 @@ const VenuePage = () => {
                   location
                   open_at
                   close_at
-                  
                 }
               }
             `,
@@ -97,55 +87,22 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        setImage(data.data.venues[0].id);
-        console.log(data.data.venues[0].image_id);
         setLoading(false);
       } catch (error) {
         console.log(error);
+        setError("Failed to load venue details");
         setLoading(false);
       }
     };
 
     fetchVenueDetails();
   }, [id]);
- 
-  const getImageSource = (id) => {
-    switch (id) {
-      case "063a2e3f-8365-40f3-8613-9613f6024d78":
-        return "/cueLords.jpg";
-      case "25d039e0-8a4d-49b1-ac06-5439c3af4a6f":
-        return "/playturf.jpg";
-      case "dfac7e28-16d2-45ff-93d9-add6a0a006e2":
-        return "/bsa.jpg";
-      case "d718a6cf-e982-42cf-b383-825134db21f6":
-        return "/playerTown.jpg";
-      case "cb9162ae-c5c2-44a9-ab6a-8c496f253a34":
-        return "/playerTown.jpg";
-      case "de83245f-6326-4373-9a54-d3137bd1a125":
-        return "/lpg.jpg";
-      case "36b6825d-ba31-4a8f-aa06-5dfd0ec71e8e":
-        return "/lpg.jpg";
-      case "9e0ebacb-1667-4e23-ac6e-628fe534b08b":
-        return "/dugouti.jpg";
-      case "e252f954-548c-4463-bbaf-e3323475fd6f":
-        return "/gj.jpg";
-        case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
-          return "/dbi.jpg";
-          case "2775568b-4776-4f51-a0c0-6b24646624b4":
-          return "/ppi.jpg";
-      default:
-        return null;
-    }
-  };
-
-  const imageSource = getImageSource(image);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // If not client-side, render nothing or a placeholder
-  if (!isClient) {
+  if (!isClient || loading) {
     return (
       <>
         <Navbar />
@@ -156,9 +113,18 @@ const VenuePage = () => {
     );
   }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!venue) return <p>Venue not found.</p>;
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen text-white">
+          {error}
+        </div>
+      </>
+    );
+  }
+
+  if (!venue) return null;
 
   return (
     <>

@@ -137,79 +137,63 @@ const SlotManagement = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-  
-    try {
-      // Create slots for each selected date
-      const courtWithSlots = {
-        id: selectedCourt, // Use the existing court ID
-        slots: {
-          data: selectedDates.flatMap(date => 
-            slots.map(slot => ({
-              date: date.toISOString().split('T')[0],
-              start_at: slot.startTime + ':00',
-              end_at: slot.endTime + ':00',
-              price: parseFloat(slot.price)
-            }))
-          )
-        }
-      };
-  
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-          "x-hasura-role": "seller",
-        },
-        body: JSON.stringify({
-          query: `
-            mutation UpdateCourtWithSlots($courtId: uuid!, $slots: [slots_insert_input!]!) {
-              update_courts_by_pk(
-                pk_columns: { id: $courtId },
-                _set: {}
-              ) {
-                id
-                slots(where: {id: {_is_null: true}}) {
-                  id
-                }
-              }
-              insert_slots(objects: $slots) {
-                affected_rows
-              }
+  // Modified handleSubmit function for SlotManagement
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    // Use the same approach as your working component - create objects first
+    const slotObjects = selectedDates.flatMap(date => 
+      slots.map(slot => ({
+        court_id: selectedCourt,
+        date: date.toISOString().split('T')[0],
+        start_at: slot.startTime + ':00',
+        end_at: slot.endTime + ':00',
+        price: parseFloat(slot.price)
+      }))
+    );
+
+    // Use direct slot insertion instead of court update
+    const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        "x-hasura-role": "seller",
+      },
+      body: JSON.stringify({
+        query: `
+          mutation InsertSlots($slots: [slots_insert_input!]!) {
+            insert_slots(objects: $slots) {
+              affected_rows
             }
-          `,
-          variables: {
-            courtId: selectedCourt,
-            slots: courtWithSlots.slots.data.map(slot => ({
-              ...slot,
-              court_id: selectedCourt
-            }))
           }
-        })
-      });
-  
-      const result = await response.json();
-      
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
-      }
-  
-      if (result.data?.insert_slots?.affected_rows > 0) {
-        alert('Slots created successfully!');
-        // Reset form
-        setSlots([{ startTime: "01:00", endTime: "02:00", price: "" }]);
-        setSelectedDates([]);
-      }
-    } catch (error) {
-      console.error('Error creating slots:', error);
-      alert('Failed to create slots: ' + error.message);
-    } finally {
-      setIsLoading(false);
+        `,
+        variables: {
+          slots: slotObjects
+        }
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0].message);
     }
-  };
+
+    if (result.data?.insert_slots?.affected_rows > 0) {
+      alert('Slots created successfully!');
+      setSlots([{ startTime: "01:00", endTime: "02:00", price: "" }]);
+      setSelectedDates([]);
+    }
+  } catch (error) {
+    console.error('Error creating slots:', error);
+    alert('Failed to create slots: ' + error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <Card className="w-full max-w-4xl mx-auto">

@@ -140,41 +140,63 @@ const SlotManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
       // Create slots for each selected date
-      const slotObjects = selectedDates.flatMap(date => 
-        slots.map(slot => ({
-          court_id: selectedCourt,
-          date: date.toISOString().split('T')[0],
-          start_at: slot.startTime + ':00',
-          end_at: slot.endTime + ':00',
-          price: parseFloat(slot.price)
-        }))
-      );
-
+      const courtWithSlots = {
+        id: selectedCourt, // Use the existing court ID
+        slots: {
+          data: selectedDates.flatMap(date => 
+            slots.map(slot => ({
+              date: date.toISOString().split('T')[0],
+              start_at: slot.startTime + ':00',
+              end_at: slot.endTime + ':00',
+              price: parseFloat(slot.price)
+            }))
+          )
+        }
+      };
+  
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
-          "x-hasura-role":"seller",
+          "x-hasura-role": "seller",
         },
         body: JSON.stringify({
           query: `
-            mutation CreateSlots($objects: [slots_insert_input!]!) {
-              insert_slots(objects: $objects) {
+            mutation UpdateCourtWithSlots($courtId: uuid!, $slots: [slots_insert_input!]!) {
+              update_courts_by_pk(
+                pk_columns: { id: $courtId },
+                _set: {}
+              ) {
+                id
+                slots(where: {id: {_is_null: true}}) {
+                  id
+                }
+              }
+              insert_slots(objects: $slots) {
                 affected_rows
               }
             }
           `,
           variables: {
-            objects: slotObjects
+            courtId: selectedCourt,
+            slots: courtWithSlots.slots.data.map(slot => ({
+              ...slot,
+              court_id: selectedCourt
+            }))
           }
         })
       });
-
+  
       const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
+  
       if (result.data?.insert_slots?.affected_rows > 0) {
         alert('Slots created successfully!');
         // Reset form
@@ -183,7 +205,7 @@ const SlotManagement = () => {
       }
     } catch (error) {
       console.error('Error creating slots:', error);
-      alert('Failed to create slots');
+      alert('Failed to create slots: ' + error.message);
     } finally {
       setIsLoading(false);
     }

@@ -12,6 +12,31 @@ import { useGeolocated } from "react-geolocated";
 import Navbar from "../components/Navbar";
 import "../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
+const getLocationFromCoords = async (latitude, longitude) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+    );
+    const data = await response.json();
+    
+    if (data.address) {
+      const city = data.address.city || data.address.town || data.address.village;
+      const state = data.address.state;
+      const country = data.address.country;
+      
+      return {
+        city,
+        state,
+        country,
+        formattedLocation: `${city}, ${state}, ${country}`
+      };
+    }
+    throw new Error("Unable to get location details");
+  } catch (error) {
+    console.error("Error getting location from coordinates:", error);
+    return null;
+  }
+};
 export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -23,19 +48,30 @@ export default function Bookings() {
   const accessToken = useAccessToken();
   const userData = useUserData();
   // Geolocation hook
-  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
-    useGeolocated({
-      positionOptions: {
-        enableHighAccuracy: false,
-      },
-      userDecisionTimeout: 5000,
-    });
+  const { coords, isGeolocationAvailable, isGeolocationEnabled } = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+      timeout: 5000,
+    },
+    userDecisionTimeout: 5000,
+  });
 
   // Ensure component only renders on client
 
+  
   // Fetch location details based on coordinates
   useEffect(() => {
-    const fetchLocationWithBackup = async () => {
+    const detectLocation = async () => {
+      // First try using browser geolocation
+      if (coords?.latitude && coords?.longitude) {
+        const locationData = await getLocationFromCoords(coords.latitude, coords.longitude);
+        if (locationData) {
+          setLocation(locationData.formattedLocation);
+          return;
+        }
+      }
+
+      // Fall back to IP-based services if geolocation fails
       const services = [
         "https://ipapi.co/json/",
         "https://ip-api.com/json/",
@@ -50,7 +86,7 @@ export default function Bookings() {
           const city = data.city || data.City || data.cityName;
           const state = data.region || data.regionName || data.region_name;
           const country = data.country_name || data.country || data.Country;
-          console.log(city);
+
           if (city && state && country) {
             setLocation(`${city}, ${state}, ${country}`);
             break;
@@ -61,8 +97,21 @@ export default function Bookings() {
       }
     };
 
-    fetchLocationWithBackup();
-  }, []);
+    detectLocation();
+  }, [coords]);
+  const requestLocationPermission = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          // This will trigger the useGeolocated hook to update
+          console.log("Location permission granted");
+        },
+        error => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  };
 
   const getVenues = async () => {
     const response = await fetch(
@@ -164,6 +213,14 @@ export default function Bookings() {
       venueSection.scrollIntoView({ behavior: "smooth" });
     }
   };
+  const LocationButton = () => (
+    <button 
+      onClick={requestLocationPermission}
+      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+    >
+      Use My Current Location
+    </button>
+  );
 
   // Venue card rendering component
 
@@ -201,6 +258,7 @@ export default function Bookings() {
     const imageSource = getImageSource(item.id);
 
     return (
+      
       <div className="venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
         {/* Image Section */}
         <div className="h-64 overflow-hidden">

@@ -47,6 +47,7 @@ import { useRouter } from "next/navigation";
 import "../../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 export default function BookNow() {
+  const [expanded, setExpanded] = useState(false);
   const { id } = useParams();
   const router = useRouter();
   const accessToken = useAccessToken();
@@ -1310,6 +1311,55 @@ export default function BookNow() {
           </Card>
         </div>
       </div>
+      <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+      <button 
+        onClick={() => setExpanded(!expanded)} 
+        className="flex w-full justify-between items-center font-medium text-lg"
+      >
+        Terms & Conditions
+        <span className="text-gray-500">
+          {expanded ? '−' : '+'}
+        </span>
+      </button>
+      
+      {expanded && (
+        <div className="mt-4 text-sm text-gray-700 space-y-4">
+          <div>
+            <h3 className="font-semibold mb-2">Reschedule Policy:</h3>
+            <p>Rescheduling is allowed 2 Hours prior to slot time. Rescheduling of a booking can be done only 2 times. Once rescheduled, booking cannot be cancelled. Please Reach out to us on contact@playnue.com or <strong>+91 - 9044405954.</strong></p>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-2">Cancellation Policy:</h3>
+            <p>0-2 hrs prior to slot: Cancellations not allowed. &gt;2 hrs prior to slot: 10.0% of Gross Amount will be deducted as cancellation fee. Please Reach out to us on contact@playnue.com or <strong>+91 - 9044405954.</strong></p>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-2">Club Policy:</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Eatables are not allowed inside the premises.</li>
+              <li>Consumption of Food, Alcohol and Smoking inside the premises is prohibited.</li>
+              <li>Yelling or shouting inside the premises is strictly prohibited. Unsolicited criticism, disruptive behavior, offensive language, obscene gestures or poor sportsmanship will not be tolerated.</li>
+              <li>The booked slot timings must be followed strictly.</li>
+              <li>Please report to the venue at least 5 minutes prior to the booked slot.</li>
+              <li>Please use the Inquire option or Reach out to us on contact@playnue.com or <strong>+91 - 9044405954</strong> for corporate bookings. Corporate bookings will not be allowed through the app. Any such bookings made will be canceled without prior intimation & with no refund.</li>
+              <li>Prior permission from the venue is required to conduct tournaments or coaching at the venue. Please use the Inquire option or Reach out to us on contact@playnue.com or <strong>+91 - 9044405954</strong> for help with this.</li>
+              <li>100% of the slot fee will be charged for cancellations of bulk bookings.</li>
+              <li>Management is not responsible for loss of personal belongings & any injuries caused during the matches.</li>
+              <li>Please use the dustbin to dump your waste. Littering the club premises could result in a permanent ban from the club.</li>
+              <li>Willful damage to the club's equipment, or the facility, will not be tolerated. Any person(s) causing damage to the equipment or property of the venue shall be held accountable and would be charged accordingly.</li>
+              <li>The venue reserves the right to discontinue any offer for any service or change its policies at any time without due notice.</li>
+              <li>The venue reserves the right to refuse anyone entry to the venue at their discretion and failure to follow the above rules could result in suspension, or termination, of the player's privilege to play, at the discretion of the venue.</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-2">Terms of service:</h3>
+            <p>By continuing, you agree to our terms of service</p>
+          </div>
+        </div>
+      )}
+    </div>
     </>
   );
 }

@@ -135,11 +135,11 @@ const VenuePage = () => {
           case "2775568b-4776-4f51-a0c0-6b24646624b4":
           return "/ppi.jpg";
       default:
-        return null;
+        return "/playturf.jpg";
     }
   };
 
-  const imageSource = getImageSource(image);
+  const imageSource = getImageSource(venue?.id);
 
   useEffect(() => {
     setIsClient(true);

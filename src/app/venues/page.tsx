@@ -45,7 +45,10 @@ export default function Bookings() {
   const [localVenues, setLocalVenues] = useState([]);
   const [otherVenues, setOtherVenues] = useState([]);
   const [isClient, setIsClient] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationError, setLocationError] = useState("");
   const accessToken = useAccessToken();
+  const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
   // Geolocation hook
   const { coords, isGeolocationAvailable, isGeolocationEnabled } = useGeolocated({
@@ -56,12 +59,22 @@ export default function Bookings() {
     userDecisionTimeout: 5000,
   });
 
-  // Ensure component only renders on client
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
 
-  
-  // Fetch location details based on coordinates
   useEffect(() => {
     const detectLocation = async () => {
+      setLocationError("");
+      
       // First try using browser geolocation
       if (coords?.latitude && coords?.longitude) {
         const locationData = await getLocationFromCoords(coords.latitude, coords.longitude);
@@ -71,47 +84,29 @@ export default function Bookings() {
         }
       }
 
-      // Fall back to IP-based services if geolocation fails
-      const services = [
-        "https://ipapi.co/json/",
-        "https://ip-api.com/json/",
-        "https://ipinfo.io/json",
-      ];
-
-      for (const serviceUrl of services) {
-        try {
-          const response = await fetch(serviceUrl);
-          const data = await response.json();
-
-          const city = data.city || data.City || data.cityName;
-          const state = data.region || data.regionName || data.region_name;
-          const country = data.country_name || data.country || data.Country;
-
-          if (city && state && country) {
-            setLocation(`${city}, ${state}, ${country}`);
-            break;
-          }
-        } catch (error) {
-          console.error(`Location fetch failed for ${serviceUrl}`, error);
+      // Fall back to IP-based services
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        const data = await response.json();
+        if (data.city && data.region && data.country_name) {
+          setLocation(`${data.city}, ${data.region}, ${data.country_name}`);
+        } else {
+          setLocationError("Unable to detect location automatically. Please enter your location.");
         }
+      } catch (error) {
+        setLocationError("Unable to detect location automatically. Please enter your location.");
       }
     };
 
     detectLocation();
   }, [coords]);
-  const requestLocationPermission = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          // This will trigger the useGeolocated hook to update
-          console.log("Location permission granted");
-        },
-        error => {
-          console.error("Error getting location:", error);
-        }
-      );
-    }
-  };
+
+  // Ensure component only renders on client
+
+  
+  // Fetch location details based on coordinates
+
+  
 
   const getVenues = async () => {
     const response = await fetch(
@@ -200,9 +195,50 @@ export default function Bookings() {
   };
 
   useEffect(() => {
-    // Fetch venues when component mounts, regardless of geolocation
-    getVenues();
-  }, []);
+    if (!venues.length) return;
+
+    const filterVenues = () => {
+      const searchTerm = searchQuery.toLowerCase();
+      const filtered = venues.filter(venue => {
+        const venueLocation = venue.location.toLowerCase();
+        const venueTitle = venue.title.toLowerCase();
+        
+        // Check if the search term matches location or title
+        return venueLocation.includes(searchTerm) || 
+               venueTitle.includes(searchTerm);
+      });
+
+      // Sort venues by relevance (exact matches first)
+      filtered.sort((a, b) => {
+        const aExactMatch = a.location.toLowerCase() === searchTerm;
+        const bExactMatch = b.location.toLowerCase() === searchTerm;
+        return bExactMatch - aExactMatch;
+      });
+
+      setFilteredVenues(filtered);
+    };
+
+    filterVenues();
+  }, [searchQuery, venues]);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const requestLocationPermission = () => {
+    setLocationError("");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          console.log("Location permission granted");
+        },
+        error => {
+          setLocationError("Please allow location access or enter your location manually.");
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  };
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };
@@ -308,7 +344,7 @@ export default function Bookings() {
           )}
 
           {/* Book Now Button */}
-          <Link href={`/venue-details/${item.id}`}>
+          <Link href={`/venue-details/${item.title}`}>
             <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               Book Now
             </button>
@@ -321,6 +357,9 @@ export default function Bookings() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+  useEffect(() => {
+    getVenues();
+  }, [location]);
 
   // If not client-side, render nothing or a placeholder
   if (!isClient) {
@@ -346,6 +385,7 @@ export default function Bookings() {
     );
   }
 
+  
   // useEffect(() => {
   //   const preloader = document.getElementById("preloader");
   //   if (preloader) {
@@ -373,22 +413,35 @@ export default function Bookings() {
 
           {/* Search Bar */}
           <div className="max-w-md mx-auto mb-8">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Your Location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-gray-800 text-white border-gray-700 rounded-lg pl-10 pr-4 py-2"
-              />
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                🔍
-              </span>
+            <div className="flex flex-col gap-4">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search by city or venue name"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="w-full bg-gray-800 text-white border-gray-700 rounded-lg pl-10 pr-4 py-2"
+                />
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  🔍
+                </span>
+              </div>
+              
+              {locationError && (
+                <p className="text-yellow-500 text-sm text-center">{locationError}</p>
+              )}
+              
+              <button 
+                onClick={requestLocationPermission}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300"
+              >
+                Use My Current Location
+              </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {venues.map(renderVenueCard)}
+            {(searchQuery ? filteredVenues : venues).map(renderVenueCard)}
           </div>
 
           {venues.length === 0 && (

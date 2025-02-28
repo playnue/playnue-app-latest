@@ -344,7 +344,7 @@ export default function Bookings() {
           )}
 
           {/* Book Now Button */}
-          <Link href={`/venue-details/${item.title}`}>
+          <Link href={`/venue-details/${item.id}`}>
             <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               Book Now
             </button>

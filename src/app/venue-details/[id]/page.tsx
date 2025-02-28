@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import "../../loader.css";
 import { parse } from "path";
 import { nhost } from "@/lib/nhost";
+
 interface VenueDetails {
   id: string;
   title: string;
@@ -17,11 +18,11 @@ interface VenueDetails {
   description: string;
   sports: { name: string; icon: string }[];
   amenities: string[];
-  extra_image_ids: string[];
+  image_id: string; // Changed from extra_image_ids to match your data
   location: string;
   open_at: string;
   close_at: string;
-  rating?: number; // Optional fields can be added based on available data
+  rating?: number;
   reviews?: number;
 }
 
@@ -39,76 +40,25 @@ const sportIcons = {
   PS4: "🎮",
   LawnTennis: "🎾",
   Cricket_Net:"🏏"
-  // TableTennis: " :table "
 };
 
 const VenuePage = () => {
   const { id } = useParams();
-  console.log(id);
   const [venue, setVenue] = useState<VenueDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const [image, setImage] = useState();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  
   const handleButtonClick = (e) => {
-    e.preventDefault(); // Prevent the default behavior of the link
+    e.preventDefault();
     setIsLoading(true);
-    router.push(`/book-now/${venue.id}`);
+    router.push(`/book-now/${venue?.id}`);
   };
-  // Fetch data from Hasura
-  useEffect(() => {
-    const fetchVenueDetails = async () => {
-      try {
-        const response = await fetch(
-          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              // Authorization: `Bearer ${parsedData.accessToken}`,
-            },
-            body: JSON.stringify({
-              query: `
-              query MyQuery {
-                venues(where: {title: {_eq: "${id}"}}) {
-                  id
-                  title
-                  description
-                  sports
-                  amenities
-                  image_id
-                  location
-                  open_at
-                  close_at
-                  
-                }
-              }
-            `,
-            }),
-          }
-        );
-
-        const data = await response.json();
-        if (data.errors) {
-          throw new Error("Failed to fetch venue data");
-        }
-        setVenue(data.data.venues[0]);
-        setImage(data.data.venues[0].id);
-        console.log(data.data.venues[0].image_id);
-        setLoading(false);
-      } catch (error) {
-        console.log(error);
-        setLoading(false);
-      }
-    };
-
-    fetchVenueDetails();
-  }, [id]);
- 
+  
+  // Function to get image source based on venue ID
   const getImageSource = (id) => {
     switch (id) {
       case "063a2e3f-8365-40f3-8613-9613f6024d78":
@@ -129,22 +79,67 @@ const VenuePage = () => {
         return "/dugouti.jpg";
       case "e252f954-548c-4463-bbaf-e3323475fd6f":
         return "/gj.jpg";
-        case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
-          return "/dbi.jpg";
-          case "2775568b-4776-4f51-a0c0-6b24646624b4":
-          return "/ppi.jpg";
+      case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
+        return "/dbi.jpg";
+      case "2775568b-4776-4f51-a0c0-6b24646624b4":
+        return "/ppi.jpg";
       default:
-        return null;
+        return "/playturf.jpg"; // Default image if no match is found
     }
   };
 
-  const imageSource = getImageSource(image);
+  // Fetch data from Hasura
+  useEffect(() => {
+    const fetchVenueDetails = async () => {
+      try {
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: `
+              query MyQuery {
+                venues(where: {title: {_eq: "${id}"}}) {
+                  id
+                  title
+                  description
+                  sports
+                  amenities
+                  image_id
+                  location
+                  open_at
+                  close_at
+                }
+              }
+            `,
+            }),
+          }
+        );
+
+        const data = await response.json();
+        if (data.errors) {
+          throw new Error("Failed to fetch venue data");
+        }
+        setVenue(data.data.venues[0]);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setError("Failed to load venue data");
+        setLoading(false);
+      }
+    };
+
+    fetchVenueDetails();
+  }, [id]);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // If not client-side, render nothing or a placeholder
+  // If not client-side, render loading state
   if (!isClient) {
     return (
       <>
@@ -156,9 +151,35 @@ const VenuePage = () => {
     );
   }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!venue) return <p>Venue not found.</p>;
+  if (loading) return (
+    <>
+      <Navbar />
+      <div className="flex items-center justify-center min-h-screen">
+        <div id="preloader"></div>
+      </div>
+    </>
+  );
+  
+  if (error) return (
+    <>
+      <Navbar />
+      <div className="flex items-center justify-center min-h-screen text-white">
+        <p>Error: {error}</p>
+      </div>
+    </>
+  );
+  
+  if (!venue) return (
+    <>
+      <Navbar />
+      <div className="flex items-center justify-center min-h-screen text-white">
+        <p>Venue not found.</p>
+      </div>
+    </>
+  );
+
+  // Get the appropriate image for this venue
+  const venueImage = getImageSource(venue.id);
 
   return (
     <>
@@ -169,7 +190,7 @@ const VenuePage = () => {
           <div className="bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg mb-8">
             <div className="relative h-96">
               <img
-                src="/playturf.jpg"
+                src={venueImage}
                 alt={venue.title}
                 className="w-full h-full object-cover"
               />
@@ -258,7 +279,9 @@ const VenuePage = () => {
                 </h2>
                 <div className="bg-[#252632] p-4 rounded-lg">
                   <Link
-                    href={`https://google.com/maps/search/?api=1&query=${venue.location}`}
+                    href={`https://google.com/maps/search/?api=1&query=${encodeURIComponent(venue.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-center text-purple-400 hover:text-purple-300 py-4"
                   >
                     <span className="mr-2">🗺️</span>

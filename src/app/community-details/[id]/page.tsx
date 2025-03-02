@@ -346,7 +346,30 @@ const GameDetails = () => {
                 )}
               </div>
 
-              
+              <div className="pt-2 space-y-3">
+                <Button
+                  size="lg"
+                  className={`w-full px-4 py-2 rounded ${
+                    game.seats > 0
+                      ? "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300"
+                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  }`}
+                  disabled={game.seats <= 0}
+                  onClick={handleJoin}
+                >
+                  {game.seats > 0 ? "Join Game" : "Game Full"}
+                </Button>
+
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full px-4 py-2 rounded border-purple-600 text-purple-400 hover:bg-gray-700 transition-all duration-300"
+                  onClick={handleSendQuery}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Send Query to Organizer
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

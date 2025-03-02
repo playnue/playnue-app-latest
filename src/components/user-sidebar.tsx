@@ -12,6 +12,8 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  Gamepad,
+  Icon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -28,15 +30,16 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { nhost } from "@/lib/nhost";
+import { title } from "process";
 
 export default function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const user = useUserData();
-  
+
   // Check if user has seller role
   const isSeller = user?.defaultRole === "seller";
-  
+
   // Create base navigation with Dashboard
   const baseNavItems = [
     {
@@ -44,40 +47,50 @@ export default function AppSidebar({
       url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
-    }
+    },
   ];
 
   // Create booking navigation item based on role
-  const bookingNavItem = isSeller ? {
-    title: "Bookings",
-    url: "/seller-bookings",
-    icon: Bot,
-  } : {
-    title: "My Bookings",
-    url: "/user-bookings",
-    icon: Bot,
-  };
+  const bookingNavItem = isSeller
+    ? {
+        title: "Bookings",
+        url: "/seller-bookings",
+        icon: Bot,
+      }
+    : {
+        title: "My Bookings",
+        url: "/user-bookings",
+        icon: Bot,
+      };
 
   // Create venue navigation items based on role
-  const venueNavItem = isSeller ? {
-    title: "Venue",
-    url: "#",
-    icon: BookOpen,
-    items: [
-      {
-        title: "Venue Details",
-        url: "/venue",
-      },
-      {
-        title: "Courts",
-        url: "/courts&slots",
-      },
-    ],
-  } : {
-    title: "Venues",
-    url: "/venues",
-    icon: BookOpen,
-  };
+  const venueNavItem = isSeller
+    ? {
+        title: "Venue",
+        url: "#",
+        icon: BookOpen,
+        items: [
+          {
+            title: "Venue Details",
+            url: "/venue",
+          },
+          {
+            title: "Courts",
+            url: "/courts&slots",
+          },
+        ],
+      }
+    : {
+        title: "Venues",
+        url: "/venues",
+        icon: BookOpen,
+      };
+
+    const myGame = !isSeller && {
+      title:"My Games",
+      url:"/my-games",
+      icon:Gamepad
+    }
 
   // Combine all navigation items
   const navItems = [...baseNavItems, bookingNavItem, venueNavItem];

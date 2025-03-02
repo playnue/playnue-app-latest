@@ -1,46 +1,68 @@
-"use client"
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+"use client";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 
 const CreateGameButton = () => {
   const [showModal, setShowModal] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [sport, setSport] = useState('');
-  const [difficulty, setDifficulty] = useState('');
-  const [location, setLocation] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [description, setDescription] = useState("");
+  const [sport, setSport] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [location, setLocation] = useState("");
+  const [date, setDate] = useState("");
   const [seats, setSeats] = useState(1);
-  const [contactType, setContactType] = useState('none');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  
-  // New state for venues
+  const [time, setTime] = useState("");
+  // Form step state
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Venues state
   const [venues, setVenues] = useState([]);
-  const [venueId, setVenueId] = useState('');
+  const [filteredVenues, setFilteredVenues] = useState([]);
+  const [venueId, setVenueId] = useState("");
   const [loadingVenues, setLoadingVenues] = useState(false);
-  
+
   const accessToken = useAccessToken();
   const userData = useUserData();
   const router = useRouter();
 
-  // Fetch venues when the modal opens
+  // Fetch all venues when the modal opens
   useEffect(() => {
     if (showModal) {
       fetchVenues();
     }
   }, [showModal, accessToken]);
 
+  // Filter venues when sport changes
+  // Filter venues when sport changes
+  useEffect(() => {
+    if (sport && venues.length > 0) {
+      // Filter venues that have the selected sport in their sports array (case-insensitive)
+      const matchingVenues = venues.filter(
+        (venue) =>
+          venue.sports &&
+          venue.sports.some(
+            (venueSport) => venueSport.toLowerCase() === sport.toLowerCase()
+          )
+      );
+      console.log("Matching venues:", matchingVenues);
+
+      setFilteredVenues(matchingVenues);
+
+      // Reset venue selection when sport changes
+      setVenueId("");
+    } else {
+      setFilteredVenues([]);
+    }
+  }, [sport, venues]);
+
   // Function to fetch venues
   const fetchVenues = async () => {
     if (!accessToken) return;
-    
+
     setLoadingVenues(true);
     try {
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
@@ -54,9 +76,10 @@ const CreateGameButton = () => {
               venues {
                 id
                 title
+                sports
               }
             }
-          `
+          `,
         }),
       });
 
@@ -78,22 +101,24 @@ const CreateGameButton = () => {
   const handleCreateGame = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setSuccess(false);
-    
+
     try {
       // Check if user is authenticated
       if (!userData || !accessToken) {
         throw new Error("You must be logged in to create a game");
       }
-      
-      // Using the exact same mutation structure as in your original code
+
+      // Combine date and time
+      const dateTimeString = `${date}T${time}`;
+
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-          "x-hasura-role":"user"
+          Authorization: `Bearer ${accessToken}`,
+          "x-hasura-role": "user",
         },
         body: JSON.stringify({
           query: `
@@ -105,15 +130,15 @@ const CreateGameButton = () => {
           `,
           variables: {
             game: {
-              title,
+              title: sport,
               description,
               sport,
               difficulty,
               location,
-              date,
+              date: date, // Using the combined date and time
               seats: parseInt(seats),
-              venue_id: venueId, // Include the venue_id in the mutation
-            }
+              venue_id: venueId,
+            },
           },
         }),
       });
@@ -126,17 +151,201 @@ const CreateGameButton = () => {
 
       // Success!
       setSuccess(true);
-      
+
       // Redirect to the new game page
       setTimeout(() => {
         router.push(`/community-details/${data.insert_games_one.id}`);
       }, 1500);
-      
     } catch (error) {
       console.error("Error creating game:", error);
       setError(error.message || "Failed to create game. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const nextStep = () => {
+    // Validate current step
+    if (currentStep === 1) {
+      if (!sport) {
+        setError("Please select a sport");
+        return;
+      }
+      if (!venueId) {
+        setError("Please select a venue");
+        return;
+      }
+    }
+
+    setError("");
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const prevStep = () => {
+    setError("");
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  // Render form steps
+  const renderFormStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="mb-4">
+            <label className="block text-lg font-medium text-gray-300 mb-2">
+              Step 1: Select a Sport
+            </label>
+            <select
+              value={sport}
+              onChange={(e) => setSport(e.target.value)}
+              required
+              className="w-full p-3 border border-gray-700 bg-gray-800 text-white rounded text-lg"
+            >
+              <option value="">Select Sport</option>
+              <option value="football">Football</option>
+              <option value="basketball">Basketball</option>
+              <option value="tennis">Tennis</option>
+              <option value="cricket">Cricket</option>
+              <option value="hockey">Hockey</option>
+            </select>
+
+            {sport && filteredVenues.length > 0 && (
+              <div className="mt-6">
+                <label className="block text-lg font-medium text-gray-300 mb-2">
+                  Select a Venue
+                </label>
+                {loadingVenues ? (
+                  <p className="text-gray-400">Loading venues...</p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-gray-400 mb-2">
+                      Select a venue that offers {sport}:
+                    </p>
+
+                    <div className="max-h-60 overflow-y-auto pr-2">
+                      {filteredVenues.map((venue) => (
+                        <div
+                          key={venue.id}
+                          onClick={() => setVenueId(venue.id)}
+                          className={`p-3 border rounded cursor-pointer transition-colors ${
+                            venueId === venue.id
+                              ? "border-purple-500 bg-purple-900"
+                              : "border-gray-700 bg-gray-800 hover:bg-gray-700"
+                          }`}
+                        >
+                          <h3 className="font-medium text-white">
+                            {venue.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            Sports:{" "}
+                            {venue.sports
+                              ? venue.sports.join(", ")
+                              : "None listed"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {sport && filteredVenues.length === 0 && !loadingVenues && (
+              <p className="text-yellow-400 mt-4">
+                No venues found that offer {sport}. Please select a different
+                sport.
+              </p>
+            )}
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-300">
+              Step 2: Game Details
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Date*
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                />
+              </div>
+
+              
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Location*
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Game location"
+                required
+                className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Difficulty*
+                </label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  required
+                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                >
+                  <option value="">Select Difficulty</option>
+                  <option value="1">Beginner</option>
+                  <option value="2">Intermediate</option>
+                  <option value="3">Advanced</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Available Seats*
+                </label>
+                <input
+                  type="number"
+                  value={seats}
+                  onChange={(e) => setSeats(e.target.value)}
+                  min="1"
+                  required
+                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Contact Information*
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter your contact information (Email or Phone) and any additional notes about the game"
+                required
+                rows="3"
+                className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+              ></textarea>
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -146,8 +355,19 @@ const CreateGameButton = () => {
         onClick={() => setShowModal(true)}
         className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
       >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        <svg
+          className="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+          />
         </svg>
         Create Game
       </button>
@@ -157,15 +377,74 @@ const CreateGameButton = () => {
           <div className="bg-gray-800 rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-white">Create New Game</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  Create New Game
+                </h2>
                 <button
                   onClick={() => setShowModal(false)}
                   className="text-gray-400 hover:text-white"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
+              </div>
+
+              {/* Progress indicator */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  {[1, 2].map((step) => (
+                    <div
+                      key={step}
+                      className={`flex-1 ${step < 2 ? "border-t-2" : ""} ${
+                        step <= currentStep
+                          ? "border-purple-500"
+                          : "border-gray-700"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto ${
+                          step === currentStep
+                            ? "bg-purple-600 text-white"
+                            : step < currentStep
+                            ? "bg-purple-800 text-white"
+                            : "bg-gray-800 text-gray-500 border border-gray-700"
+                        }`}
+                      >
+                        {step < currentStep ? (
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          step
+                        )}
+                      </div>
+                      <div className="text-xs text-center mt-1 text-gray-400">
+                        {step === 1 ? "Sport & Venue" : "Game Details"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {error && (
@@ -175,155 +454,48 @@ const CreateGameButton = () => {
               )}
 
               <form onSubmit={handleCreateGame}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Title*
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Game title"
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                    />
-                  </div>
+                {renderFormStep()}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Sport*
-                    </label>
-                    <select
-                      value={sport}
-                      onChange={(e) => setSport(e.target.value)}
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                <div className="flex justify-between mt-6">
+                  {currentStep > 1 ? (
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                      <option value="">Select Sport</option>
-                      <option value="football">Football</option>
-                      <option value="basketball">Basketball</option>
-                      <option value="tennis">Tennis</option>
-                      <option value="cricket">Cricket</option>
-                      <option value="hockey">Hockey</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Difficulty*
-                    </label>
-                    <select
-                      value={difficulty}
-                      onChange={(e) => setDifficulty(e.target.value)}
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                      Back
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                      <option value="">Select Difficulty</option>
-                      <option value={1}>Beginner</option>
-                      <option value={2}>Intermediate</option>
-                      <option value={3}>Advanced</option>
-                    </select>
-                  </div>
+                      Cancel
+                    </button>
+                  )}
 
-                  {/* Venue selection dropdown */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Venue*
-                    </label>
-                    <select
-                      value={venueId}
-                      onChange={(e) => setVenueId(e.target.value)}
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                      disabled={loadingVenues}
+                  {currentStep < 3 ? (
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
                     >
-                      <option value="">
-                        {loadingVenues ? "Loading venues..." : "Select Venue"}
-                      </option>
-                      {venues.map((venue) => (
-                        <option key={venue.id} value={venue.id}>
-                          {venue.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Location*
-                    </label>
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Game location"
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Date*
-                    </label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Available Seats*
-                    </label>
-                    <input
-                      type="number"
-                      value={seats}
-                      onChange={(e) => setSeats(e.target.value)}
-                      min="1"
-                      required
-                      className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Contact
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter your contact information Email or Phone"
-                    required
-                    rows="3"
-                    className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                  ></textarea>
-                </div>
-
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`px-4 py-2 rounded text-white ${
-                      loading
-                        ? "bg-purple-800 cursor-not-allowed"
-                        : "bg-purple-600 hover:bg-purple-700"
-                    } transition-colors`}
-                  >
-                    {loading ? "Creating..." : "Create Game"}
-                  </button>
+                      Next
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`px-4 py-2 rounded text-white ${
+                        loading
+                          ? "bg-purple-800 cursor-not-allowed"
+                          : "bg-purple-600 hover:bg-purple-700"
+                      } transition-colors`}
+                    >
+                      {loading ? "Creating..." : "Create Game"}
+                    </button>
+                  )}
                 </div>
               </form>
             </div>

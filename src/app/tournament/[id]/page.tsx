@@ -73,7 +73,7 @@ const TournamentDetails = () => {
       maxTeams: 16,
       priceType: "team",
       status: "open",
-      image: "footballtournament.jpg",
+      image: "/footballtournament.jpg",
       description: "Here's to a fantastic football tournament! May every match be filled with excitement and fair play",
       instructions: [
         "Maximum Participants: 16 teams",
@@ -93,28 +93,35 @@ const TournamentDetails = () => {
     }
   ];
   
-  useEffect(() => {
-    // Check authentication status after initial load
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        // Get the full current URL path and search parameters
-        const currentPath = window.location.pathname;
-        const searchParams = window.location.search;
-        const fullPath = `${currentPath}${searchParams}`;
-        const returnUrl = encodeURIComponent(fullPath);
+  // useEffect(() => {
+  //   // Check authentication status after initial load
+  //   if (!isLoading) {
+  //     if (!isAuthenticated) {
+  //       // Get the full current URL path and search parameters
+  //       const currentPath = window.location.pathname;
+  //       const searchParams = window.location.search;
+  //       const fullPath = `${currentPath}${searchParams}`;
+  //       const returnUrl = encodeURIComponent(fullPath);
         
-        // Redirect to login with return URL
-        router.push(`/login?returnUrl=${returnUrl}`);
-        return;
-      }
+  //       // Redirect to login with return URL
+  //       router.push(`/login?returnUrl=${returnUrl}`);
+  //       return;
+  //     }
 
-      // Only load tournament data if authenticated
-      const foundTournament = allTournaments.find(
-        (t) => t.id === parseInt(id)
-      );
-      setTournament(foundTournament || null);
-    }
-  }, [isAuthenticated, isLoading, id, router]);
+  //     // Only load tournament data if authenticated
+  //     const foundTournament = allTournaments.find(
+  //       (t) => t.id === parseInt(id)
+  //     );
+  //     setTournament(foundTournament || null);
+  //   }
+  // }, [isAuthenticated, isLoading, id, router]);
+  useEffect(() => {
+    // Find and set tournament data without authentication check
+    const foundTournament = allTournaments.find(
+      (t) => t.id === parseInt(id)
+    );
+    setTournament(foundTournament || null);
+  }, [id]);
   // Show loading state while authentication is being checked
   if (isLoading) {
     return (
@@ -125,9 +132,7 @@ const TournamentDetails = () => {
   }
 
   // If not authenticated, don't render anything (redirection will happen in useEffect)
-  if (!isAuthenticated) {
-    return null;
-  }
+  
 
   // If no tournament found after loading
   if (!tournament) {

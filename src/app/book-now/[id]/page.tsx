@@ -58,7 +58,7 @@ export default function BookNow() {
     if (!user) {
       // Encode the current path to handle special characters
       const currentPath = encodeURIComponent(window.location.pathname);
-      router.push(`/login?returnUrl=${currentPath}`);
+      router.push(`/login`);
     }
   }, [user, router]);
 

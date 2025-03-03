@@ -81,7 +81,7 @@ export default function SellerBookingsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${accessToken}`,
           "X-Hasura-Role": "seller",
         },
         body: JSON.stringify({

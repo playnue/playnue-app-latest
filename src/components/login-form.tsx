@@ -49,11 +49,12 @@ export const useAuth = () => {
       // console.log(redirectPath)
       if (redirectPath) {
         // Only set redirectTo if we have a valid path
-        options.redirectTo = process.env.NEXT_PUBLIC_DOMAIN + "/"+redirectPath;
+        options.redirectTo = process.env.NEXT_PUBLIC_DOMAIN + redirectPath;
       }
       console.log(options)
       
 // process.env.url + "/" + returnUrl
+      
       const result = await nhost.auth.signIn({
         provider: 'google',
         options

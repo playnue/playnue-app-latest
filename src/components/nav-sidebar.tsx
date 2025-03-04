@@ -46,7 +46,7 @@ export default function Sidebar() {
         },
         {
           name: "Tournaments",
-          href: "/tournament",
+          href: "/tournaments",
           icon: <Trophy  size={18} />,
         },
       ],

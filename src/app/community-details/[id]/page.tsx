@@ -322,7 +322,7 @@ const GameDetails = () => {
             animate={{ opacity: 1, x: 0 }}
             className="mb-6"
           >
-            <Link href="/community-games">
+            <Link href="/community">
               <Button
                 variant="ghost"
                 className="text-purple-300 hover:text-purple-200 hover:bg-purple-900/20"

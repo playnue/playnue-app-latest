@@ -11,14 +11,18 @@ import {
   Users,
   Trophy,
   MessageCircle,
-  Home
+  Home,
+  ArrowLeft,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
 const GameDetails = () => {
   const params = useParams();
-  const gameId = params?.id; // Extract the actual ID parameter
+  const router = useRouter();
+  const gameId = params?.id;
   const [game, setGame] = useState(null);
   const [venue, setVenue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -206,172 +210,209 @@ const GameDetails = () => {
     );
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div id="preloader"></div>
-      </div>
-    );
-
-  // Show detailed debug information if game data isn't loading correctly
-  if (!game) {
-    return (
-      <div className="flex justify-center items-center min-h-screen p-4 bg-gray-900">
-        <Card className="max-w-lg w-full bg-gray-800 border border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-xl text-yellow-500">
-              Game Details Not Available
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-400">
-              We couldn't retrieve the game details. This might be due to one of
-              the following reasons:
-            </p>
-            <ul className="list-disc pl-5 space-y-2 text-gray-400">
-              <li>The game ID parameter is missing or incorrect</li>
-              <li>The API endpoint is not responding</li>
-              <li>The game might have been removed</li>
-              <li>There's an issue with the GraphQL query</li>
-            </ul>
-            <div className="mt-4 p-4 bg-gray-700 rounded-md">
-              <p className="font-semibold text-gray-300">Debug Information:</p>
-              <p className="text-gray-300">URL Parameters: {JSON.stringify(debug.params)}</p>
-              <p className="text-gray-300">Game ID: {debug.gameId || "Not available"}</p>
-              <p className="text-gray-300">API Response: {debug.responseData ? "Received" : "None"}</p>
-            </div>
-            <div className="pt-4 flex justify-center">
-              <Button
-                onClick={fetchGameDetails}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Retry Loading
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+          <div className="animate-pulse flex space-x-4">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-full"></div>
+            <div className="w-12 h-12 bg-purple-400/20 rounded-full"></div>
+            <div className="w-12 h-12 bg-purple-300/20 rounded-full"></div>
+          </div>
+        </div>
+      </>
     );
   }
 
-  if (error)
+  if (!game) {
     return (
-      <div className="flex justify-center items-center min-h-screen p-4 bg-gray-900">
-        <Card className="bg-red-50 border-gray-700 max-w-md w-full">
-          <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              <p className="text-xl font-semibold">{error}</p>
-              <Button
-                onClick={fetchGameDetails}
-                className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-lg w-full"
+          >
+            <Card className="bg-gray-800/50 backdrop-blur-lg border border-purple-500/20 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-xl text-purple-300">
+                  Game Details Not Available
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-300">
+                  We couldn't retrieve the game details. This might be due to:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-gray-400">
+                  <li>Invalid game ID</li>
+                  <li>Connection issues</li>
+                  <li>The game may have been removed</li>
+                </ul>
+                <div className="mt-6 flex space-x-4">
+                  <Button
+                    onClick={() => router.push('/community-games')}
+                    className="bg-gray-700 hover:bg-gray-600 text-white"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Games
+                  </Button>
+                  <Button
+                    onClick={fetchGameDetails}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    Retry Loading
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </>
     );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full"
+          >
+            <Card className="bg-gray-800/50 backdrop-blur-lg border border-red-500/20 shadow-xl">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-xl font-semibold text-red-400 mb-4">{error}</p>
+                  <div className="flex space-x-4 justify-center">
+                    <Button
+                      onClick={() => router.push('/community-games')}
+                      className="bg-gray-700 hover:bg-gray-600 text-white"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Games
+                    </Button>
+                    <Button
+                      onClick={fetchGameDetails}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <Navbar />
-      <div className="container mx-auto p-4 min-h-screen bg-gray-900">
-        <div className="flex justify-center items-center">
-          <Card className="max-w-md w-full border border-gray-700 rounded-lg overflow-hidden shadow-md bg-gray-800">
-            {/* Featured date and location banner at top */}
-            <div className="bg-purple-800 text-white p-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Calendar className="w-5 h-5" />
-                <span className="font-medium">
-                  {formatDate(game.date)} at {game.time || "Time not specified"}
-                </span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <MapPin className="w-5 h-5" />
-                <span className="font-medium">
-                  {game.location || "Location not specified"}
-                </span>
-              </div>
-            </div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          {/* Back button */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="mb-6"
+          >
+            <Link href="/community-games">
+              <Button
+                variant="ghost"
+                className="text-purple-300 hover:text-purple-200 hover:bg-purple-900/20"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Games
+              </Button>
+            </Link>
+          </motion.div>
 
-            <CardHeader className="space-y-3 pt-6">
-              <div className="flex flex-col gap-2 items-center text-center">
-                <CardTitle className="text-2xl font-bold text-white">
-                  {game.title || "Untitled Game"}
-                </CardTitle>
-                {game.sport && (
-                  <Badge className="text-sm capitalize bg-purple-800 text-purple-200 px-2 py-1 rounded">
-                    {game.sport}
-                  </Badge>
-                )}
-                {game.difficulty && (
-                  <Badge variant="outline" className="text-sm capitalize mt-1 border-gray-600 text-gray-300">
-                    {game.difficulty} Level
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <p className="text-gray-400 text-base leading-relaxed text-center">
-                {game.description || "No description available"}
-              </p>
-
-              <div className="grid grid-cols-1 gap-3 bg-gray-700 p-4 rounded-lg border border-gray-600">
-                <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-purple-400" />
-                  <span className="text-gray-300">
-                    {game.seats || "0"} {game.seats === 1 ? "spot" : "spots"} available
-                  </span>
+          {/* Main content */}
+          <div className="flex justify-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl w-full"
+            >
+              <Card className="bg-gray-800/50 backdrop-blur-lg border border-purple-500/20 shadow-xl overflow-hidden">
+                {/* Hero Banner */}
+                <div className="bg-gradient-to-r from-purple-900 to-purple-700 text-white p-8">
+                  <h1 className="text-3xl font-bold text-center mb-4">
+                    {game.title || "Untitled Game"}
+                  </h1>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {game.sport && (
+                      <Badge className="bg-purple-600/50 text-purple-100 px-3 py-1">
+                        {game.sport}
+                      </Badge>
+                    )}
+                    {game.difficulty && (
+                      <Badge variant="outline" className="border-purple-300/30 text-purple-100">
+                        {game.difficulty} Level
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-                {game.difficulty && (
-                  <div className="flex items-center gap-3">
-                    <Trophy className="w-5 h-5 text-purple-400" />
-                    <span className="text-gray-300 capitalize">
-                      {game.difficulty} difficulty
-                    </span>
+                <CardContent className="p-6 space-y-6">
+                  {/* Game Details */}
+                  <div className="grid gap-4 bg-gray-700/30 p-6 rounded-xl border border-purple-500/10">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {formatDate(game.date)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {game.time || "Time not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {game.location || "Location not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Users className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {game.seats || "0"} {game.seats === 1 ? "spot" : "spots"} available
+                      </span>
+                    </div>
+                    {venue && (
+                      <div className="flex items-center gap-3">
+                        <Home className="w-5 h-5 text-purple-400" />
+                        <span className="text-gray-200">
+                          Venue: {venue.title}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {/* Display venue information */}
-                {game.venue_id && (
-                  <div className="flex items-center gap-3">
-                    <Home className="w-5 h-5 text-purple-400" />
-                    <span className="text-gray-300">
-                      Venue: {venue?.title || "Loading venue..."}
-                    </span>
+
+                  {/* Description */}
+                  <div className="bg-gray-700/20 p-6 rounded-xl border border-purple-500/10">
+                    <h3 className="text-lg font-semibold text-purple-300 mb-3">
+                      About this Game
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed">
+                      {game.description || "No description available"}
+                    </p>
                   </div>
-                )}
-              </div>
 
-              <div className="pt-2 space-y-3">
-                <Button
-                  size="lg"
-                  className={`w-full px-4 py-2 rounded ${
-                    game.seats > 0
-                      ? "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300"
-                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  }`}
-                  disabled={game.seats <= 0}
-                  onClick={handleJoin}
-                >
-                  {game.seats > 0 ? "Join Game" : "Game Full"}
-                </Button>
-
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full px-4 py-2 rounded border-purple-600 text-purple-400 hover:bg-gray-700 transition-all duration-300"
-                  onClick={handleSendQuery}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Send Query to Organizer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  {/* Action Buttons */}
+                  
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </div>
       </div>
     </>

@@ -5,8 +5,11 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { format } from "date-fns";
 import CreateGameButton from "../components/CreateGameButton";
+import { HiCalendar, HiLocationMarker, HiAdjustments } from 'react-icons/hi';
+import { motion } from "framer-motion";
 
 const CommunityGames = () => {
+  // Keep all the existing state declarations and functions
   const [games, setGames] = useState([]);
   const [localGames, setLocalGames] = useState([]);
   const [otherGames, setOtherGames] = useState([]);
@@ -259,390 +262,278 @@ const CommunityGames = () => {
     setSearchQuery(e.target.value);
   };
 
-  const fetchVenueDetails = async (venueId) => {
-    if (!venueId) return;
-    
-    try {
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `
-            query GetVenue($venueId: uuid!) {
-              venues_by_pk(id: $venueId) {
-                id
-                title
-                location
-              }
-            }
-          `,
-          variables: {
-            venueId: venueId,
-          },
-        }),
-      });
-
-      const responseData = await response.json();
-      
-      if (responseData.errors) {
-        console.error("Error fetching venue:", responseData.errors);
-        return;
-      }
-
-      // if (responseData.data?.venues_by_pk) {
-      //   setVenue(responseData.data.venues_by_pk);
-      // }
-    } catch (error) {
-      console.error("Failed to fetch venue details:", error);
-    }
-  };
-
   // Loading state
-  if (!isClient || loading)
+  if (!isClient || loading) {
     return (
       <>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div id="preloader"></div>
+        <div className="flex items-center justify-center min-h-screen bg-gray-900">
+          <div className="animate-pulse flex space-x-4">
+            <div className="w-12 h-12 bg-purple-500 rounded-full"></div>
+            <div className="w-12 h-12 bg-purple-400 rounded-full"></div>
+            <div className="w-12 h-12 bg-purple-300 rounded-full"></div>
+          </div>
         </div>
       </>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <>
         <Navbar />
-        <div className="text-center py-8 text-red-500">Error: {error}</div>
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-center p-8 bg-red-900/20 rounded-lg border border-red-500/50">
+            <h2 className="text-red-400 text-xl mb-2">Error</h2>
+            <p className="text-red-300">{error}</p>
+          </div>
+        </div>
       </>
     );
+  }
 
-  // Filter local games based on user filters
-  const filteredLocalGames = localGames.filter((game) => {
-    return (
-      (!filters.sport || game.sport === filters.sport) &&
-      (!filters.difficulty || game.difficulty === filters.difficulty) &&
-      (!filters.date || game.date === filters.date)
-    );
-  });
+  const GameCard = ({ game }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="group relative bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-xl"
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div className="p-6 relative z-10">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-semibold text-white group-hover:text-purple-300 transition-colors">
+            {game.title}
+          </h3>
+          <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm font-medium">
+            {game.sport}
+          </span>
+        </div>
 
+        <p className="text-gray-300 mb-4 line-clamp-2">{game.description}</p>
+
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center text-gray-300">
+            <HiCalendar className="w-5 h-5 mr-2 text-purple-400" />
+            {format(new Date(game.date), "MMM d, yyyy")}
+          </div>
+          <div className="flex items-center text-gray-300">
+            <HiLocationMarker className="w-5 h-5 mr-2 text-purple-400" />
+            {game.venue_name !== "N/A"
+              ? `${game.venue_name}, ${game.venue_location}`
+              : game.location}
+          </div>
+          <div className="flex items-center text-gray-300">
+            <HiAdjustments className="w-5 h-5 mr-2 text-purple-400" />
+            <span className="capitalize">{game.difficulty}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-purple-300">
+            {game.seats} {game.seats === 1 ? "spot" : "spots"} left
+          </span>
+          <Link href={`/community-details/${game.id}`}>
+            <button
+              disabled={game.seats <= 0}
+              className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
+                game.seats > 0
+                  ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
+                  : "bg-gray-700 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {game.seats > 0 ? "Join Game" : "Full"}
+            </button>
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+  );
+  // Add this before the return statement
+const filteredLocalGames = localGames.filter((game) => {
+  // Check if the game matches all selected filters
+  const matchesSport = !filters.sport || game.sport.toLowerCase() === filters.sport.toLowerCase();
+  const matchesDifficulty = !filters.difficulty || game.difficulty.toLowerCase() === filters.difficulty.toLowerCase();
+  const matchesDate = !filters.date || game.date === filters.date;
+  const matchesLocation = !filters.location || 
+    game.location.toLowerCase().includes(filters.location.toLowerCase()) ||
+    (game.venue_location && game.venue_location.toLowerCase().includes(filters.location.toLowerCase()));
+
+  // Return true only if all applicable filters match
+  return matchesSport && matchesDifficulty && matchesDate && matchesLocation;
+});
   return (
     <>
       <Navbar />
-      <div className="flex justify-center bg-gray-900 min-h-screen">
-        <div className="container max-w-6xl mx-auto p-4">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white">
-              Find Community Games
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+        <div className="container max-w-7xl mx-auto px-4 py-8">
+          {/* Hero Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Discover Sports Games Near You
             </h1>
-            <p className="text-gray-400 mt-2">
-              Discover games near {location.split(",")[0]}
+            <p className="text-xl text-purple-300">
+              Join community games in {location.split(",")[0]} and connect with fellow sports enthusiasts
             </p>
-          </div>
+          </motion.div>
 
-          {/* Filters */}
-          <div className="bg-gray-800 p-4 rounded-lg mb-6 overflow-x-auto max-w-4xl mx-auto">
-            <div className="flex flex-row space-x-4 min-w-max justify-center">
-              <div className="w-48">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Sport
-                </label>
-                <select
-                  name="sport"
-                  value={filters.sport}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                >
-                  <option value="">All Sports</option>
-                  <option value="football">Football</option>
-                  <option value="basketball">Basketball</option>
-                  <option value="tennis">Tennis</option>
-                  <option value="cricket">Cricket</option>
-                  <option value="hockey">Hockey</option>
-                </select>
-              </div>
+          {/* Filters Section */}
+          <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-2xl mb-8 border border-purple-500/20"
+>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    {/* Sport Filter */}
+    <div className="filter-group">
+      <label className="text-purple-300 text-sm font-medium mb-2 block">
+        Sport Type
+      </label>
+      <select
+        name="sport"
+        value={filters.sport}
+        onChange={handleFilterChange}
+        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+        focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+        hover:border-purple-400 transition-all duration-300
+        appearance-none cursor-pointer shadow-lg shadow-purple-500/10"
+      >
+        <option value="">All Sports</option>
+        <option value="football">Football</option>
+        <option value="basketball">Basketball</option>
+        <option value="tennis">Tennis</option>
+        <option value="cricket">Cricket</option>
+        <option value="hockey">Hockey</option>
+      </select>
+    </div>
 
-              <div className="w-48">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Difficulty
-                </label>
-                <select
-                  name="difficulty"
-                  value={filters.difficulty}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                >
-                  <option value="">Any Difficulty</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
-              </div>
+    {/* Difficulty Filter */}
+    <div className="filter-group">
+      <label className="text-purple-300 text-sm font-medium mb-2 block">
+        Difficulty
+      </label>
+      <select
+        name="difficulty"
+        value={filters.difficulty}
+        onChange={handleFilterChange}
+        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+        focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+        hover:border-purple-400 transition-all duration-300
+        appearance-none cursor-pointer shadow-lg shadow-purple-500/10"
+      >
+        <option value="">Any Difficulty</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
 
-              <div className="w-48">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={filters.location}
-                  onChange={handleFilterChange}
-                  placeholder="Enter location"
-                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                />
-              </div>
+    {/* Location Filter */}
+    <div className="filter-group">
+      <label className="text-purple-300 text-sm font-medium mb-2 block">
+        Location
+      </label>
+      <input
+        type="text"
+        name="location"
+        value={filters.location}
+        onChange={handleFilterChange}
+        placeholder="Enter location"
+        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+        focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+        hover:border-purple-400 transition-all duration-300
+        placeholder-gray-400 shadow-lg shadow-purple-500/10"
+      />
+    </div>
 
-              <div className="w-48">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={filters.date}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                />
-              </div>
-              
-              <div className="w-48">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Search
-                </label>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  placeholder="Search games"
-                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-                />
-              </div>
-            </div>
-          </div>
+    {/* Date Filter */}
+    <div className="filter-group">
+      <label className="text-purple-300 text-sm font-medium mb-2 block">
+        Date
+      </label>
+      <input
+        type="date"
+        name="date"
+        value={filters.date}
+        onChange={handleFilterChange}
+        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+        focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+        hover:border-purple-400 transition-all duration-300
+        shadow-lg shadow-purple-500/10
+        [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+      />
+    </div>
 
-          {/* SEARCH RESULTS SECTION */}
-          {isSearching ? (
-            <>
-              <h2 className="text-xl font-semibold text-white mb-4 text-center">
-                Search Results
-              </h2>
-              {searchResults.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+    {/* Search Input */}
+    <div className="filter-group">
+      <label className="text-purple-300 text-sm font-medium mb-2 block">
+        Search
+      </label>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={handleSearch}
+        placeholder="Search games"
+        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+        focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+        hover:border-purple-400 transition-all duration-300
+        placeholder-gray-400 shadow-lg shadow-purple-500/10"
+      />
+    </div>
+  </div>
+</motion.div>
+
+          {/* Games Display Section */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {isSearching ? (
+              // Search Results
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Search Results ({searchResults.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {searchResults.map((game) => (
-                    <div className="bg-white rounded-lg shadow-md p-6 max-w-md">
-                    <div className="text-gray-500 mb-2">{game.difficulty}</div>
-                    
-                    <div className="flex items-center mb-2">
-                      <div className="flex">
-                        <div className="relative">
-                          <img 
-                            src="/user.jpeg" 
-                            alt="Profile" 
-                            className="w-10 h-10 rounded-full border-2 border-white"
-                          />
-                        </div>
-                      </div>
-                      <div className="ml-3 font-medium text-lg">
-                        {game.seats} Players needed
-                      </div>
-                    </div>
-                    
-                    <div className="text-gray-800 mb-4">
-                      {game.date}
-                    </div>
-                    
-                    <div className="flex items-center mb-4">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 text-gray-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="text-gray-800">{game.location}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 text-gray-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <div className="bg-gray-100 rounded-full px-4 py-1 text-sm text-gray-800">
-                        {game.difficulty}
-                      </div>
-                    </div>
-                  </div>
+                    <GameCard key={game.id} game={game} />
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 bg-gray-800 rounded-lg mb-8">
-                  <p className="text-gray-400">
-                    No games found matching your search criteria.
-                  </p>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* LOCAL GAMES SECTION - Only shown if there are local games and not searching */}
-              {filteredLocalGames.length > 0 ? (
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-white mb-4 text-center">
-                    Games Near You
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-                    {filteredLocalGames.map((game) => (
-                      <div
-                        key={game.id}
-                        className="border border-gray-700 rounded-lg overflow-hidden shadow-md bg-gray-800 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl w-full max-w-sm"
-                      >
-                        <div className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h2 className="text-xl font-semibold text-white">
-                              {game.title}
-                            </h2>
-                            <span className="bg-purple-800 text-purple-200 text-xs px-2 py-1 rounded">
-                              {game.sport}
-                            </span>
-                          </div>
-
-                          <p className="text-gray-400 mb-4 text-sm">
-                            {game.description}
-                          </p>
-
-                          <div className="grid grid-cols-2 gap-2 mb-4">
-                            <div className="text-sm text-gray-300">
-                              <span className="font-medium">Date: </span>
-                              {format(new Date(game.date), "MMM d, yyyy")}
-                            </div>
-
-                            <div className="text-sm text-gray-300">
-                              <span className="font-medium">Location: </span>
-                              {game.venue_name !== "N/A"
-                                ? `${game.venue_name}, ${game.venue_location}`
-                                : game.location}
-                            </div>
-                            <div className="text-sm text-gray-300">
-                              <span className="font-medium">Difficulty: </span>
-                              <span className="capitalize">{game.difficulty}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <div className="text-sm font-medium text-gray-300">
-                              {game.seats} {game.seats === 1 ? "spot" : "spots"}{" "}
-                              left
-                            </div>
-                            <Link href={`/community-details/${game.id}`}>
-                              <button
-                                disabled={game.seats <= 0}
-                                className={`px-4 py-2 rounded ${
-                                  game.seats > 0
-                                    ? "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300"
-                                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                }`}
-                              >
-                                {game.seats > 0 ? "Join Game" : "Full"}
-                              </button>
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-8 text-center py-4 bg-gray-800 rounded-lg">
-                  <p className="text-gray-400">
-                    No games found near {location.split(",")[0]}.
-                  </p>
-                  
-                  {/* Only show other games section if there are no local games */}
-                  {otherGames.length > 0 && (
-                    <div className="mt-8">
-                      <h2 className="text-xl font-semibold text-white mb-4">
-                        Other Available Games
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-                        {otherGames
-                          .filter((game) => {
-                            return (
-                              (!filters.sport || game.sport === filters.sport) &&
-                              (!filters.difficulty || game.difficulty === filters.difficulty) &&
-                              (!filters.date || game.date === filters.date)
-                            );
-                          })
-                          .map((game) => (
-                            <div
-                              key={game.id}
-                              className="border border-gray-700 rounded-lg overflow-hidden shadow-md bg-gray-800 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl w-full max-w-sm"
-                            >
-                              <div className="p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h2 className="text-xl font-semibold text-white">
-                                    {game.title}
-                                  </h2>
-                                  <span className="bg-purple-800 text-purple-200 text-xs px-2 py-1 rounded">
-                                    {game.sport}
-                                  </span>
-                                </div>
-
-                                <p className="text-gray-400 mb-4 text-sm">
-                                  {game.description}
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-2 mb-4">
-                                  <div className="text-sm text-gray-300">
-                                    <span className="font-medium">Date: </span>
-                                    {format(new Date(game.date), "MMM d, yyyy")}
-                                  </div>
-
-                                  <div className="text-sm text-gray-300">
-                                    <span className="font-medium">Location: </span>
-                                    {game.venue_name !== "N/A"
-                                      ? `${game.venue_name}, ${game.venue_location}`
-                                      : game.location}
-                                  </div>
-                                  <div className="text-sm text-gray-300">
-                                    <span className="font-medium">Difficulty: </span>
-                                    <span className="capitalize">{game.difficulty}</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                  <div className="text-sm font-medium text-gray-300">
-                                    {game.seats} {game.seats === 1 ? "spot" : "spots"}{" "}
-                                    left
-                                  </div>
-                                  <Link href={`/community-details/${game.id}`}>
-                                    <button
-                                      disabled={game.seats <= 0}
-                                      className={`px-4 py-2 rounded ${
-                                        game.seats > 0
-                                          ? "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300"
-                                          : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                      }`}
-                                    >
-                                      {game.seats > 0 ? "Join Game" : "Full"}
-                                    </button>
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
+              </div>
+            ) : (
+              // Local Games
+              <>
+                {filteredLocalGames.length > 0 ? (
+                  <div className="space-y-6 mb-12">
+                    <h2 className="text-2xl font-bold text-white mb-6">
+                      Games Near You
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredLocalGames.map((game) => (
+                        <GameCard key={game.id} game={game} />
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400 text-lg">
+                      No games found in your area. Try adjusting your filters or create a new game!
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
         </div>
       </div>
-      <CreateGameButton/>
+      <CreateGameButton />
     </>
   );
 };
-
 
 export default CommunityGames;

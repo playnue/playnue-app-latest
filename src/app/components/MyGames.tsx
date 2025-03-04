@@ -188,7 +188,7 @@ const MyGames = () => {
     <div className="w-full py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent">My Games</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-black bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent">My Games</h2>
           <Link 
             href="/create-game"
             className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg shadow-md transition-colors duration-200 hidden sm:flex items-center"
@@ -211,7 +211,7 @@ const MyGames = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-purple-300 transition-colors duration-200 line-clamp-2">
-                      {game.title}
+                      {game.sport}
                     </h3>
                     <span className="text-3xl">{getSportIcon(game.sport)}</span>
                   </div>

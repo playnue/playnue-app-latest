@@ -296,12 +296,12 @@ export default function SellerBookingsPage() {
                           )}
                         </div>
                       <div>
-                        {booking.payment_type === 1 ? (
+                        {booking.payment_type === 2 ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <CreditCard className="w-3 h-3 mr-1" />
                             Full Payment
                           </span>
-                        ) : booking.payment_type === 2 ? (
+                        ) : booking.payment_type === 1 ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                             <CreditCard className="w-3 h-3 mr-1" />
                             50% Advance

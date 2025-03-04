@@ -21,6 +21,7 @@ const UpdateGame = () => {
     seats: 1,
     title:"",
     description: "",
+    date:"",
   });
 
   // Fetch game data on component mount
@@ -92,6 +93,7 @@ const UpdateGame = () => {
         seats: gameData.seats || 1,
         title:gameData.title || "",
         description: gameData.description || "",
+        date:gameData.date || ""
       });
     } catch (error) {
       console.error("Error fetching game details:", error);
@@ -171,6 +173,7 @@ const UpdateGame = () => {
               $gameId: uuid!,
               $seats: Int!,
               $title: String!,
+              $date: date!,
               $description: String
             ) {
               update_games_by_pk(
@@ -178,6 +181,7 @@ const UpdateGame = () => {
                 _set: {
                   seats: $seats,
                   title:$title,
+                  date:$date,
                   description: $description
                 }
               ) {
@@ -190,6 +194,7 @@ const UpdateGame = () => {
             gameId,
             seats: formData.seats,
             title: formData.title,
+            date:formData.date,
             description: formData.description,
           },
         }),
@@ -335,32 +340,38 @@ const UpdateGame = () => {
 
         {/* Venue Box at the top */}
         {venue && venue.title && (
-          <div className="bg-gradient-to-r from-purple-800 to-indigo-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden mb-6">
-            <div className="p-5 flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-bold text-white">{venue.title}</h3>
-                {venue.location && (
-                  <p className="text-gray-300 text-sm mt-1">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-4 w-4 inline mr-1" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    {venue.location}
-                  </p>
-                )}
-              </div>
-              <Link href={`/book-now/${venue.id}`}>
-              <button className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-sm font-medium rounded-lg transition-colors duration-200">
-                Book Now
-              </button>
-              </Link>
-            </div>
+  <div className="bg-gradient-to-r from-purple-800 to-indigo-900 rounded-lg shadow-md border border-gray-700 overflow-hidden mb-4 transition-all duration-200">
+    <div className="p-4 flex justify-between items-center">
+      <div>
+        <h3 className="text-lg font-bold text-white">{venue.title}</h3>
+        {venue.location && (
+          <div className="flex items-center text-gray-300 text-xs mt-1">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-3 w-3 mr-1 text-indigo-300" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            <span>{venue.location}</span>
+            <Link href="/venues">
+              <span className="ml-2 text-indigo-300 hover:text-white underline underline-offset-2 text-xs">
+                Change
+              </span>
+            </Link>
           </div>
         )}
+      </div>
+      
+      <Link href={`/book-now/${venue.id}`}>
+        <button className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs font-medium rounded-md shadow-sm">
+          Book Now
+        </button>
+      </Link>
+    </div>
+  </div>
+)}
 
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl border border-gray-700 overflow-hidden">
           <div className="px-6 pt-6 pb-4 border-b border-gray-700">
@@ -412,6 +423,25 @@ const UpdateGame = () => {
                   min="1"
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Number of players"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="date"
+                  className="block text-sm font-medium text-gray-300 mb-1"
+                >
+                  Date
+                </label>
+                <input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  required
+                  min="1"
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Contact Details"
                 />
               </div>
               <div>

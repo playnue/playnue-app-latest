@@ -259,6 +259,46 @@ const CommunityGames = () => {
     setSearchQuery(e.target.value);
   };
 
+  const fetchVenueDetails = async (venueId) => {
+    if (!venueId) return;
+    
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
+            query GetVenue($venueId: uuid!) {
+              venues_by_pk(id: $venueId) {
+                id
+                title
+                location
+              }
+            }
+          `,
+          variables: {
+            venueId: venueId,
+          },
+        }),
+      });
+
+      const responseData = await response.json();
+      
+      if (responseData.errors) {
+        console.error("Error fetching venue:", responseData.errors);
+        return;
+      }
+
+      // if (responseData.data?.venues_by_pk) {
+      //   setVenue(responseData.data.venues_by_pk);
+      // }
+    } catch (error) {
+      console.error("Failed to fetch venue details:", error);
+    }
+  };
+
   // Loading state
   if (!isClient || loading)
     return (
@@ -391,62 +431,47 @@ const CommunityGames = () => {
               {searchResults.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
                   {searchResults.map((game) => (
-                    <div
-                      key={game.id}
-                      className="border border-gray-700 rounded-lg overflow-hidden shadow-md bg-gray-800 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl w-full max-w-sm"
-                    >
-                      <div className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h2 className="text-xl font-semibold text-white">
-                            {game.title}
-                          </h2>
-                          <span className="bg-purple-800 text-purple-200 text-xs px-2 py-1 rounded">
-                            {game.sport}
-                          </span>
-                        </div>
-
-                        <p className="text-gray-400 mb-4 text-sm">
-                          {game.description}
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          <div className="text-sm text-gray-300">
-                            <span className="font-medium">Date: </span>
-                            {format(new Date(game.date), "MMM d, yyyy")}
-                          </div>
-
-                          <div className="text-sm text-gray-300">
-                            <span className="font-medium">Location: </span>
-                            {game.venue_name !== "N/A"
-                              ? `${game.venue_name}, ${game.venue_location}`
-                              : game.location}
-                          </div>
-                          <div className="text-sm text-gray-300">
-                            <span className="font-medium">Difficulty: </span>
-                            <span className="capitalize">{game.difficulty}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm font-medium text-gray-300">
-                            {game.seats} {game.seats === 1 ? "spot" : "spots"}{" "}
-                            left
-                          </div>
-                          <Link href={`/community-details/${game.id}`}>
-                            <button
-                              disabled={game.seats <= 0}
-                              className={`px-4 py-2 rounded ${
-                                game.seats > 0
-                                  ? "bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300"
-                                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                              }`}
-                            >
-                              {game.seats > 0 ? "Join Game" : "Full"}
-                            </button>
-                          </Link>
+                    <div className="bg-white rounded-lg shadow-md p-6 max-w-md">
+                    <div className="text-gray-500 mb-2">{game.difficulty}</div>
+                    
+                    <div className="flex items-center mb-2">
+                      <div className="flex">
+                        <div className="relative">
+                          <img 
+                            src="/user.jpeg" 
+                            alt="Profile" 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                          />
                         </div>
                       </div>
+                      <div className="ml-3 font-medium text-lg">
+                        {game.seats} Players needed
+                      </div>
                     </div>
+                    
+                    <div className="text-gray-800 mb-4">
+                      {game.date}
+                    </div>
+                    
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-gray-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-gray-800">{game.location}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-gray-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <div className="bg-gray-100 rounded-full px-4 py-1 text-sm text-gray-800">
+                        {game.difficulty}
+                      </div>
+                    </div>
+                  </div>
                   ))}
                 </div>
               ) : (

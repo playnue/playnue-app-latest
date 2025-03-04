@@ -8,10 +8,12 @@ const CreateGameButton = () => {
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState("");
   const [sport, setSport] = useState("");
+  const [teamType, setTeamType] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
   const [seats, setSeats] = useState(1);
+  const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -36,7 +38,18 @@ const CreateGameButton = () => {
     }
   }, [showModal, accessToken]);
 
-  // Filter venues when sport changes
+  const sportsTeams = {
+    cricket: ["11-a-side", "6-a-side"],
+    football: ["11-a-side", "7-a-side", "5-a-side"],
+    tennis: ["Singles", "Doubles", "Mixed Doubles"],
+    snooker: ["Singles", "Doubles"],
+    basketball: ["5-a-side", "3-a-side"],
+    golf: ["Singles", "Doubles", "Team Play"],
+    pickleball: ["Singles", "Doubles"],
+    pool: ["Singles", "Doubles"],
+    hockey: ["11-a-side", "7-a-side", "5-a-side"]
+  };
+
   // Filter venues when sport changes
   useEffect(() => {
     if (sport && venues.length > 0) {
@@ -54,6 +67,8 @@ const CreateGameButton = () => {
 
       // Reset venue selection when sport changes
       setVenueId("");
+      // Reset team type when sport changes
+      setTeamType("");
     } else {
       setFilteredVenues([]);
     }
@@ -130,8 +145,8 @@ const CreateGameButton = () => {
           `,
           variables: {
             game: {
-              title: sport,
-              description,
+              title: contact,
+              description: `${description} (${teamType})`,
               sport,
               difficulty,
               location,
@@ -171,6 +186,11 @@ const CreateGameButton = () => {
         setError("Please select a sport");
         return;
       }
+      if (!teamType && sportsTeams[sport]) {
+        setError("Please select a team type");
+        return;
+      }
+    } else if (currentStep === 2) {
       if (!venueId) {
         setError("Please select a venue");
         return;
@@ -207,62 +227,84 @@ const CreateGameButton = () => {
               <option value="tennis">Tennis</option>
               <option value="cricket">Cricket</option>
               <option value="hockey">Hockey</option>
+              <option value="snooker">Snooker</option>
+              <option value="golf">Golf</option>
+              <option value="pickleball">Pickleball</option>
+              <option value="pool">Pool</option>
             </select>
 
-            {sport && filteredVenues.length > 0 && (
+            {sport && sportsTeams[sport] && (
               <div className="mt-6">
                 <label className="block text-lg font-medium text-gray-300 mb-2">
-                  Select a Venue
+                  Select Team Type
                 </label>
-                {loadingVenues ? (
-                  <p className="text-gray-400">Loading venues...</p>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-gray-400 mb-2">
-                      Select a venue that offers {sport}:
-                    </p>
-
-                    <div className="max-h-60 overflow-y-auto pr-2">
-                      {filteredVenues.map((venue) => (
-                        <div
-                          key={venue.id}
-                          onClick={() => setVenueId(venue.id)}
-                          className={`p-3 border rounded cursor-pointer transition-colors ${
-                            venueId === venue.id
-                              ? "border-purple-500 bg-purple-900"
-                              : "border-gray-700 bg-gray-800 hover:bg-gray-700"
-                          }`}
-                        >
-                          <h3 className="font-medium text-white">
-                            {venue.title}
-                          </h3>
-                          <p className="text-sm text-gray-400">
-                            Sports:{" "}
-                            {venue.sports
-                              ? venue.sports.join(", ")
-                              : "None listed"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-3">
+                  {sportsTeams[sport].map((team) => (
+                    <button
+                      key={team}
+                      type="button"
+                      onClick={() => setTeamType(team)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        teamType === team
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-700 text-white hover:bg-gray-600"
+                      }`}
+                    >
+                      {team}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-
-            {sport && filteredVenues.length === 0 && !loadingVenues && (
-              <p className="text-yellow-400 mt-4">
-                No venues found that offer {sport}. Please select a different
-                sport.
-              </p>
             )}
           </div>
         );
       case 2:
         return (
+          <div className="mb-4">
+            <label className="block text-lg font-medium text-gray-300 mb-2">
+              Step 2: Select a Venue
+            </label>
+            {loadingVenues ? (
+              <p className="text-gray-400">Loading venues...</p>
+            ) : filteredVenues.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-gray-400 mb-2">
+                  Select a venue that offers {sport}:
+                </p>
+
+                <div className="max-h-60 overflow-y-auto pr-2">
+                  {filteredVenues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      onClick={() => setVenueId(venue.id)}
+                      className={`p-3 border rounded cursor-pointer transition-colors ${
+                        venueId === venue.id
+                          ? "border-purple-500 bg-purple-900"
+                          : "border-gray-700 bg-gray-800 hover:bg-gray-700"
+                      }`}
+                    >
+                      <h3 className="font-medium text-white">{venue.title}</h3>
+                      <p className="text-sm text-gray-400">
+                        Sports:{" "}
+                        {venue.sports ? venue.sports.join(", ") : "None listed"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-yellow-400">
+                No venues found that offer {sport}. Please go back and select a
+                different sport.
+              </p>
+            )}
+          </div>
+        );
+      case 3:
+        return (
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-300">
-              Step 2: Game Details
+              Step 3: Game Details
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,8 +320,6 @@ const CreateGameButton = () => {
                   className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
                 />
               </div>
-
-              
             </div>
 
             <div>
@@ -291,6 +331,19 @@ const CreateGameButton = () => {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Game location"
+                required
+                className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Contact*
+              </label>
+              <input
+                type="text"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder="Enter your contact details"
                 required
                 className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
               />
@@ -316,7 +369,7 @@ const CreateGameButton = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Available Seats*
+                  Required Players*
                 </label>
                 <input
                   type="number"
@@ -331,16 +384,21 @@ const CreateGameButton = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
-                Contact Information*
+                Description*
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter your contact information (Email or Phone) and any additional notes about the game"
+                placeholder="Enter Instructions for players"
                 required
-                rows="3"
+                rows={3}
                 className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
               ></textarea>
+              {teamType && (
+                <p className="text-sm text-gray-400 mt-1">
+                  Team type: {teamType} (will be added to description)
+                </p>
+              )}
             </div>
           </div>
         );
@@ -404,10 +462,10 @@ const CreateGameButton = () => {
               {/* Progress indicator */}
               <div className="mb-6">
                 <div className="flex items-center justify-between">
-                  {[1, 2].map((step) => (
+                  {[1, 2, 3].map((step) => (
                     <div
                       key={step}
-                      className={`flex-1 ${step < 2 ? "border-t-2" : ""} ${
+                      className={`flex-1 ${step < 3 ? "border-t-2" : ""} ${
                         step <= currentStep
                           ? "border-purple-500"
                           : "border-gray-700"
@@ -440,7 +498,7 @@ const CreateGameButton = () => {
                         )}
                       </div>
                       <div className="text-xs text-center mt-1 text-gray-400">
-                        {step === 1 ? "Sport & Venue" : "Game Details"}
+                        {step === 1 ? "Sport & Team" : step === 2 ? "Venue" : "Game Details"}
                       </div>
                     </div>
                   ))}
@@ -469,7 +527,7 @@ const CreateGameButton = () => {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                      className="px-4 py-2 bg-red-700 text-white rounded hover:bg-gray-600 transition-colors"
                     >
                       Cancel
                     </button>

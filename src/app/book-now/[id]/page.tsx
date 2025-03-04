@@ -77,7 +77,7 @@ export default function BookNow() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [duration, setDuration] = useState(60);
   const [selectedCourt, setSelectedCourt] = useState("");
-  const [selectedSlot, setSelectedSlots] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState([]);
 
   // Coupon related states and constants
   const [availableCoupons, setAvailableCoupons] = useState([]);
@@ -577,22 +577,22 @@ export default function BookNow() {
   }
 
   const handleAddToCart = () => {
-    if (!selectedCourt || !selectedSlot) {
+    if (!selectedCourt || !selectedSlots) {
       alert("Please select a court and time slot first");
       return;
     }
 
-    console.log("Selected slot data:", selectedSlot);
+    console.log("Selected slot data:", selectedSlots);
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
     const selectedSlotPrice = parseFloat(
-      selectedSlot.price.replace(/[^0-9.-]+/g, "")
+      selectedSlots.price.replace(/[^0-9.-]+/g, "")
     );
 
     const newBooking = {
       id: Date.now(),
-      slotId: selectedSlot.id,
-      time: formatTimeRange(selectedSlot.start_at, selectedSlot.end_at),
+      slotId: selectedSlots.id,
+      time: formatTimeRange(selectedSlots.start_at, selectedSlots.end_at),
       duration: duration,
       court: selectedCourtName,
       price: selectedSlotPrice,
@@ -614,7 +614,7 @@ export default function BookNow() {
   };
 
   // const totalCost = cart.reduce((sum, item) => sum + item.price, 0);
-  const slotId = selectedSlot.id;
+  const slotId = selectedSlots.id;
 
   const handleBookNow = async () => {
     if (cart.length === 0) {
@@ -1036,7 +1036,7 @@ export default function BookNow() {
                       <Button
                         key={slot.id}
                         variant={
-                          selectedSlot?.id === slot.id ? "default" : "outline"
+                          selectedSlots?.id === slot.id ? "default" : "outline"
                         }
                         onClick={() => {
                           console.log("Selected slot:", slot);

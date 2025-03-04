@@ -252,7 +252,7 @@ const GameDetails = () => {
                 </ul>
                 <div className="mt-6 flex space-x-4">
                   <Button
-                    onClick={() => router.push('/community-games')}
+                    onClick={() => router.push('/community')}
                     className="bg-gray-700 hover:bg-gray-600 text-white"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />

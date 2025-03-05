@@ -86,15 +86,14 @@ export default function AppSidebar({
         icon: BookOpen,
       };
 
-    const myGame = !isSeller && {
-      title:"My Games",
-      url:"/my-games",
-      icon:Gamepad
-    }
+      const myGame = !isSeller ? {
+        title: "My Games",
+        url: "/my-games",
+        icon: Gamepad
+      } : null;
 
   // Combine all navigation items
-  const navItems = [...baseNavItems, bookingNavItem, venueNavItem];
-
+  const navItems = [...baseNavItems, bookingNavItem, venueNavItem, ...(myGame ? [myGame] : [])];
   const teams = [
     {
       name: "Playnue",

@@ -12,6 +12,7 @@ import {
   Trophy,
   MessageCircle,
   Home,
+  Contact,
   ArrowLeft,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -344,7 +345,7 @@ const GameDetails = () => {
                 {/* Hero Banner */}
                 <div className="bg-gradient-to-r from-purple-900 to-purple-700 text-white p-8">
                   <h1 className="text-3xl font-bold text-center mb-4">
-                    {game.title || "Untitled Game"}
+                    {game.sport.toUpperCase() || "Untitled Game"} Game
                   </h1>
                   <div className="flex flex-wrap justify-center gap-3">
                     {game.sport && (
@@ -370,15 +371,15 @@ const GameDetails = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-purple-400" />
-                      <span className="text-gray-200">
-                        {game.time || "Time not specified"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
                       <MapPin className="w-5 h-5 text-purple-400" />
                       <span className="text-gray-200">
                         {game.location || "Location not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Contact className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {game.title || "Location not specified"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">

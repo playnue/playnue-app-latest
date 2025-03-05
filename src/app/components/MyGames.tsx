@@ -189,7 +189,7 @@ const MyGames = () => {
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-black bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent">My Games</h2>
-          <Link 
+          {/* <Link 
             href="/create-game"
             className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg shadow-md transition-colors duration-200 hidden sm:flex items-center"
           >
@@ -197,7 +197,7 @@ const MyGames = () => {
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             Create New Game
-          </Link>
+          </Link> */}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -263,7 +263,7 @@ const MyGames = () => {
           ))}
         </div>
         
-        <div className="mt-8 flex justify-center sm:hidden">
+        {/* <div className="mt-8 flex justify-center sm:hidden">
           <Link 
             href="/create-game"
             className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg shadow-md transition-colors duration-200 flex items-center"
@@ -273,7 +273,7 @@ const MyGames = () => {
             </svg>
             Create New Game
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );

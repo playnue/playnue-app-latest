@@ -1,11 +1,13 @@
-"use client"
+"use client";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { format } from "date-fns";
 import CreateGameButton from "../components/CreateGameButton";
-import { HiCalendar, HiLocationMarker, HiAdjustments } from 'react-icons/hi';
+import { MdSportsEsports  } from "react-icons/md";
+import { GiPodiumWinner  } from "react-icons/gi";
+import { HiCalendar, HiLocationMarker, HiAdjustments } from "react-icons/hi";
 import { motion } from "framer-motion";
 
 const CommunityGames = () => {
@@ -36,13 +38,13 @@ const CommunityGames = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
       );
       const data = await response.json();
-  
+
       if (data.address) {
         const city =
           data.address.city || data.address.town || data.address.village;
         const state = data.address.state;
         const country = data.address.country;
-  
+
         return {
           city,
           state,
@@ -200,20 +202,28 @@ const CommunityGames = () => {
 
   // Handle search and filters
   useEffect(() => {
-    if (searchQuery || filters.sport || filters.difficulty || filters.date || filters.location) {
+    if (
+      searchQuery ||
+      filters.sport ||
+      filters.difficulty ||
+      filters.date ||
+      filters.location
+    ) {
       setIsSearching(true);
-      
+
       // Start with all games
       let result = [...games];
-      
+
       if (filters.sport) {
         result = result.filter((game) => game.sport === filters.sport);
       }
-      
+
       if (filters.difficulty) {
-        result = result.filter((game) => game.difficulty === filters.difficulty);
+        result = result.filter(
+          (game) => game.difficulty === filters.difficulty
+        );
       }
-      
+
       if (filters.location) {
         result = result.filter(
           (game) =>
@@ -225,11 +235,11 @@ const CommunityGames = () => {
               .includes(filters.location.toLowerCase())
         );
       }
-      
+
       if (filters.date) {
         result = result.filter((game) => game.date === filters.date);
       }
-      
+
       // Apply search query if present
       if (searchQuery) {
         const searchTerm = searchQuery.toLowerCase();
@@ -241,7 +251,7 @@ const CommunityGames = () => {
             game.sport.toLowerCase().includes(searchTerm)
         );
       }
-      
+
       setSearchResults(result);
     } else {
       setIsSearching(false);
@@ -299,15 +309,20 @@ const CommunityGames = () => {
       transition={{ duration: 0.3 }}
       className="group relative bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-xl"
     >
+       <div className="absolute top-4 right-4 z-20">
+        <img 
+          src="user.jpeg" 
+          alt={game.sport} 
+          className="w-16 h-16 rounded-full border-2 border-purple-500/50 object-cover"
+        />
+      </div>
       <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div className="p-6 relative z-10">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-xl font-semibold text-white group-hover:text-purple-300 transition-colors">
-            {game.title}
+            {game.sport.toUpperCase()}
           </h3>
-          <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm font-medium">
-            {game.sport}
-          </span>
+          
         </div>
 
         <p className="text-gray-300 mb-4 line-clamp-2">{game.description}</p>
@@ -324,8 +339,16 @@ const CommunityGames = () => {
               : game.location}
           </div>
           <div className="flex items-center text-gray-300">
-            <HiAdjustments className="w-5 h-5 mr-2 text-purple-400" />
-            <span className="capitalize">{game.difficulty}</span>
+            <GiPodiumWinner   className="w-5 h-5 mr-2 text-purple-400" />
+            <span className="capitalize">
+              {game.difficulty === 1
+                ? "Beginner"
+                : game.difficulty === 2
+                ? "Intermediate"
+                : game.difficulty === 3
+                ? "Advanced"
+                : game.difficulty}
+            </span>
           </div>
         </div>
 
@@ -342,7 +365,7 @@ const CommunityGames = () => {
                   : "bg-gray-700 text-gray-400 cursor-not-allowed"
               }`}
             >
-              {game.seats > 0 ? "Join Game" : "Full"}
+              {game.seats > 0 ? "View Details" : "Full"}
             </button>
           </Link>
         </div>
@@ -350,18 +373,26 @@ const CommunityGames = () => {
     </motion.div>
   );
   // Add this before the return statement
-const filteredLocalGames = localGames.filter((game) => {
-  // Check if the game matches all selected filters
-  const matchesSport = !filters.sport || game.sport.toLowerCase() === filters.sport.toLowerCase();
-  const matchesDifficulty = !filters.difficulty || game.difficulty.toLowerCase() === filters.difficulty.toLowerCase();
-  const matchesDate = !filters.date || game.date === filters.date;
-  const matchesLocation = !filters.location || 
-    game.location.toLowerCase().includes(filters.location.toLowerCase()) ||
-    (game.venue_location && game.venue_location.toLowerCase().includes(filters.location.toLowerCase()));
+  const filteredLocalGames = localGames.filter((game) => {
+    // Check if the game matches all selected filters
+    const matchesSport =
+      !filters.sport ||
+      game.sport.toLowerCase() === filters.sport.toLowerCase();
+    const matchesDifficulty =
+      !filters.difficulty ||
+      game.difficulty.toLowerCase() === filters.difficulty.toLowerCase();
+    const matchesDate = !filters.date || game.date === filters.date;
+    const matchesLocation =
+      !filters.location ||
+      game.location.toLowerCase().includes(filters.location.toLowerCase()) ||
+      (game.venue_location &&
+        game.venue_location
+          .toLowerCase()
+          .includes(filters.location.toLowerCase()));
 
-  // Return true only if all applicable filters match
-  return matchesSport && matchesDifficulty && matchesDate && matchesLocation;
-});
+    // Return true only if all applicable filters match
+    return matchesSport && matchesDifficulty && matchesDate && matchesLocation;
+  });
   return (
     <>
       <Navbar />
@@ -377,115 +408,116 @@ const filteredLocalGames = localGames.filter((game) => {
               Discover Sports Games Near You
             </h1>
             <p className="text-xl text-purple-300">
-              Join community games in {location.split(",")[0]} and connect with fellow sports enthusiasts
+              Join community games in {location.split(",")[0]} and connect with
+              fellow sports enthusiasts
             </p>
           </motion.div>
 
           {/* Filters Section */}
           <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-2xl mb-8 border border-purple-500/20"
->
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-    {/* Sport Filter */}
-    <div className="filter-group">
-      <label className="text-purple-300 text-sm font-medium mb-2 block">
-        Sport Type
-      </label>
-      <select
-        name="sport"
-        value={filters.sport}
-        onChange={handleFilterChange}
-        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-2xl mb-8 border border-purple-500/20"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Sport Filter */}
+              <div className="filter-group">
+                <label className="text-purple-300 text-sm font-medium mb-2 block">
+                  Sport Type
+                </label>
+                <select
+                  name="sport"
+                  value={filters.sport}
+                  onChange={handleFilterChange}
+                  className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
         focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
         hover:border-purple-400 transition-all duration-300
         appearance-none cursor-pointer shadow-lg shadow-purple-500/10"
-      >
-        <option value="">All Sports</option>
-        <option value="football">Football</option>
-        <option value="basketball">Basketball</option>
-        <option value="tennis">Tennis</option>
-        <option value="cricket">Cricket</option>
-        <option value="hockey">Hockey</option>
-      </select>
-    </div>
+                >
+                  <option value="">All Sports</option>
+                  <option value="football">Football</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="tennis">Tennis</option>
+                  <option value="cricket">Cricket</option>
+                  <option value="hockey">Hockey</option>
+                </select>
+              </div>
 
-    {/* Difficulty Filter */}
-    <div className="filter-group">
-      <label className="text-purple-300 text-sm font-medium mb-2 block">
-        Difficulty
-      </label>
-      <select
-        name="difficulty"
-        value={filters.difficulty}
-        onChange={handleFilterChange}
-        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+              {/* Difficulty Filter */}
+              <div className="filter-group">
+                <label className="text-purple-300 text-sm font-medium mb-2 block">
+                  Difficulty
+                </label>
+                <select
+                  name="difficulty"
+                  value={filters.difficulty}
+                  onChange={handleFilterChange}
+                  className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
         focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
         hover:border-purple-400 transition-all duration-300
         appearance-none cursor-pointer shadow-lg shadow-purple-500/10"
-      >
-        <option value="">Any Difficulty</option>
-        <option value="beginner">Beginner</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-    </div>
+                >
+                  <option value="">Any Difficulty</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
 
-    {/* Location Filter */}
-    <div className="filter-group">
-      <label className="text-purple-300 text-sm font-medium mb-2 block">
-        Location
-      </label>
-      <input
-        type="text"
-        name="location"
-        value={filters.location}
-        onChange={handleFilterChange}
-        placeholder="Enter location"
-        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+              {/* Location Filter */}
+              <div className="filter-group">
+                <label className="text-purple-300 text-sm font-medium mb-2 block">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={filters.location}
+                  onChange={handleFilterChange}
+                  placeholder="Enter location"
+                  className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
         focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
         hover:border-purple-400 transition-all duration-300
         placeholder-gray-400 shadow-lg shadow-purple-500/10"
-      />
-    </div>
+                />
+              </div>
 
-    {/* Date Filter */}
-    <div className="filter-group">
-      <label className="text-purple-300 text-sm font-medium mb-2 block">
-        Date
-      </label>
-      <input
-        type="date"
-        name="date"
-        value={filters.date}
-        onChange={handleFilterChange}
-        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+              {/* Date Filter */}
+              <div className="filter-group">
+                <label className="text-purple-300 text-sm font-medium mb-2 block">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={filters.date}
+                  onChange={handleFilterChange}
+                  className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
         focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
         hover:border-purple-400 transition-all duration-300
         shadow-lg shadow-purple-500/10
         [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
-      />
-    </div>
+                />
+              </div>
 
-    {/* Search Input */}
-    <div className="filter-group">
-      <label className="text-purple-300 text-sm font-medium mb-2 block">
-        Search
-      </label>
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={handleSearch}
-        placeholder="Search games"
-        className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
+              {/* Search Input */}
+              <div className="filter-group">
+                <label className="text-purple-300 text-sm font-medium mb-2 block">
+                  Search
+                </label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  placeholder="Search games"
+                  className="w-full bg-gray-800/90 border border-purple-500/30 text-white rounded-lg px-4 py-2.5 
         focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
         hover:border-purple-400 transition-all duration-300
         placeholder-gray-400 shadow-lg shadow-purple-500/10"
-      />
-    </div>
-  </div>
-</motion.div>
+                />
+              </div>
+            </div>
+          </motion.div>
 
           {/* Games Display Section */}
           <motion.div
@@ -522,7 +554,8 @@ const filteredLocalGames = localGames.filter((game) => {
                 ) : (
                   <div className="text-center py-12">
                     <p className="text-gray-400 text-lg">
-                      No games found in your area. Try adjusting your filters or create a new game!
+                      No games found in your area. Try adjusting your filters or
+                      create a new game!
                     </p>
                   </div>
                 )}

@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tag } from "lucide-react";
-
+import { ArrowLeft, Tag } from "lucide-react";
+import right from "../../right.png";
 // import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -46,6 +46,8 @@ import {
 import { useRouter } from "next/navigation";
 import "../../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
+import Image from "next/image";
+import Link from "next/link";
 export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
   const { id } = useParams();
@@ -942,6 +944,28 @@ export default function BookNow() {
       <Navbar />
       <div className="max-w-md mx-auto p-4">
         <Card className="p-4 mb-4">
+        <Link 
+      href={`/venue-details/${id}`} 
+      className="inline-block"
+    >
+      <button 
+        className={`
+          flex items-center justify-center 
+          bg-gray-100 hover:bg-gray-200 
+          text-gray-800 
+          rounded-full 
+          p-2 
+          transition-colors 
+          duration-200 
+          focus:outline-none 
+          focus:ring-2 
+          focus:ring-blue-500
+        `}
+        aria-label="Go back"
+      >
+        <ArrowLeft size={20} />
+      </button>
+    </Link>
           <h2 className="text-xl font-bold mb-4">{venue?.title}</h2>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Sport</label>

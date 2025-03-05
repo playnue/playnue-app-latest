@@ -15,7 +15,7 @@
 
         nav {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             padding: 1rem 2rem;
             position: fixed;
@@ -69,6 +69,9 @@
         .nav-links {
             display: flex;
             gap: 1.5rem;
+            position: absolute; /* Add this */
+            left: 50%; /* Add this */
+            transform: translateX(-50%); /* Add this to center the links */
         }
 
         .nav-links a {

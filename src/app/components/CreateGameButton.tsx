@@ -25,6 +25,7 @@ const CreateGameButton = () => {
   const [venues, setVenues] = useState([]);
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [venueId, setVenueId] = useState("");
+  const [selectedVenueLocation, setSelectedVenueLocation] = useState("");
   const [loadingVenues, setLoadingVenues] = useState(false);
 
   const accessToken = useAccessToken();
@@ -47,13 +48,12 @@ const CreateGameButton = () => {
     golf: ["Singles", "Doubles", "Team Play"],
     pickleball: ["Singles", "Doubles"],
     pool: ["Singles", "Doubles"],
-    hockey: ["11-a-side", "7-a-side", "5-a-side"]
+    hockey: ["11-a-side", "7-a-side", "5-a-side"],
   };
 
   // Filter venues when sport changes
   useEffect(() => {
     if (sport && venues.length > 0) {
-      // Filter venues that have the selected sport in their sports array (case-insensitive)
       const matchingVenues = venues.filter(
         (venue) =>
           venue.sports &&
@@ -67,7 +67,7 @@ const CreateGameButton = () => {
 
       // Reset venue selection when sport changes
       setVenueId("");
-      // Reset team type when sport changes
+      setSelectedVenueLocation("");
       setTeamType("");
     } else {
       setFilteredVenues([]);
@@ -92,6 +92,7 @@ const CreateGameButton = () => {
                 id
                 title
                 sports
+                location
               }
             }
           `,
@@ -149,7 +150,8 @@ const CreateGameButton = () => {
               description: `${description} (${teamType})`,
               sport,
               difficulty,
-              location,
+              time,
+              location: selectedVenueLocation || "",
               date: date, // Using the combined date and time
               seats: parseInt(seats),
               venue_id: venueId,
@@ -223,10 +225,11 @@ const CreateGameButton = () => {
             >
               <option value="">Select Sport</option>
               <option value="football">Football</option>
-              <option value="basketball">Basketball</option>
+              <option value="badminton">Badminton</option>
+              <option value="table-tennis">Table Tennis</option>
+              <option value="lawntennis">Lawn Tennis</option>
               <option value="tennis">Tennis</option>
-              <option value="cricket">Cricket</option>
-              <option value="hockey">Hockey</option>
+              <option value="cricket">BoxCricket</option>
               <option value="snooker">Snooker</option>
               <option value="golf">Golf</option>
               <option value="pickleball">Pickleball</option>
@@ -276,7 +279,10 @@ const CreateGameButton = () => {
                   {filteredVenues.map((venue) => (
                     <div
                       key={venue.id}
-                      onClick={() => setVenueId(venue.id)}
+                      onClick={() => {
+                        setVenueId(venue.id);
+                        setSelectedVenueLocation(venue.location);
+                      }}
                       className={`p-3 border rounded cursor-pointer transition-colors ${
                         venueId === venue.id
                           ? "border-purple-500 bg-purple-900"
@@ -321,20 +327,6 @@ const CreateGameButton = () => {
                 />
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Location*
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Game location"
-                required
-                className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Contact*
@@ -357,7 +349,6 @@ const CreateGameButton = () => {
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  required
                   className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
                 >
                   <option value="">Select Difficulty</option>
@@ -375,7 +366,18 @@ const CreateGameButton = () => {
                   type="number"
                   value={seats}
                   onChange={(e) => setSeats(e.target.value)}
-                  min="1"
+                  required
+                  className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Time*
+                </label>
+                <input
+                  type="time" // Correct input type for time
+                  value={time} // Use the time state
+                  onChange={(e) => setTime(e.target.value)}
                   required
                   className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
                 />
@@ -498,7 +500,11 @@ const CreateGameButton = () => {
                         )}
                       </div>
                       <div className="text-xs text-center mt-1 text-gray-400">
-                        {step === 1 ? "Sport & Team" : step === 2 ? "Venue" : "Game Details"}
+                        {step === 1
+                          ? "Sport & Team"
+                          : step === 2
+                          ? "Venue"
+                          : "Game Details"}
                       </div>
                     </div>
                   ))}

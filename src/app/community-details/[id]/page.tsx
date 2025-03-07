@@ -14,6 +14,7 @@ import {
   Home,
   Contact,
   ArrowLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
@@ -197,19 +198,6 @@ const GameDetails = () => {
     }
   };
 
-  const handleJoin = () => {
-    // Implementation for joining the game
-    alert(`You've joined the game: ${game?.title || "Unknown game"}`);
-  };
-
-  const handleSendQuery = () => {
-    // Implementation for sending a query about the game
-    alert(
-      `Your query about "${
-        game?.title || "this game"
-      }" has been sent to the organizer`
-    );
-  };
 
   if (loading) {
     return (
@@ -266,6 +254,7 @@ const GameDetails = () => {
                     Retry Loading
                   </Button>
                 </div>
+
               </CardContent>
             </Card>
           </motion.div>
@@ -355,7 +344,13 @@ const GameDetails = () => {
                     )}
                     {game.difficulty && (
                       <Badge variant="outline" className="border-purple-300/30 text-purple-100">
-                        {game.difficulty} Level
+                        {game.difficulty === 1
+                ? "Beginner"
+                : game.difficulty === 2
+                ? "Intermediate"
+                : game.difficulty === 3
+                ? "Advanced"
+                : game.difficulty}
                       </Badge>
                     )}
                   </div>
@@ -409,7 +404,17 @@ const GameDetails = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  
+                  {/* <div className="bg-yellow-500/10 p-6 rounded-xl border border-yellow-500/30 flex items-start space-x-4">
+                    <AlertTriangle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-yellow-300 mb-2">
+                        Responsibility Disclaimer
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed">
+                        By participating in this game, you acknowledge that the host bears full responsibility for organizing and managing the event. Participants are required to exercise personal judgment, follow safety guidelines, and participate at their own risk. The platform serves merely as a facilitator and is not liable for any incidents or outcomes related to the game.
+                      </p>
+                    </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </motion.div>

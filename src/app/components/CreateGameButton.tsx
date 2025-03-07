@@ -335,7 +335,7 @@ const CreateGameButton = () => {
                 type="text"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder="Enter your contact details"
+                placeholder="Enter your contact details (Phone no. / Email id)"
                 required
                 className="w-full p-2 border border-gray-700 bg-gray-800 text-white rounded"
               />

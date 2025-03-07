@@ -408,8 +408,8 @@ const CommunityGames = () => {
               Discover Sports Games Near You
             </h1>
             <p className="text-xl text-purple-300">
-              Join community games in {location.split(",")[0]} and connect with
-              fellow sports enthusiasts
+              Join Community Games in {location.split(",")[0]} and Connect with
+              Fellow Sports Enthusiasts
             </p>
           </motion.div>
 

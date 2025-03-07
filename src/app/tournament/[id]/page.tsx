@@ -64,16 +64,16 @@ const TournamentDetails = () => {
       name: "Football Tournament",
       sport: "Football",
       area: "Plot no.700 amar shaheed path near eldeco express plaza road, eldeco udyaan-2 south city lucknow 226025",
-      entryFee: 2500,
-      startDate: "2025-03-08",
-      endDate: "2025-03-09",
+      entryFee: 8000,
+      startDate: "2025-03-15",
+      endDate: "2025-03-16",
       venue: "Player's Town- South City",
       teamsRegistered: 0,
       players: 6,
       maxTeams: 16,
       priceType: "team",
       status: "open",
-      image: "/footballtournament.jpg",
+      image: "/footballtournament1.jpg",
       description: "Here's to a fantastic football tournament! May every match be filled with excitement and fair play",
       instructions: [
         "Maximum Participants: 16 teams",
@@ -85,9 +85,9 @@ const TournamentDetails = () => {
         "All players must follow fair play guidelines"
       ],
       prizes: {
-        first: "₹8,000",
-        runnerUp: "₹3,000",
-        topScorer: "₹1,000"
+        first: "₹60,000",
+        runnerUp: "₹20,000",
+        topScorer: "₹10,000"
       },
       registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
     }

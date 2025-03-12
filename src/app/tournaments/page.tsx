@@ -26,13 +26,13 @@ export default function Tournaments() {
       name: "Football Tournament",
       sport: "Football",
       area: "Plot no.700 amar shaheed path near eldeco express plaza road, eldeco udyaan-2 south city Lucknow 22605",
-      entryFee: 8000,
-      startDate: "2025-03-15",
+      entryFee: 1500,
+      startDate: "2025-03-22",
       venue: "Player's Town-South City",
       teamsRegistered: 0,
       maxTeams: 16,
       status: "open",
-      image: "/footballtournament1.jpg",
+      image: "/footballtournament2.jpg",
     },
   ];
 

@@ -48,6 +48,7 @@ import "../../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import { DialogDescription } from "@radix-ui/react-dialog";
 export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
   const { id } = useParams();
@@ -79,7 +80,8 @@ export default function BookNow() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [duration, setDuration] = useState(60);
   const [selectedCourt, setSelectedCourt] = useState("");
-  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState([]); // Change to array for multiple slots
+  const [selectedTimes, setSelectedTimes] = useState([]);
 
   // Coupon related states and constants
   const [availableCoupons, setAvailableCoupons] = useState([]);
@@ -126,6 +128,32 @@ export default function BookNow() {
     return slot.price >= 700;
   };
 
+  const handleSlotSelection = (slot) => {
+    // Check if slot is already selected
+    const isAlreadySelected = selectedSlots.some(
+      (selectedSlot) => selectedSlot.id === slot.id
+    );
+
+    if (isAlreadySelected) {
+      // Remove slot if already selected
+      setSelectedSlots(
+        selectedSlots.filter((selectedSlot) => selectedSlot.id !== slot.id)
+      );
+      setSelectedTimes(
+        selectedTimes.filter(
+          (time) => time !== formatTimeRange(slot.start_at, slot.end_at)
+        )
+      );
+    } else {
+      // Add slot if not selected
+      setSelectedSlots([...selectedSlots, slot]);
+      setSelectedTimes([
+        ...selectedTimes,
+        formatTimeRange(slot.start_at, slot.end_at),
+      ]);
+    }
+  };
+
   // Calculate the full amount before any discounts
   const fullAmount = cart.reduce((sum, item) => sum + item.price, 0);
 
@@ -150,20 +178,20 @@ export default function BookNow() {
   // Calculate coupon discount based on the amount after partial payment
   const calculateDiscount = () => {
     if (!isCouponApplied || !activeCoupon) return 0;
-  
+
     let eligibleAmount = amountAfterPartial;
-    
+
     // If coupon has court restrictions, only apply to eligible courts
     if (activeCoupon.court_ids?.length > 0) {
       eligibleAmount = cart.reduce((sum, item) => {
-        const courtId = courts.find(court => court.name === item.court)?.id;
+        const courtId = courts.find((court) => court.name === item.court)?.id;
         if (courtId && activeCoupon.court_ids.includes(courtId)) {
           return sum + item.price;
         }
         return sum;
       }, 0);
     }
-  
+
     let calculatedDiscount = 0;
     if (activeCoupon.type === 1) {
       // Percentage discount
@@ -172,7 +200,7 @@ export default function BookNow() {
       // Fixed amount discount
       calculatedDiscount = Math.min(activeCoupon.value, eligibleAmount);
     }
-  
+
     return calculatedDiscount;
   };
 
@@ -579,29 +607,32 @@ export default function BookNow() {
   }
 
   const handleAddToCart = () => {
-    if (!selectedCourt || !selectedSlots) {
-      alert("Please select a court and time slot first");
+    if (!selectedCourt || selectedSlots.length === 0) {
+      alert("Please select a court and at least one time slot");
       return;
     }
-
-    console.log("Selected slot data:", selectedSlots);
+  
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
-    const selectedSlotPrice = parseFloat(
-      selectedSlots.price.replace(/[^0-9.-]+/g, "")
-    );
-
-    const newBooking = {
-      id: Date.now(),
-      slotId: selectedSlots.id,
-      time: formatTimeRange(selectedSlots.start_at, selectedSlots.end_at),
-      duration: duration,
-      court: selectedCourtName,
-      price: selectedSlotPrice,
-    };
-
-    console.log("New booking object:", newBooking);
-    setCart([...cart, newBooking]);
+  
+    // Add all selected slots to cart
+    const newBookings = selectedSlots.map((slot) => {
+      const selectedSlotPrice = parseFloat(
+        slot.price.replace(/[^0-9.-]+/g, "")
+      );
+  
+      return {
+        id: Date.now() + Math.random(), // Ensure unique ID
+        slotId: slot.id,
+        time: formatTimeRange(slot.start_at, slot.end_at),
+        duration: duration,
+        court: selectedCourtName,
+        price: selectedSlotPrice,
+      };
+    });
+  
+    console.log("New bookings:", newBookings);
+    setCart([...cart, ...newBookings]);
   };
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));
@@ -629,6 +660,7 @@ export default function BookNow() {
     }
     try {
       // Create order via your backend
+      const slotIds = cart.map(item => item.slotId);
       const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
@@ -639,7 +671,7 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
-            slot_ids: [slotId],
+            slot_ids: slotIds, 
             payment_type: isPartialPayment ? 1 : 2,
           }),
         }
@@ -741,45 +773,45 @@ export default function BookNow() {
     if (currentCartValue < coupon.min_cart_value) {
       return {
         isValid: false,
-        message: `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`
+        message: `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`,
       };
     }
-  
+
     // Check venue restriction
     if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
       return {
         isValid: false,
-        message: "This coupon is not valid for this venue"
+        message: "This coupon is not valid for this venue",
       };
     }
-  
+
     // Check court restriction
     if (coupon.court_ids?.length > 0) {
       // For each item in cart, check if it's eligible for the coupon
-      const cartItems = cart.map(item => {
-        const courtId = courts.find(court => court.name === item.court)?.id;
+      const cartItems = cart.map((item) => {
+        const courtId = courts.find((court) => court.name === item.court)?.id;
         return {
           ...item,
-          isEligible: courtId && coupon.court_ids.includes(courtId)
+          isEligible: courtId && coupon.court_ids.includes(courtId),
         };
       });
-  
+
       // Calculate total eligible amount
       const eligibleAmount = cartItems
-        .filter(item => item.isEligible)
+        .filter((item) => item.isEligible)
         .reduce((sum, item) => sum + item.price, 0);
-  
+
       if (eligibleAmount === 0) {
         return {
           isValid: false,
-          message: "This coupon is not valid for any courts in your cart"
+          message: "This coupon is not valid for any courts in your cart",
         };
       }
     }
-  
+
     return {
       isValid: true,
-      message: ""
+      message: "",
     };
   };
   useEffect(() => {
@@ -944,12 +976,9 @@ export default function BookNow() {
       <Navbar />
       <div className="max-w-md mx-auto p-4">
         <Card className="p-4 mb-4">
-        <Link 
-      href={`/venue-details/${id}`} 
-      className="inline-block"
-    >
-      <button 
-        className={`
+          <Link href={`/venue-details/${id}`} className="inline-block">
+            <button
+              className={`
           flex items-center justify-center 
           bg-gray-100 hover:bg-gray-200 
           text-gray-800 
@@ -961,11 +990,11 @@ export default function BookNow() {
           focus:ring-2 
           focus:ring-blue-500
         `}
-        aria-label="Go back"
-      >
-        <ArrowLeft size={20} />
-      </button>
-    </Link>
+              aria-label="Go back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          </Link>
           <h2 className="text-xl font-bold mb-4">{venue?.title}</h2>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Sport</label>
@@ -1035,13 +1064,18 @@ export default function BookNow() {
                   className="w-full justify-between"
                   onClick={() => setIsDialogOpen(!isDialogOpen)}
                 >
-                  {selectedTime || "Select Time"}
+                  {selectedTimes.length > 0
+                    ? `${selectedTimes.length} time slot(s) selected`
+                    : "Select Time"}
                   <Clock className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-h-[500px] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Select Time</DialogTitle>
+                  <DialogTitle>Select Time Slots</DialogTitle>
+                  <DialogDescription>
+                    Select multiple time slots by clicking on them
+                  </DialogDescription>
                 </DialogHeader>
                 <div
                   className="grid grid-cols-2 gap-2 mt-4 overflow-y-auto pr-2"
@@ -1060,22 +1094,29 @@ export default function BookNow() {
                       <Button
                         key={slot.id}
                         variant={
-                          selectedSlots?.id === slot.id ? "default" : "outline"
+                          selectedSlots.some((s) => s.id === slot.id)
+                            ? "default"
+                            : "outline"
                         }
-                        onClick={() => {
-                          console.log("Selected slot:", slot);
-                          setSelectedTime(
-                            formatTimeRange(slot.start_at, slot.end_at)
-                          );
-                          setSelectedSlots(slot);
-                          setIsDialogOpen(false);
-                        }}
+                        onClick={() => handleSlotSelection(slot)}
                         className="text-sm"
                       >
                         {formatTimeRange(slot.start_at, slot.end_at)}
                       </Button>
                     ))
                   )}
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedSlots([]);
+                      setSelectedTimes([]);
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                  <Button onClick={() => setIsDialogOpen(false)}>Done</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1336,54 +1377,106 @@ export default function BookNow() {
         </div>
       </div>
       <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
-      <button 
-        onClick={() => setExpanded(!expanded)} 
-        className="flex w-full justify-between items-center font-medium text-lg"
-      >
-        Terms & Conditions
-        <span className="text-gray-500">
-          {expanded ? '−' : '+'}
-        </span>
-      </button>
-      
-      {expanded && (
-        <div className="mt-4 text-sm text-gray-700 space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">Reschedule Policy:</h3>
-            <p>Rescheduling is allowed 2 Hours prior to slot time. Rescheduling of a booking can be done only 2 times. Once rescheduled, booking cannot be cancelled. Please Reach out to us on contact@playnue.com or <strong>+91 - 9044405954.</strong></p>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex w-full justify-between items-center font-medium text-lg"
+        >
+          Terms & Conditions
+          <span className="text-gray-500">{expanded ? "−" : "+"}</span>
+        </button>
+
+        {expanded && (
+          <div className="mt-4 text-sm text-gray-700 space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Reschedule Policy:</h3>
+              <p>
+                Rescheduling is allowed 2 Hours prior to slot time. Rescheduling
+                of a booking can be done only 2 times. Once rescheduled, booking
+                cannot be cancelled. Please Reach out to us on
+                contact@playnue.com or <strong>+91 - 9044405954.</strong>
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Cancellation Policy:</h3>
+              <p>
+                0-2 hrs prior to slot: Cancellations not allowed. &gt;2 hrs
+                prior to slot: 10.0% of Gross Amount will be deducted as
+                cancellation fee. Please Reach out to us on contact@playnue.com
+                or <strong>+91 - 9044405954.</strong>
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Club Policy:</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Eatables are not allowed inside the premises.</li>
+                <li>
+                  Consumption of Food, Alcohol and Smoking inside the premises
+                  is prohibited.
+                </li>
+                <li>
+                  Yelling or shouting inside the premises is strictly
+                  prohibited. Unsolicited criticism, disruptive behavior,
+                  offensive language, obscene gestures or poor sportsmanship
+                  will not be tolerated.
+                </li>
+                <li>The booked slot timings must be followed strictly.</li>
+                <li>
+                  Please report to the venue at least 5 minutes prior to the
+                  booked slot.
+                </li>
+                <li>
+                  Please use the Inquire option or Reach out to us on
+                  contact@playnue.com or <strong>+91 - 9044405954</strong> for
+                  corporate bookings. Corporate bookings will not be allowed
+                  through the app. Any such bookings made will be canceled
+                  without prior intimation & with no refund.
+                </li>
+                <li>
+                  Prior permission from the venue is required to conduct
+                  tournaments or coaching at the venue. Please use the Inquire
+                  option or Reach out to us on contact@playnue.com or{" "}
+                  <strong>+91 - 9044405954</strong> for help with this.
+                </li>
+                <li>
+                  100% of the slot fee will be charged for cancellations of bulk
+                  bookings.
+                </li>
+                <li>
+                  Management is not responsible for loss of personal belongings
+                  & any injuries caused during the matches.
+                </li>
+                <li>
+                  Please use the dustbin to dump your waste. Littering the club
+                  premises could result in a permanent ban from the club.
+                </li>
+                <li>
+                  Willful damage to the club's equipment, or the facility, will
+                  not be tolerated. Any person(s) causing damage to the
+                  equipment or property of the venue shall be held accountable
+                  and would be charged accordingly.
+                </li>
+                <li>
+                  The venue reserves the right to discontinue any offer for any
+                  service or change its policies at any time without due notice.
+                </li>
+                <li>
+                  The venue reserves the right to refuse anyone entry to the
+                  venue at their discretion and failure to follow the above
+                  rules could result in suspension, or termination, of the
+                  player's privilege to play, at the discretion of the venue.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Terms of service:</h3>
+              <p>By continuing, you agree to our terms of service</p>
+            </div>
           </div>
-          
-          <div>
-            <h3 className="font-semibold mb-2">Cancellation Policy:</h3>
-            <p>0-2 hrs prior to slot: Cancellations not allowed. &gt;2 hrs prior to slot: 10.0% of Gross Amount will be deducted as cancellation fee. Please Reach out to us on contact@playnue.com or <strong>+91 - 9044405954.</strong></p>
-          </div>
-          
-          <div>
-            <h3 className="font-semibold mb-2">Club Policy:</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Eatables are not allowed inside the premises.</li>
-              <li>Consumption of Food, Alcohol and Smoking inside the premises is prohibited.</li>
-              <li>Yelling or shouting inside the premises is strictly prohibited. Unsolicited criticism, disruptive behavior, offensive language, obscene gestures or poor sportsmanship will not be tolerated.</li>
-              <li>The booked slot timings must be followed strictly.</li>
-              <li>Please report to the venue at least 5 minutes prior to the booked slot.</li>
-              <li>Please use the Inquire option or Reach out to us on contact@playnue.com or <strong>+91 - 9044405954</strong> for corporate bookings. Corporate bookings will not be allowed through the app. Any such bookings made will be canceled without prior intimation & with no refund.</li>
-              <li>Prior permission from the venue is required to conduct tournaments or coaching at the venue. Please use the Inquire option or Reach out to us on contact@playnue.com or <strong>+91 - 9044405954</strong> for help with this.</li>
-              <li>100% of the slot fee will be charged for cancellations of bulk bookings.</li>
-              <li>Management is not responsible for loss of personal belongings & any injuries caused during the matches.</li>
-              <li>Please use the dustbin to dump your waste. Littering the club premises could result in a permanent ban from the club.</li>
-              <li>Willful damage to the club's equipment, or the facility, will not be tolerated. Any person(s) causing damage to the equipment or property of the venue shall be held accountable and would be charged accordingly.</li>
-              <li>The venue reserves the right to discontinue any offer for any service or change its policies at any time without due notice.</li>
-              <li>The venue reserves the right to refuse anyone entry to the venue at their discretion and failure to follow the above rules could result in suspension, or termination, of the player's privilege to play, at the discretion of the venue.</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="font-semibold mb-2">Terms of service:</h3>
-            <p>By continuing, you agree to our terms of service</p>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 }

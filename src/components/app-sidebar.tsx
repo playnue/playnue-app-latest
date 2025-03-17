@@ -30,10 +30,10 @@ const data = {
         //   title: "Edit Price",
         //   url: "/admin/edit-price",
         // },
-        {
-          title: "Manage Booking",
-          url: "/courts&slots",
-        },
+        // {
+        //   title: "Manage Booking",
+        //   url: "/courts&slots",
+        // },
       ],
     },
   ],

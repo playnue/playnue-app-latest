@@ -1,24 +1,16 @@
 "use client";
 import * as React from "react";
 import {
-  AudioWaveform,
-  BookOpen,
   Bot,
+  BookOpen,
   Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
   LogOut,
-  PieChart,
-  Settings2,
   SquareTerminal,
   Gamepad,
-  Icon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import { useUserData } from "@nhost/nextjs";
 import {
@@ -26,74 +18,57 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
 import { nhost } from "@/lib/nhost";
-import { title } from "process";
 
 export default function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const user = useUserData();
-
-  // Check if user has seller role
   const isSeller = user?.defaultRole === "seller";
 
-  // Create base navigation with Dashboard
-  const baseNavItems = [
+  // Define navigation items based on user role
+  const navItems = [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
     },
+    // Booking navigation item
+    {
+      title: isSeller ? "Venue Bookings" : "My Bookings",
+      url: isSeller ? "/seller-bookings" : "/user-bookings",
+      icon: Bot,
+    },
+    // Venue navigation item
+    isSeller
+      ? {
+          title: "Venue",
+          url: "#",
+          icon: BookOpen,
+          items: [
+            {
+              title: "Venue Profile",
+              url: "/venue",
+            },
+            {
+              title: "Offline Slot Booking",
+              url: "/courts&slots",
+            },
+          ],
+        }
+      : {
+          title: "Venues",
+          url: "/venues",
+          icon: BookOpen,
+        },
+    // My Games - only for non-sellers
+    ...(isSeller ? [] : [{ title: "My Games", url: "/my-games", icon: Gamepad }]),
+    // Update Slots - only for sellers
+    ...(isSeller ? [{ title: "Create Time Slots", url: "/slotsUpdate", icon: Command }] : []),
   ];
 
-  // Create booking navigation item based on role
-  const bookingNavItem = isSeller
-    ? {
-        title: "Bookings",
-        url: "/seller-bookings",
-        icon: Bot,
-      }
-    : {
-        title: "My Bookings",
-        url: "/user-bookings",
-        icon: Bot,
-      };
-
-  // Create venue navigation items based on role
-  const venueNavItem = isSeller
-    ? {
-        title: "Venue",
-        url: "#",
-        icon: BookOpen,
-        items: [
-          {
-            title: "Venue Details",
-            url: "/venue",
-          },
-          {
-            title: "Courts",
-            url: "/courts&slots",
-          },
-        ],
-      }
-    : {
-        title: "Venues",
-        url: "/venues",
-        icon: BookOpen,
-      };
-
-      const myGame = !isSeller ? {
-        title: "My Games",
-        url: "/my-games",
-        icon: Gamepad
-      } : null;
-
-  // Combine all navigation items
-  const navItems = [...baseNavItems, bookingNavItem, venueNavItem, ...(myGame ? [myGame] : [])];
   const teams = [
     {
       name: "Playnue",
@@ -101,6 +76,15 @@ export default function AppSidebar({
       plan: "Enterprise",
     },
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await nhost.auth.signOut();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -112,17 +96,10 @@ export default function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <button
-          onClick={async () => {
-            try {
-              await nhost.auth.signOut();
-              window.location.href = "/login";
-            } catch (error) {
-              console.error("Error signing out:", error);
-            }
-          }}
-          className="w-full flex items-center justify-center p-2 hover:bg-gray-100 text-red-500 transition-colors duration-200 text-gray-600 hover:text-gray-900"
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center p-2 hover:bg-gray-100 transition-colors duration-200 text-red-500"
         >
-          <LogOut className="mr-2 w-5 h-5 text-red-500" />
+          <LogOut className="mr-2 w-5 h-5" />
           Logout
         </button>
       </SidebarFooter>

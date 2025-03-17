@@ -29,7 +29,7 @@ export default function Tournaments() {
       entryFee: 1500,
       startDate: "2025-03-22",
       venue: "Player's Town-South City",
-      teamsRegistered: 0,
+      teamsRegistered: 5,
       maxTeams: 16,
       status: "open",
       image: "/footballtournament2.jpg",

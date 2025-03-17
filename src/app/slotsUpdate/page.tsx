@@ -24,8 +24,8 @@ const SlotManagement = () => {
   const accessToken = useAccessToken();
   const [slots, setSlots] = useState([
     {
-      startTime: "01:00",
-      endTime: "02:00",
+      startTime: "00:00",
+      endTime: "00:30",
       price: ""
     }
   ]);
@@ -100,15 +100,25 @@ const SlotManagement = () => {
 
   const addSlot = () => {
     const lastSlot = slots[slots.length - 1];
-    const lastEndHour = parseInt(lastSlot.endTime.split(':')[0]);
+    let lastEndHour = parseInt(lastSlot.endTime.split(':')[0]);
+    let lastEndMinute = parseInt(lastSlot.endTime.split(':')[1]);
     
-    // Calculate next slot times
-    const nextStartHour = lastEndHour;
-    const nextEndHour = (nextStartHour + 1) % 24;
+    // Calculate next slot times for half-hour intervals
+    let nextStartHour = lastEndHour;
+    let nextStartMinute = lastEndMinute;
+    
+    let nextEndHour = nextStartHour;
+    let nextEndMinute = nextStartMinute + 30;
+    
+    // Handle minute overflow
+    if (nextEndMinute >= 60) {
+      nextEndHour = (nextEndHour + 1) % 24;
+      nextEndMinute = 0;
+    }
     
     const nextSlot = {
-      startTime: `${String(nextStartHour).padStart(2, '0')}:00`,
-      endTime: `${String(nextEndHour).padStart(2, '0')}:00`,
+      startTime: `${String(nextStartHour).padStart(2, '0')}:${String(nextStartMinute).padStart(2, '0')}`,
+      endTime: `${String(nextEndHour).padStart(2, '0')}:${String(nextEndMinute).padStart(2, '0')}`,
       price: lastSlot.price // Optionally copy the price from the last slot
     };
     
@@ -118,87 +128,72 @@ const SlotManagement = () => {
   const removeSlot = (index) => {
     if (slots.length > 1) {
       const newSlots = slots.filter((_, i) => i !== index);
-      
-      // Recalculate times for all slots after the removed one
-      const updatedSlots = newSlots.map((slot, i) => {
-        if (i === 0) return slot; // Keep first slot as is
-        
-        const startHour = (i + 1) % 24;
-        const endHour = (startHour + 1) % 24;
-        
-        return {
-          ...slot,
-          startTime: `${String(startHour).padStart(2, '0')}:00`,
-          endTime: `${String(endHour).padStart(2, '0')}:00`
-        };
-      });
-      
-      setSlots(updatedSlots);
+      setSlots(newSlots);
     }
   };
 
   // Modified handleSubmit function for SlotManagement
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    // Use the same approach as your working component - create objects first
-    const slotObjects = selectedDates.flatMap(date => 
-      slots.map(slot => ({
-        court_id: selectedCourt,
-        date: date.toISOString().split('T')[0],
-        start_at: slot.startTime + ':00',
-        end_at: slot.endTime + ':00',
-        price: parseFloat(slot.price)
-      }))
-    );
+    try {
+      // Use the same approach as your working component - create objects first
+      const slotObjects = selectedDates.flatMap(date => 
+        slots.map(slot => ({
+          court_id: selectedCourt,
+          date: date.toISOString().split('T')[0],
+          start_at: slot.startTime + ':00',
+          end_at: slot.endTime + ':00',
+          price: parseFloat(slot.price)
+        }))
+      );
 
-    // Use direct slot insertion instead of court update
-    const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        "x-hasura-role": "seller",
-      },
-      body: JSON.stringify({
-        query: `
-          mutation InsertSlots($slots: [slots_insert_input!]!) {
-            insert_slots(objects: $slots) {
-              affected_rows
+      // Use direct slot insertion instead of court update
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          "x-hasura-role": "seller",
+        },
+        body: JSON.stringify({
+          query: `
+            mutation InsertSlots($slots: [slots_insert_input!]!) {
+              insert_slots(objects: $slots) {
+                affected_rows
+              }
             }
+          `,
+          variables: {
+            slots: slotObjects
           }
-        `,
-        variables: {
-          slots: slotObjects
-        }
-      })
-    });
+        })
+      });
 
-    const result = await response.json();
-    
-    if (result.errors) {
-      throw new Error(result.errors[0].message);
-    }
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
 
-    if (result.data?.insert_slots?.affected_rows > 0) {
-      alert('Slots created successfully!');
-      setSlots([{ startTime: "01:00", endTime: "02:00", price: "" }]);
-      setSelectedDates([]);
+      if (result.data?.insert_slots?.affected_rows > 0) {
+        alert('Slots created successfully!');
+        setSlots([{ startTime: "00:00", endTime: "00:30", price: "" }]);
+        setSelectedDates([]);
+      }
+    } catch (error) {
+      console.error('Error creating slots:', error);
+      alert('Failed to create slots: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Error creating slots:', error);
-    alert('Failed to create slots: ' + error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Create Sequential Slots</CardTitle>
+        <CardTitle>Create Half-Hour Slots</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -255,10 +250,10 @@ const handleSubmit = async (e) => {
             {/* Slots Management */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Sequential Time Slots</h3>
+                <h3 className="text-lg font-medium">Half-Hour Time Slots</h3>
                 <Button type="button" onClick={addSlot} size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Next Hour
+                  Add Next Slot
                 </Button>
               </div>
 

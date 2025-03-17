@@ -68,7 +68,7 @@ const TournamentDetails = () => {
       startDate: "2025-03-22",
       endDate: "2025-03-23",
       venue: "Player's Town- South City",
-      teamsRegistered: 0,
+      teamsRegistered: 5,
       players: 6,
       maxTeams: 16,
       priceType: "team",

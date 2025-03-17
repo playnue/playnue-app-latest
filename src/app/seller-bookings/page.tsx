@@ -183,7 +183,7 @@ export default function SellerBookingsPage() {
   const calculatePaymentAmount = (booking) => {
     // Remove currency symbol and commas, then parse as float
     const fullPrice = parseFloat(booking.slot.price.replace(/[$,₹]/g, ""));
-    return booking.payment_type === 2 ? fullPrice / 2 : fullPrice;
+    return booking.payment_type === 1 ? fullPrice / 2 : fullPrice;
   };
 
   useEffect(() => {

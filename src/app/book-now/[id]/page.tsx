@@ -51,6 +51,7 @@ import Link from "next/link";
 import { DialogDescription } from "@radix-ui/react-dialog";
 export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
+  const [expandedBlock, setExpandedBlock] = useState(null);
   const { id } = useParams();
   const router = useRouter();
   const accessToken = useAccessToken();
@@ -67,6 +68,7 @@ export default function BookNow() {
 
   // Basic states
   const [isClient, setIsClient] = useState(false);
+
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cart, setCart] = useState([]);
@@ -567,19 +569,106 @@ export default function BookNow() {
     ).padStart(2, "0")}`;
   };
 
+  const getTimeBlocks = () => {
+    return [
+      { name: "Late Night ", start: 0, end: 6 },
+      { name: "Morning ", start: 6, end: 12 },
+      { name: "Afternoon ", start: 12, end: 18 },
+      { name: "Night ", start: 18, end: 24 },
+    ];
+  };
+
+  const getTimeBlockIcon = (index) => {
+    switch (index) {
+      case 0: // Night/Early Morning
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-indigo-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+        );
+      case 1: // Morning
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-yellow-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        );
+      case 2: // Afternoon
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-orange-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 100 12A6 6 0 0010 4z"
+              clipRule="evenodd"
+            />
+          </svg>
+        );
+      case 3: // Evening
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-purple-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+  const getHourFromTimeString = (timeString) => {
+    // Parse time string in format "HH:MM:SS"
+    const [hours] = timeString.split(":").map(Number);
+    return hours;
+  };
+
+  const getSlotsInBlock = (block) => {
+    return slots.filter((slot) => {
+      const slotHour = getHourFromTimeString(slot.start_at);
+      return slotHour >= block.start && slotHour < block.end;
+    });
+  };
+
+  const toggleTimeBlock = (index) => {
+    setExpandedBlock(expandedBlock === index ? null : index);
+  };
+
   const formatTimeRange = (startTime, endTime) => {
-    const formatTime = (time) => {
-      const [hours, minutes] = time.split(":");
-      const date = new Date();
-      date.setHours(hours, minutes);
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+    // Parse time strings
+    const [startHours, startMinutes] = startTime.split(":").map(Number);
+    const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+    // Format in 12-hour format with AM/PM
+    const formatTime = (hours, minutes) => {
+      const period = hours >= 12 ? "PM" : "AM";
+      const displayHours = hours % 12 || 12;
+      return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
     };
 
-    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    return `${formatTime(startHours, startMinutes)} - ${formatTime(
+      endHours,
+      endMinutes
+    )}`;
   };
 
   function convertTo24HourFormat(time) {
@@ -611,16 +700,16 @@ export default function BookNow() {
       alert("Please select a court and at least one time slot");
       return;
     }
-  
+
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
-  
+
     // Add all selected slots to cart
     const newBookings = selectedSlots.map((slot) => {
       const selectedSlotPrice = parseFloat(
         slot.price.replace(/[^0-9.-]+/g, "")
       );
-  
+
       return {
         id: Date.now() + Math.random(), // Ensure unique ID
         slotId: slot.id,
@@ -630,7 +719,7 @@ export default function BookNow() {
         price: selectedSlotPrice,
       };
     });
-  
+
     console.log("New bookings:", newBookings);
     setCart([...cart, ...newBookings]);
   };
@@ -660,7 +749,7 @@ export default function BookNow() {
     }
     try {
       // Create order via your backend
-      const slotIds = cart.map(item => item.slotId);
+      const slotIds = cart.map((item) => item.slotId);
       const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_FUNCTIONS}/razorpay/order`,
         {
@@ -671,7 +760,7 @@ export default function BookNow() {
           },
           body: JSON.stringify({
             amount: totalCost, // Backend will multiply by 100
-            slot_ids: slotIds, 
+            slot_ids: slotIds,
             payment_type: isPartialPayment ? 1 : 2,
           }),
         }
@@ -1070,53 +1159,128 @@ export default function BookNow() {
                   <Clock className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-h-[500px] flex flex-col">
+              <DialogContent className="max-h-[80vh] flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Select Time Slots</DialogTitle>
+                  <DialogTitle className="text-xl">
+                    Select Time Slots
+                  </DialogTitle>
                   <DialogDescription>
-                    Select multiple time slots by clicking on them
+                    Choose from available time periods below
                   </DialogDescription>
                 </DialogHeader>
+
+                {/* Scrollable container with explicit height */}
                 <div
-                  className="grid grid-cols-2 gap-2 mt-4 overflow-y-auto pr-2"
-                  style={{ maxHeight: "400px" }}
+                  className="flex-1 overflow-y-auto pr-2 mt-4"
+                  style={{
+                    minHeight: "200px",
+                    maxHeight: "60vh",
+                    overflowY: "scroll", // Force scroll behavior
+                  }}
                 >
                   {!selectedCourt ? (
-                    <p className="text-center col-span-2">
-                      Please select a court first
-                    </p>
+                    <div className="text-center p-8 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">
+                        Please select a court first
+                      </p>
+                    </div>
                   ) : slots.length === 0 ? (
-                    <p className="text-center col-span-2">
-                      No slots available for the selected date
-                    </p>
+                    <div className="text-center p-8 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">
+                        No slots available for the selected date
+                      </p>
+                    </div>
                   ) : (
-                    slots.map((slot) => (
-                      <Button
-                        key={slot.id}
-                        variant={
-                          selectedSlots.some((s) => s.id === slot.id)
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() => handleSlotSelection(slot)}
-                        className="text-sm"
+                    getTimeBlocks().map((block, index) => (
+                      <div
+                        key={index}
+                        className="mb-4 border rounded-lg overflow-hidden"
                       >
-                        {formatTimeRange(slot.start_at, slot.end_at)}
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          className={`w-full justify-between p-4 font-medium text-left ${
+                            expandedBlock === index ? "bg-blue-50" : ""
+                          }`}
+                          onClick={() => toggleTimeBlock(index)}
+                        >
+                          <div className="flex items-center">
+                            {getTimeBlockIcon(index)}
+                            <span className="ml-2">{block.name}</span>
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {getSlotsInBlock(block).length} slots
+                            </span>
+                          </div>
+                          <span>{expandedBlock === index ? "▲" : "▼"}</span>
+                        </Button>
+
+                        {expandedBlock === index && (
+                          <div
+                            className={`p-3 bg-gray-50 ${
+                              getSlotsInBlock(block).length > 0
+                                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+                                : ""
+                            }`}
+                          >
+                            {getSlotsInBlock(block).length === 0 ? (
+                              <p className="text-sm text-gray-500 p-2">
+                                No available slots in this time block
+                              </p>
+                            ) : (
+                              getSlotsInBlock(block).map((slot) => (
+                                <Button
+                                  key={slot.id}
+                                  variant={
+                                    selectedSlots.some((s) => s.id === slot.id)
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  onClick={() => handleSlotSelection(slot)}
+                                  className={`text-sm h-auto py-3 ${
+                                    selectedSlots.some((s) => s.id === slot.id)
+                                      ? "bg-blue-600 hover:bg-blue-700"
+                                      : "hover:bg-blue-50"
+                                  }`}
+                                >
+                                  <div className="flex flex-col items-center w-full">
+                                    <span className="text-center">
+                                      {
+                                        formatTimeRange(
+                                          slot.start_at,
+                                          slot.end_at
+                                        ).split(" - ")[0]
+                                      }
+                                    </span>
+                                    <span className="text-xs mt-1 opacity-80">
+                                      ₹{slot.price.split('$')[1]}
+                                    </span>
+                                  </div>
+                                </Button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                     ))
                   )}
                 </div>
-                <div className="flex justify-end gap-2 mt-4">
+
+                <div className="flex justify-end gap-2 mt-4 pt-3 border-t">
                   <Button
                     variant="ghost"
                     onClick={() => {
                       setSelectedSlots([]);
                       setSelectedTimes([]);
                     }}
+                    className="hover:bg-red-50 hover:text-red-600"
                   >
                     Clear All
                   </Button>
-                  <Button onClick={() => setIsDialogOpen(false)}>Done</Button>
+                  <Button
+                    onClick={() => setIsDialogOpen(false)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Done
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

@@ -286,6 +286,8 @@ export default function Bookings() {
           return "/dbo.jpg";
         case "2775568b-4776-4f51-a0c0-6b24646624b4":
           return "/ppo.jpg";
+        case "8e2ab06a-8d23-4fc5-858e-44118d3e0f28":
+          return "/partyPoly.jpg";
         default:
           return "/comingSoon.jpeg";
       }

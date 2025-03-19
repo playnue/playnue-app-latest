@@ -38,7 +38,7 @@ const sportIcons = {
   Pool: "🎱",
   PS4: "🎮",
   LawnTennis: "🎾",
-  Cricket_Net:"🏏"
+  Cricket_Net: "🏏",
   // TableTennis: " :table "
 };
 
@@ -97,7 +97,7 @@ const VenuePage = () => {
           throw new Error("Failed to fetch venue data");
         }
         setVenue(data.data.venues[0]);
-        console.log(data?.data)
+        console.log(data?.data);
         // setImage(data.data.venues[0].id);
         // console.log(data.data.venues[0].image_id);
         setLoading(false);
@@ -109,7 +109,7 @@ const VenuePage = () => {
 
     fetchVenueDetails();
   }, [id]);
- 
+
   const getImageSource = (id) => {
     switch (id) {
       case "063a2e3f-8365-40f3-8613-9613f6024d78":
@@ -130,10 +130,12 @@ const VenuePage = () => {
         return "/dugouti.jpg";
       case "e252f954-548c-4463-bbaf-e3323475fd6f":
         return "/gj.jpg";
-        case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
-          return "/dbi.jpg";
-          case "2775568b-4776-4f51-a0c0-6b24646624b4":
-          return "/ppi.jpg";
+      case "3f4c9df0-2a4e-48d3-a11e-c2083dc38f1d":
+        return "/dbi.jpg";
+      case "2775568b-4776-4f51-a0c0-6b24646624b4":
+        return "/ppi.jpg";
+      case "8e2ab06a-8d23-4fc5-858e-44118d3e0f28":
+        return "/partyPoly.jpg";
       default:
         return "/playturf.jpg";
     }
@@ -195,7 +197,8 @@ const VenuePage = () => {
                 <div className="bg-[#252632] p-4 rounded-lg">
                   <p className="text-gray-300">
                     ⏰{" "}
-                    {venue.open_at === "00:00:00" && venue.close_at === "00:00:00"
+                    {venue.open_at === "00:00:00" &&
+                    venue.close_at === "00:00:00"
                       ? "24/7"
                       : `${venue.open_at} - ${venue.close_at}`}
                   </p>
@@ -214,7 +217,9 @@ const VenuePage = () => {
                         key={sport}
                         className="bg-purple-600/20 px-4 py-2 rounded-lg flex items-center"
                       >
-                        <span className="text-2xl mr-2">{sportIcons[sport]}</span>
+                        <span className="text-2xl mr-2">
+                          {sportIcons[sport]}
+                        </span>
                         <span className="text-white">{sport}</span>
                       </div>
                     ))}

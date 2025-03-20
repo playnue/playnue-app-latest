@@ -7,12 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Tag } from "lucide-react";
+import { ArrowLeft, Tag, Users, UsersIcon } from "lucide-react";
 import right from "../../right.png";
 // import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -48,10 +49,12 @@ import "../../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import { DialogDescription } from "@radix-ui/react-dialog";
+import { DialogClose, DialogDescription } from "@radix-ui/react-dialog";
 export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState(null);
+  const [selectedPlayerOption, setSelectedPlayerOption] = useState(null);
+const [playerMultiplier, setPlayerMultiplier] = useState(1);
   const { id } = useParams();
   const router = useRouter();
   const accessToken = useAccessToken();
@@ -103,6 +106,12 @@ export default function BookNow() {
   const [pointsToRedeem, setPointsToRedeem] = useState();
   const [isRedeemingPoints, setIsRedeemingPoints] = useState(false);
   const POINTS_TO_RUPEES_RATIO = 1;
+
+  const handlePlayerSelection = (option, multiplier) => {
+    setSelectedPlayerOption(option);
+    setPlayerMultiplier(multiplier);
+  };
+
 
   const handlePartialPaymentChange = (checked) => {
     if (checked) {
@@ -700,28 +709,48 @@ export default function BookNow() {
       alert("Please select a court and at least one time slot");
       return;
     }
-
+  
+    // Check if player selection is required for this venue
+    const isSpecialVenue = id === "562cb30c-f543-4f19-86fd-a424c4265091";
+    
+    if (isSpecialVenue && !selectedPlayerOption) {
+      alert("Please select the number of players");
+      return;
+    }
+  
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
-
+  
     // Add all selected slots to cart
     const newBookings = selectedSlots.map((slot) => {
-      const selectedSlotPrice = parseFloat(
+      let selectedSlotPrice = parseFloat(
         slot.price.replace(/[^0-9.-]+/g, "")
       );
-
+      
+      // Apply multiplier only for the special venue
+      if (isSpecialVenue) {
+        selectedSlotPrice = selectedSlotPrice * playerMultiplier;
+      }
+  
       return {
         id: Date.now() + Math.random(), // Ensure unique ID
         slotId: slot.id,
         time: formatTimeRange(slot.start_at, slot.end_at),
         duration: duration,
         court: selectedCourtName,
+        playerOption: isSpecialVenue ? selectedPlayerOption : null,
         price: selectedSlotPrice,
       };
     });
-
+  
     console.log("New bookings:", newBookings);
     setCart([...cart, ...newBookings]);
+    
+    // Reset selections after adding to cart
+    if (isSpecialVenue) {
+      setSelectedPlayerOption(null);
+      setPlayerMultiplier(1);
+    }
   };
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));
@@ -1251,7 +1280,7 @@ export default function BookNow() {
                                       }
                                     </span>
                                     <span className="text-xs mt-1 opacity-80">
-                                      ₹{slot.price.split('$')[1]}
+                                      ₹{slot.price.split("$")[1]}
                                     </span>
                                   </div>
                                 </Button>
@@ -1285,7 +1314,93 @@ export default function BookNow() {
               </DialogContent>
             </Dialog>
           </div>
-
+          {/* Player Selection Dialog - Only shows for specific venue */}
+          {id === "562cb30c-f543-4f19-86fd-a424c4265091" && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Number of Players
+              </label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {selectedPlayerOption
+                      ? selectedPlayerOption
+                      : "Select Players"}
+                    <Users className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Select Number of Players</DialogTitle>
+                    <DialogDescription>
+                      Choose how many players will be participating
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <Button
+                      variant={
+                        selectedPlayerOption === "2 Players"
+                          ? "default"
+                          : "outline"
+                      }
+                      className={`h-auto py-6 ${
+                        selectedPlayerOption === "2 Players"
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "hover:bg-blue-50"
+                      }`}
+                      onClick={() => handlePlayerSelection("2 Players", 2)}
+                    >
+                      <div className="flex flex-col items-center">
+                        <Users className="h-6 w-6 mb-2" />
+                        <span>2 Players</span>
+                        <span className="text-xs mt-1 opacity-80">
+                          Standard Rate (×2)
+                        </span>
+                      </div>
+                    </Button>
+                    <Button
+                      variant={
+                        selectedPlayerOption === "4+ Players"
+                          ? "default"
+                          : "outline"
+                      }
+                      className={`h-auto py-6 ${
+                        selectedPlayerOption === "4+ Players"
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "hover:bg-blue-50"
+                      }`}
+                      onClick={() => handlePlayerSelection("4+ Players", 4)}
+                    >
+                      <div className="flex flex-col items-center">
+                        <UsersIcon className="h-6 w-6 mb-2" />
+                        <span>4+ Players</span>
+                        <span className="text-xs mt-1 opacity-80">
+                          Group Rate (×4)
+                        </span>
+                      </div>
+                    </Button>
+                  </div>
+                  <DialogFooter className="sm:justify-end">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setSelectedPlayerOption(null)}
+                      className="hover:bg-red-50 hover:text-red-600"
+                    >
+                      Reset
+                    </Button>
+                    <DialogClose asChild>
+                      <Button
+                        type="button"
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Confirm
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
           <Button onClick={handleAddToCart} className="w-full">
             Add to Cart
           </Button>

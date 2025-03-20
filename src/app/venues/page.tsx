@@ -288,6 +288,8 @@ export default function Bookings() {
           return "/ppo.jpg";
         case "8e2ab06a-8d23-4fc5-858e-44118d3e0f28":
           return "/partyPoly.jpg";
+        case "562cb30c-f543-4f19-86fd-a424c4265091":
+          return "/picklepro.jpg";
         default:
           return "/comingSoon.jpeg";
       }

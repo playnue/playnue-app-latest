@@ -135,7 +135,9 @@ const VenuePage = () => {
       case "2775568b-4776-4f51-a0c0-6b24646624b4":
         return "/ppi.jpg";
       case "8e2ab06a-8d23-4fc5-858e-44118d3e0f28":
-        return "/partyPoly.jpg";
+        return "/partyPolyin.jpg";
+        case "562cb30c-f543-4f19-86fd-a424c4265091":
+          return "/picklepro.jpg";
       default:
         return "/playturf.jpg";
     }

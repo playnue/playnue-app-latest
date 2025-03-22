@@ -136,10 +136,12 @@ const VenuePage = () => {
         return "/ppi.jpg";
       case "8e2ab06a-8d23-4fc5-858e-44118d3e0f28":
         return "/partyPolyin.jpg";
-        case "562cb30c-f543-4f19-86fd-a424c4265091":
-          return "/picklepro.jpg";
-          case "0dbd3a09-30f4-4e34-b178-a6a7c4398255":
-          return "/tt2.jpg";
+      case "562cb30c-f543-4f19-86fd-a424c4265091":
+        return "/picklepro.jpg";
+      case "0dbd3a09-30f4-4e34-b178-a6a7c4398255":
+        return "/tt2.jpg";
+      case "8158e7e5-714e-4fb6-b7b9-0668a3180e04":
+        return "/arcadia.jpg";
       default:
         return "/playturf.jpg";
     }

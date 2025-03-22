@@ -18,17 +18,18 @@ const getLocationFromCoords = async (latitude, longitude) => {
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
     );
     const data = await response.json();
-    
+
     if (data.address) {
-      const city = data.address.city || data.address.town || data.address.village;
+      const city =
+        data.address.city || data.address.town || data.address.village;
       const state = data.address.state;
       const country = data.address.country;
-      
+
       return {
         city,
         state,
         country,
-        formattedLocation: `${city}, ${state}, ${country}`
+        formattedLocation: `${city}, ${state}, ${country}`,
       };
     }
     throw new Error("Unable to get location details");
@@ -51,33 +52,39 @@ export default function Bookings() {
   const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
   // Geolocation hook
-  const { coords, isGeolocationAvailable, isGeolocationEnabled } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-      timeout: 5000,
-    },
-    userDecisionTimeout: 5000,
-  });
+  const { coords, isGeolocationAvailable, isGeolocationEnabled } =
+    useGeolocated({
+      positionOptions: {
+        enableHighAccuracy: true,
+        timeout: 5000,
+      },
+      userDecisionTimeout: 5000,
+    });
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   useEffect(() => {
     const detectLocation = async () => {
       setLocationError("");
-      
+
       // First try using browser geolocation
       if (coords?.latitude && coords?.longitude) {
-        const locationData = await getLocationFromCoords(coords.latitude, coords.longitude);
+        const locationData = await getLocationFromCoords(
+          coords.latitude,
+          coords.longitude
+        );
         if (locationData) {
           setLocation(locationData.formattedLocation);
           return;
@@ -91,10 +98,14 @@ export default function Bookings() {
         if (data.city && data.region && data.country_name) {
           setLocation(`${data.city}, ${data.region}, ${data.country_name}`);
         } else {
-          setLocationError("Unable to detect location automatically. Please enter your location.");
+          setLocationError(
+            "Unable to detect location automatically. Please enter your location."
+          );
         }
       } catch (error) {
-        setLocationError("Unable to detect location automatically. Please enter your location.");
+        setLocationError(
+          "Unable to detect location automatically. Please enter your location."
+        );
       }
     };
 
@@ -103,10 +114,7 @@ export default function Bookings() {
 
   // Ensure component only renders on client
 
-  
   // Fetch location details based on coordinates
-
-  
 
   const getVenues = async () => {
     const response = await fetch(
@@ -199,13 +207,14 @@ export default function Bookings() {
 
     const filterVenues = () => {
       const searchTerm = searchQuery.toLowerCase();
-      const filtered = venues.filter(venue => {
+      const filtered = venues.filter((venue) => {
         const venueLocation = venue.location.toLowerCase();
         const venueTitle = venue.title.toLowerCase();
-        
+
         // Check if the search term matches location or title
-        return venueLocation.includes(searchTerm) || 
-               venueTitle.includes(searchTerm);
+        return (
+          venueLocation.includes(searchTerm) || venueTitle.includes(searchTerm)
+        );
       });
 
       // Sort venues by relevance (exact matches first)
@@ -229,11 +238,13 @@ export default function Bookings() {
     setLocationError("");
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        position => {
+        (position) => {
           console.log("Location permission granted");
         },
-        error => {
-          setLocationError("Please allow location access or enter your location manually.");
+        (error) => {
+          setLocationError(
+            "Please allow location access or enter your location manually."
+          );
           console.error("Error getting location:", error);
         }
       );
@@ -250,7 +261,7 @@ export default function Bookings() {
     }
   };
   const LocationButton = () => (
-    <button 
+    <button
       onClick={requestLocationPermission}
       className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
     >
@@ -292,6 +303,8 @@ export default function Bookings() {
           return "/picklepro.jpg";
         case "0dbd3a09-30f4-4e34-b178-a6a7c4398255":
           return "/tt1.jpg";
+        case "8158e7e5-714e-4fb6-b7b9-0668a3180e04":
+          return "/arcadia.jpg";
         default:
           return "/comingSoon.jpeg";
       }
@@ -300,7 +313,6 @@ export default function Bookings() {
     const imageSource = getImageSource(item.id);
 
     return (
-      
       <div className="venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
         {/* Image Section */}
         <div className="h-64 overflow-hidden">
@@ -391,7 +403,6 @@ export default function Bookings() {
     );
   }
 
-  
   // useEffect(() => {
   //   const preloader = document.getElementById("preloader");
   //   if (preloader) {
@@ -432,12 +443,14 @@ export default function Bookings() {
                   🔍
                 </span>
               </div>
-              
+
               {locationError && (
-                <p className="text-yellow-500 text-sm text-center">{locationError}</p>
+                <p className="text-yellow-500 text-sm text-center">
+                  {locationError}
+                </p>
               )}
-              
-              <button 
+
+              <button
                 onClick={requestLocationPermission}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300"
               >

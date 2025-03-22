@@ -13,6 +13,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Plus, X, Clock } from 'lucide-react';
 import { useAccessToken } from '@nhost/nextjs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const SlotManagement = () => {
   const [venues, setVenues] = useState([]);
@@ -20,6 +22,7 @@ const SlotManagement = () => {
   const [selectedVenue, setSelectedVenue] = useState('');
   const [selectedCourt, setSelectedCourt] = useState('');
   const [selectedDates, setSelectedDates] = useState([]);
+  const [slotDuration, setSlotDuration] = useState('30'); // Default to 30 minutes
   const [isLoading, setIsLoading] = useState(false);
   const accessToken = useAccessToken();
   const [slots, setSlots] = useState([
@@ -41,6 +44,16 @@ const SlotManagement = () => {
       fetchCourts(selectedVenue);
     }
   }, [selectedVenue]);
+
+  // Reset slots when duration changes
+  useEffect(() => {
+    const endTime = slotDuration === '30' ? "00:30" : "01:00";
+    setSlots([{
+      startTime: "00:00",
+      endTime,
+      price: ""
+    }]);
+  }, [slotDuration]);
 
   const fetchVenues = async () => {
     try {
@@ -103,18 +116,30 @@ const SlotManagement = () => {
     let lastEndHour = parseInt(lastSlot.endTime.split(':')[0]);
     let lastEndMinute = parseInt(lastSlot.endTime.split(':')[1]);
     
-    // Calculate next slot times for half-hour intervals
+    // Start time is the end time of the previous slot
     let nextStartHour = lastEndHour;
     let nextStartMinute = lastEndMinute;
     
+    // Calculate end time based on slot duration
     let nextEndHour = nextStartHour;
-    let nextEndMinute = nextStartMinute + 30;
+    let nextEndMinute = nextStartMinute;
+    
+    if (slotDuration === '30') {
+      // Add 30 minutes
+      nextEndMinute += 30;
+    } else {
+      // Add 60 minutes
+      nextEndHour += 1;
+    }
     
     // Handle minute overflow
     if (nextEndMinute >= 60) {
       nextEndHour = (nextEndHour + 1) % 24;
       nextEndMinute = 0;
     }
+    
+    // Handle hour overflow
+    nextEndHour = nextEndHour % 24;
     
     const nextSlot = {
       startTime: `${String(nextStartHour).padStart(2, '0')}:${String(nextStartMinute).padStart(2, '0')}`,
@@ -179,7 +204,9 @@ const SlotManagement = () => {
 
       if (result.data?.insert_slots?.affected_rows > 0) {
         alert('Slots created successfully!');
-        setSlots([{ startTime: "00:00", endTime: "00:30", price: "" }]);
+        // Reset form
+        const endTime = slotDuration === '30' ? "00:30" : "01:00";
+        setSlots([{ startTime: "00:00", endTime, price: "" }]);
         setSelectedDates([]);
       }
     } catch (error) {
@@ -193,7 +220,7 @@ const SlotManagement = () => {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Create Half-Hour Slots</CardTitle>
+        <CardTitle>Create Time Slots</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -237,6 +264,24 @@ const SlotManagement = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-1">Slot Duration</label>
+                <RadioGroup 
+                  value={slotDuration} 
+                  onValueChange={setSlotDuration}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="30" id="r1" />
+                    <Label htmlFor="r1">30 Minutes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="60" id="r2" />
+                    <Label htmlFor="r2">1 Hour</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-1">Select Dates</label>
                 <Calendar
                   mode="multiple"
@@ -250,7 +295,9 @@ const SlotManagement = () => {
             {/* Slots Management */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Half-Hour Time Slots</h3>
+                <h3 className="text-lg font-medium">
+                  {slotDuration === '30' ? 'Half-Hour' : 'One-Hour'} Time Slots
+                </h3>
                 <Button type="button" onClick={addSlot} size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Next Slot

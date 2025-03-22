@@ -9,6 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { nhost } from "../../lib/nhost";
 import { NhostClient } from "@nhost/nhost-js";
 import { useAccessToken, useNhostClient, useUserData } from "@nhost/nextjs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Clock,
   MapPin,
@@ -154,6 +156,7 @@ const TimePicker = ({ value, onChange, label }) => {
 
 const MultiStepVenueForm = () => {
   const [step, setStep] = useState(1);
+  const [slotDuration, setSlotDuration] = useState("60");
   const [venueId, setVenueId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -225,22 +228,22 @@ const MultiStepVenueForm = () => {
     setQuickCourts(quickCourts.filter((_, i) => i !== index));
   };
 
-  const generateCourtSlots = () => {
-    const generatedCourts = quickCourts.map((court) => ({
-      name: court.name,
-      slots: [
-        {
-          timeSlots: Array.from({ length: 24 }, (_, hour) => ({
-            startTime: `${hour.toString().padStart(2, "0")}:00`,
-            endTime: `${(hour + 1).toString().padStart(2, "0")}:00`,
-            price: court.price,
-          })),
-        },
-      ],
-    }));
+  // const generateCourtSlots = () => {
+  //   const generatedCourts = quickCourts.map((court) => ({
+  //     name: court.name,
+  //     slots: [
+  //       {
+  //         timeSlots: Array.from({ length: 24 }, (_, hour) => ({
+  //           startTime: `${hour.toString().padStart(2, "0")}:00`,
+  //           endTime: `${(hour + 1).toString().padStart(2, "0")}:00`,
+  //           price: court.price,
+  //         })),
+  //       },
+  //     ],
+  //   }));
 
-    setCourts(generatedCourts);
-  };
+  //   setCourts(generatedCourts);
+  // };
   const handleSlotTimeChange = (index, field, value) => {
     const newSlots = [...slots];
     newSlots[index] = {
@@ -366,14 +369,101 @@ const MultiStepVenueForm = () => {
     ]);
   };
 
+  const SlotDurationSelector = () => (
+    <div className="mb-4">
+      <label className="block text-sm font-medium mb-1">Slot Duration</label>
+      <RadioGroup
+        value={slotDuration}
+        onValueChange={setSlotDuration}
+        className="flex gap-4"
+      >
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="60" id="hour" />
+          <Label htmlFor="hour">1 Hour</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="30" id="half-hour" />
+          <Label htmlFor="half-hour">30 Minutes</Label>
+        </div>
+      </RadioGroup>
+    </div>
+  );
+
   const addTimeSlot = (courtIndex, slotPatternIndex) => {
     const newCourts = [...courts];
+    const slots = newCourts[courtIndex].slots[slotPatternIndex].timeSlots;
+
+    // Get end time of last slot or use default start time
+    let startTime = "00:00";
+    let endTime = slotDuration === "60" ? "01:00" : "00:30";
+
+    if (slots.length > 0) {
+      const lastSlot = slots[slots.length - 1];
+      startTime = lastSlot.endTime;
+
+      // Calculate end time based on start time and duration
+      const [hours, minutes] = startTime.split(":").map(Number);
+      const endMinutes = minutes + (slotDuration === "30" ? 30 : 60);
+      const endHours = hours + Math.floor(endMinutes / 60);
+      endTime = `${String(endHours % 24).padStart(2, "0")}:${String(
+        endMinutes % 60
+      ).padStart(2, "0")}`;
+    }
+
     newCourts[courtIndex].slots[slotPatternIndex].timeSlots.push({
-      startTime: "09:00",
-      endTime: "10:00",
+      startTime,
+      endTime,
       price: "",
     });
+
     setCourts(newCourts);
+  };
+
+  const generateCourtSlots = () => {
+    if (selectedDates.length === 0 || quickCourts.length === 0) {
+      alert("Please select dates and add at least one court");
+      return;
+    }
+
+    // Create a new array of courts with slots
+    const generatedCourts = quickCourts.map((quickCourt) => {
+      // Generate 24 hours of slots based on selected duration
+      const timeSlots = [];
+      const slotCount = 24 * (slotDuration === "30" ? 2 : 1); // 48 slots for 30min, 24 for 1hr
+
+      for (let i = 0; i < slotCount; i++) {
+        const intervalMinutes = slotDuration === "30" ? 30 : 60;
+        const startMinutes = i * intervalMinutes;
+        const endMinutes = startMinutes + intervalMinutes;
+
+        const startHours = Math.floor(startMinutes / 60);
+        const startMins = startMinutes % 60;
+
+        const endHours = Math.floor(endMinutes / 60);
+        const endMins = endMinutes % 60;
+
+        timeSlots.push({
+          startTime: `${String(startHours).padStart(2, "0")}:${String(
+            startMins
+          ).padStart(2, "0")}`,
+          endTime: `${String(endHours % 24).padStart(2, "0")}:${String(
+            endMins
+          ).padStart(2, "0")}`,
+          price: quickCourt.price,
+        });
+      }
+
+      return {
+        name: quickCourt.name,
+        slots: [
+          {
+            timeSlots,
+          },
+        ],
+      };
+    });
+
+    setCourts(generatedCourts);
   };
 
   const removeTimeSlot = (courtIndex, slotPatternIndex, timeSlotIndex) => {
@@ -385,221 +475,6 @@ const MultiStepVenueForm = () => {
         currentTimeSlots.filter((_, index) => index !== timeSlotIndex);
       setCourts(newCourts);
     }
-  };
-
-  const removeSlotFromCourt = (courtIndex, slotIndex) => {
-    const updatedCourts = [...courts];
-    updatedCourts[courtIndex].slots = updatedCourts[courtIndex].slots.filter(
-      (_, i) => i !== slotIndex
-    );
-    setCourts(updatedCourts);
-  };
-
-  // Update court details
-  const updateCourtDetail = (courtIndex, field, value) => {
-    const updatedCourts = [...courts];
-    updatedCourts[courtIndex] = {
-      ...updatedCourts[courtIndex],
-      [field]: value,
-    };
-    setCourts(updatedCourts);
-  };
-
-  // Update slot details for a specific court
-  const updateCourtSlot = (courtIndex, slotIndex, field, value) => {
-    const updatedCourts = [...courts];
-    updatedCourts[courtIndex].slots[slotIndex] = {
-      ...updatedCourts[courtIndex].slots[slotIndex],
-      [field]: value,
-    };
-    setCourts(updatedCourts);
-  };
-
-  const handleCourtsSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      // First, insert courts
-      const courtsMutation = `
-        mutation InsertCourts($objects: [courts_insert_input!]!) {
-          insert_courts_one(objects: $objects) {
-            returning {
-              id
-              name
-            }
-          }
-        }
-      `;
-
-      const courtsVariables = {
-        objects: courts.map((court) => ({
-          name: court.name,
-          venue_id: venueId,
-        })),
-      };
-
-      const courtsResponse = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            query: courtsMutation,
-            variables: courtsVariables,
-          }),
-        }
-      );
-
-      const courtsResult = await courtsResponse.json();
-
-      // If courts were inserted successfully, proceed to insert slots
-      if (courtsResult.data?.insert_courts?.returning) {
-        const courtIds = courtsResult.data.insert_courts.returning.map(
-          (court, index) => ({
-            id: court.id,
-            courtIndex: index,
-          })
-        );
-
-        // Prepare slots mutation
-        const slotsMutation = `
-          mutation InsertSlots($objects: [slots_insert_input!]!) {
-            insert_slots_one(objects: $objects) {
-              affected_rows
-            }
-          }
-        `;
-
-        // Prepare slots with corresponding court IDs
-        const slotObjects = courtIds.flatMap(({ id, courtIndex }) =>
-          courts[courtIndex].slots.map((slot) => ({
-            start_at: slot.startTime + ":00",
-            end_at: slot.endTime + ":00",
-            price: parseFloat(slot.price),
-            court_id: id,
-          }))
-        );
-
-        const slotsResponse = await fetch(
-          process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              query: slotsMutation,
-              variables: { objects: slotObjects },
-            }),
-          }
-        );
-
-        const slotsResult = await slotsResponse.json();
-
-        if (slotsResult.data?.insert_slots?.affected_rows > 0) {
-          alert("Venue, Courts, and Slots saved successfully!");
-          // Reset or navigate as needed
-        }
-      }
-    } catch (error) {
-      console.error("Error saving courts and slots:", error);
-      alert("Failed to save courts and slots");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  // Handle image upload
-  // const handleImageUpload = async (e) => {
-  //   const files = Array.from(e.target.files);
-
-  //   try {
-  //     const base64Promises = files.map((file) => fileToBase64(file));
-  //     const base64Results = await Promise.all(base64Promises);
-
-  //     setVenue((prev) => ({
-  //       ...prev,
-  //       images: [...prev.images, ...base64Results],
-  //     }));
-  //   } catch (error) {
-  //     console.error("Error converting images:", error);
-  //     alert("Failed to process images");
-  //   }
-  // };
-
-  // Remove image
-  const removeImage = (index) => {
-    setVenue((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSlotSubmit = async (e) => {
-    console.log(slots.map((slot) => console.log(slot.startTime)));
-    e.preventDefault();
-    try {
-      const mutation = `
-        mutation InsertSlots($objects: [slots_insert_input!]!) {
-          insert_slots(objects: $objects) {
-            affected_rows
-          }
-        }
-      `;
-
-      const slotObjects = slots.map((slot) => ({
-        start_at: slot.startTime + ":00",
-        end_at: slot.endTime + ":00",
-        price: parseFloat(slot.price),
-        court_id: courtId,
-      }));
-
-      const variables = {
-        objects: slotObjects,
-      };
-
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ query: mutation, variables }),
-      });
-
-      const result = await response.json();
-      if (result.data?.insert_slots?.affected_rows > 0) {
-        alert("All data saved successfully!");
-        // Reset form or redirect
-      }
-    } catch (error) {
-      console.error("Error saving slots:", error);
-      alert("Failed to save slots");
-    }
-  };
-
-  const addSlot = () => {
-    setSlots([
-      ...slots,
-      {
-        startTime: "09:00",
-        endTime: "10:00",
-        price: "",
-      },
-    ]);
   };
 
   const removeSlot = (index) => {
@@ -633,85 +508,6 @@ const MultiStepVenueForm = () => {
         ...prev,
         sports: [...prev.sports, value],
       }));
-    }
-  };
-
-  const handleVenueAndCourtsSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Fetch user ID
-      const userId = await fetchUserIdByEmail(venue.sellerEmail);
-      if (!userId) {
-        throw new Error("No user found with the provided email.");
-      }
-
-      // Prepare the nested mutation
-      const mutation = `
-        mutation CreateVenueWithCourtsAndSlots($venueData: venues_insert_input!) {
-          insert_venues_one(object: $venueData) {
-            id
-            title
-          }
-        }
-      `;
-
-      // Prepare variables with nested courts and slots
-      const variables = {
-        venueData: {
-          title: venue.title,
-          description: venue.description,
-          location: venue.location,
-          open_at: venue.openingTime || "00:00",
-          close_at: venue.closingTime || "00:00",
-          amenities: venue.amenities,
-          sports: venue.sports,
-          user_id: userId,
-          extra_image_ids: venue.images,
-          courts: {
-            data: courts.map((court) => ({
-              name: court.name,
-
-              slots: {
-                data: court.slots.map((slot) => ({
-                  start_at: slot.startTime + ":00",
-                  end_at: slot.endTime + ":00",
-                  price: parseFloat(slot.price),
-                })),
-              },
-            })),
-          },
-        },
-      };
-
-      // Execute the mutation
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          query: mutation,
-          variables,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.data?.insert_venues_one?.id) {
-        // Successfully created venue with courts and slots
-        alert("Venue, Courts, and Slots saved successfully!");
-        // Reset form or navigate as needed
-      } else {
-        throw new Error("Failed to create venue");
-      }
-    } catch (error) {
-      console.error("Error saving venue and courts:", error);
-      alert(error.message || "Failed to save venue and courts");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -988,110 +784,7 @@ const MultiStepVenueForm = () => {
                     className="w-full"
                   />
                 </div>
-
-                {/* Image preview section */}
-                {/* {venue.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4">
-                    {venue.images.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`Venue ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 
-                         opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )} */}
               </div>
-
-              {/* {Images} */}
-              {/* <div>
-        <label className="block text-sm font-medium mb-1">
-          Upload Venue Images
-        </label>
-        <Input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => uploadImages(e.target.files)}
-          className="w-full"
-          disabled={isUploading}
-        />
-        
-        {isUploading && (
-          <div className="mt-2">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full" 
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-600 mt-1">
-              Uploading: {Math.round(uploadProgress)}%
-            </p>
-          </div>
-        )}
-
-        {venue.imageUrls && venue.imageUrls.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {venue.imageUrls.map((url, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={url}
-                  alt={`Venue image ${index + 1}`}
-                  className="w-20 h-20 object-cover rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(url, index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 
-                           opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div> */}
-              {/* <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Upload Venue Images
-                        </label>
-                        <Input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="w-full"
-                        />
-          
-                        {venue.imageUrls && venue.imageUrls.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {venue.imageUrls.map((url, index) => (
-                              <img
-                                key={index}
-                                src={url}
-                                alt={`Venue image ${index + 1}`}
-                                className="w-20 h-20 object-cover rounded"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div> */}
-
-              {/* <Button type="submit" className="w-full">
-              Save Venue
-            </Button> */}
             </div>
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? "Saving..." : "Next: Add Courts"}
@@ -1116,47 +809,72 @@ const MultiStepVenueForm = () => {
                 </div>
               </div>
               <div className="border p-4 rounded-lg bg-gray-50 mt-4">
-  <h3 className="text-lg font-semibold mb-4">Quick Court Generation</h3>
-  {quickCourts.map((court, index) => (
-    <div key={index} className="flex gap-2 mb-2">
-      <Input
-        placeholder="Court Name"
-        value={court.name}
-        onChange={(e) => {
-          const newQuickCourts = [...quickCourts];
-          newQuickCourts[index].name = e.target.value;
-          setQuickCourts(newQuickCourts);
-        }}
-      />
-      <Input
-        type="number"
-        placeholder="Price/Hour"
-        value={court.price}
-        onChange={(e) => {
-          const newQuickCourts = [...quickCourts];
-          newQuickCourts[index].price = e.target.value;
-          setQuickCourts(newQuickCourts);
-        }}
-      />
-      {quickCourts.length > 1 && (
-        <Button 
-          onClick={() => removeQuickCourtRow(index)} 
-          variant="destructive"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      )}
-    </div>
-  ))}
-  <div className="flex gap-2 mt-2">
-    <Button onClick={addQuickCourtRow} type="button">
-      <Plus className="w-4 h-4 mr-2" /> Add Court
-    </Button>
-    <Button onClick={generateCourtSlots} type="button" variant="secondary">
-      Generate 24-Hour Slots
-    </Button>
-  </div>
-</div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">
+                    Slot Duration
+                  </label>
+                  <RadioGroup
+                    value={slotDuration}
+                    onValueChange={setSlotDuration}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="60" id="hour" />
+                      <Label htmlFor="hour">1 Hour</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="30" id="half-hour" />
+                      <Label htmlFor="half-hour">30 Minutes</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <h3 className="text-lg font-semibold mb-4">
+                  Quick Court Generation
+                </h3>
+                {quickCourts.map((court, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="Court Name"
+                      value={court.name}
+                      onChange={(e) => {
+                        const newQuickCourts = [...quickCourts];
+                        newQuickCourts[index].name = e.target.value;
+                        setQuickCourts(newQuickCourts);
+                      }}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Price/Hour"
+                      value={court.price}
+                      onChange={(e) => {
+                        const newQuickCourts = [...quickCourts];
+                        newQuickCourts[index].price = e.target.value;
+                        setQuickCourts(newQuickCourts);
+                      }}
+                    />
+                    {quickCourts.length > 1 && (
+                      <Button
+                        onClick={() => removeQuickCourtRow(index)}
+                        variant="destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-2">
+                  <Button onClick={addQuickCourtRow} type="button">
+                    <Plus className="w-4 h-4 mr-2" /> Add Court
+                  </Button>
+                  <Button
+                    onClick={generateCourtSlots}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Generate 24-Hour Slots
+                  </Button>
+                </div>
+              </div>
               {/* Right column: Courts management */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -1224,18 +942,13 @@ const MultiStepVenueForm = () => {
                                     </span>
                                     {slotPattern.timeSlots.length > 1 && (
                                       <Button
-                                        onClick={() =>
-                                          removeTimeSlot(
-                                            courtIndex,
-                                            slotPatternIndex,
-                                            timeSlotIndex
-                                          )
-                                        }
-                                        variant="destructive"
-                                        size="sm"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </Button>
+                                      onClick={() => removeTimeSlot(courtIndex, slotPatternIndex, timeSlotIndex)}
+                                      variant="destructive"
+                                      size="sm"
+                                      type="button" // Add this line
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
                                     )}
                                   </div>
 

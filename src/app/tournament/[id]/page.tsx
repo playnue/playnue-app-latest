@@ -109,7 +109,7 @@ const TournamentDetails = () => {
       description: "Lucknow awaits its cricketing conqueror: 16 teams, 1 dream, 1 trophy. Experience the thrill of box cricket in Lucknow's premier cricket competition with a prize pool of ₹30,000!",
       instructions: [
         "Format: Box Cricket (6 overs per innings)",
-        "Teams: 16 teams maximum (8 players per team - 6 main + 2 substitutes)",
+        "Teams: 16 teams maximum (8 players per team - 6 main players + 1 impact player + 1 substitute)",
         "Registration Deadline: April 1, 2025",
         "Teams must wear matching colored jerseys",
         "Tournament will be played according to official box cricket rules",

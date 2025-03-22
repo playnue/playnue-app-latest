@@ -90,7 +90,54 @@ const TournamentDetails = () => {
         topScorer: "₹1500"
       },
       registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
+    },
+    {
+      id: 3,
+      name: "Lucknow Box Cricket League (LBCL)",
+      sport: "Box Cricket",
+      area: "Jankipuram, Lucknow",
+      entryFee: 3499,
+      startDate: "2025-04-19",
+      endDate: "2025-04-20",
+      venue: "Athlete Sports Arena, Jankipuram, Lucknow",
+      teamsRegistered: 0,
+      players: 11,
+      maxTeams: 16,
+      priceType: "team",
+      status: "open",
+      image: "/lbcl2.jpg",
+      description: "Lucknow awaits its cricketing conqueror: 16 teams, 1 dream, 1 trophy. Experience the thrill of box cricket in Lucknow's premier cricket competition with a prize pool of ₹30,000!",
+      instructions: [
+        "Format: Box Cricket (6 overs per innings)",
+        "Teams: 16 teams maximum (8 players per team - 6 main + 2 substitutes)",
+        "Registration Deadline: April 1, 2025",
+        "Teams must wear matching colored jerseys",
+        "Tournament will be played according to official box cricket rules",
+        "Teams must arrive 30 minutes before scheduled match time",
+        "Decisions by umpires and tournament officials are final",
+        "Fair play is expected from all participants",
+        "No refunds for no-shows or disqualified teams"
+      ],
+      prizes: {
+        first: "₹20,000",
+        runnerUp: "₹7,000",
+        thirdPlace: "₹3,000",
+      },
+      additionalRewards: [
+        "Trophies for winning teams",
+        "Medals for outstanding performers",
+        "Certificates for all participants",
+        "10% discount vouchers at ASA Sports Store",
+        "Tournament merchandise and goodies"
+      ],
+      tournamentFormat: [
+        "Group Stage: 4 groups of 4 teams each",
+        "Top 2 teams from each group advance to knockout stage",
+        "Quarter-finals, Semi-finals, and Finals"
+      ],
+      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
     }
+
   ];
   
   // useEffect(() => {

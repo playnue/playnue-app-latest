@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
-
+ 
 export default function Tournaments() {
   // Sample tournament data - replace with your API data
   const allTournaments = [
@@ -33,6 +33,19 @@ export default function Tournaments() {
       maxTeams: 16,
       status: "open",
       image: "/footballtournament2.jpg",
+    },
+    {
+      id: 3,
+      name: "Lucknow Box Cricket League (LBCL)",
+      sport: "Box Cricket",
+      area: "Jankipuram, Lucknow 22605",
+      entryFee: 3499,
+      startDate: "2025-04-19",
+      venue: "Athlete Sports Arena, Jankipuram, Lucknow",
+      teamsRegistered: 0,
+      maxTeams: 16,
+      status: "open",
+      image: "/lbcl1.jpg",
     },
   ];
 

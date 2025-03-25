@@ -99,7 +99,7 @@ const TournamentDetails = () => {
       entryFee: 3499,
       startDate: "2025-04-19",
       endDate: "2025-04-20",
-      venue: "Athlete Sports Arena, Jankipuram, Lucknow",
+      venue: "Athletes Sports Arena 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, Uttar Pradesh 226021",
       teamsRegistered: 0,
       players: 11,
       maxTeams: 16,
@@ -135,7 +135,7 @@ const TournamentDetails = () => {
         "Top 2 teams from each group advance to knockout stage",
         "Quarter-finals, Semi-finals, and Finals"
       ],
-      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
+      registrationForm: "https://forms.gle/WGbNoE3xV92AyA877"
     }
 
   ];

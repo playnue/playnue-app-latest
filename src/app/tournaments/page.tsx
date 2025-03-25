@@ -41,7 +41,7 @@ export default function Tournaments() {
       area: "Jankipuram, Lucknow 22605",
       entryFee: 3499,
       startDate: "2025-04-19",
-      venue: "Athlete Sports Arena, Jankipuram, Lucknow",
+      venue: "Athletes Sports Arena 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, Uttar Pradesh 226021",
       teamsRegistered: 0,
       maxTeams: 16,
       status: "open",

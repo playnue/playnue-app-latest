@@ -31,7 +31,7 @@ export default function Tournaments() {
       venue: "Player's Town-South City",
       teamsRegistered: 5,
       maxTeams: 16,
-      status: "open",
+      status: "closed",
       image: "/footballtournament2.jpg",
     },
     {

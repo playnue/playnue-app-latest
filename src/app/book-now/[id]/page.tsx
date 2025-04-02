@@ -872,8 +872,129 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
       });
     }
   };
+  const handlePhonepe = async () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty. Please add a court and time to book.");
+      return;
+    }
+    console.log("success");
+    if (!user) {
+      router.push("/login");
+    }
+    try {
+      // Create order via your backend
+      const slotIds = cart.map((item) => item.slotId);
+      const orderResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_FUNCTIONS}/phonepe/order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            amount: totalCost, // Backend will multiply by 100
+            slot_ids: slotIds,
+            payment_type: isPartialPayment ? 1 : 2,
+          }),
+        }
+      );
 
-  // Helper function to calculate the end time based on the start time and duration
+      if (!orderResponse.ok) {
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      const orderData = await orderResponse.json();
+      console.log("Phonepe Order Created:", orderData);
+      localStorage.setItem("phonepe_transaction_id", orderData.merchantOrderId);
+      // Store additional information needed for booking
+      localStorage.setItem("phonepe_slot_ids", JSON.stringify(slotIds));
+      localStorage.setItem("phonepe_payment_type", isPartialPayment ? 1 : 2);
+
+      if (orderData.merchantOrderId) {
+        localStorage.setItem(
+          "phonepe_transaction_id",
+          orderData.merchantOrderId
+        );
+      }
+
+      // Redirect to payment URL if available
+      if (orderData.url) {
+        window.location.href = orderData.url;
+      }
+      // Razorpay checkout options
+      // console.log(selectedDate);
+      // const date = new Date(selectedDate);
+
+      // // Extract year, month, and day
+      // const year = date.getFullYear();
+      // const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-based
+      // const day = String(date.getDate()).padStart(2, "0");
+
+      // // Combine into YYYY-MM-DD format
+      // const formattedDate = `${year}-${month}-${day}`;
+
+      // const options = {
+      //   key: process.env.NEXT_PUBLIC_RAZORPAY_KEY, // Your Razorpay Key ID
+      //   amount: orderData.amount, // Amount from the created order
+      //   currency: orderData.currency,
+      //   name: "Your Sport Venue",
+      //   description: "Court Booking",
+      //   order_id: orderData.id, // Use the order_id from the created order
+      //   handler: async function (response) {
+      //     try {
+      //       console.log(response);
+      //       // Handle points redemption first (if any)
+      //       if (isRedeemingPoints && pointsToRedeem > 0) {
+      //         await updateUserLoyaltyPoints(-pointsToRedeem); // Negative value for deduction
+      //         toast.success(`Successfully redeemed ${pointsToRedeem} points!`);
+      //       }
+
+      //       // Then handle points earned from the purchase
+      //       if (pointsToEarn > 0) {
+      //         await updateUserLoyaltyPoints(pointsToEarn); // Positive value for addition
+      //         toast.success(`Earned ${pointsToEarn} new loyalty points!`);
+      //       }
+
+      //       // Handle the rest of your booking logic here
+      //       toast.success("Booking successful!");
+      //       router.push("/user-bookings");
+      //     } catch (error) {
+      //       console.error("Error in payment handler:", error);
+      //       toast.error("There was an issue processing your booking");
+      //     }
+      //   },
+      //   prefill: {
+      //     name: user.displayName || "Guest",
+      //     email: user.email || "guest@example.com",
+      //   },
+      //   theme: {
+      //     color: "#3399cc",
+      //   },
+      // };
+
+      // // Initialize Razorpay
+      // if (window.Razorpay) {
+      //   const rzp = new window.Razorpay(options);
+      //   rzp.open();
+      // } else {
+      //   console.error("Razorpay SDK not loaded");
+      //   alert("Payment gateway is temporarily unavailable");
+      // }
+    } catch (error) {
+      toast.error("Could not process your booking. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  
+  
   const calculateEndTime = (startTime, duration) => {
     const [hours, minutes] = startTime.split(":").map(Number);
     const endDate = new Date();
@@ -1647,6 +1768,12 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
 
               <Button
                 onClick={handleBookNow}
+                className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
+              >
+                {isPartialPayment ? "Pay Now" : "Book Now"}
+              </Button>
+              <Button
+                onClick={handlePhonepe}
                 className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
               >
                 {isPartialPayment ? "Pay Now" : "Book Now"}

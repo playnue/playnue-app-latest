@@ -1772,12 +1772,6 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
               >
                 {isPartialPayment ? "Pay Now" : "Book Now"}
               </Button>
-              <Button
-                onClick={handlePhonepe}
-                className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
-              >
-                {isPartialPayment ? "Pay Now" : "Book Now"}
-              </Button>
             </div>
           </Card>
         </div>

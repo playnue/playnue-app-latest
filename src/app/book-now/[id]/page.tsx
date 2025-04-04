@@ -791,6 +791,18 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
             amount: totalCost, // Backend will multiply by 100
             slot_ids: slotIds,
             payment_type: isPartialPayment ? 1 : 2,
+            loyalty_points: {
+              redeeming: isRedeemingPoints ? pointsToRedeem : 0,
+              earning: pointsToEarn,
+              current_balance: currentLoyaltyPoints
+            },
+            coupon: isCouponApplied && activeCoupon ? {
+              id: activeCoupon.id,
+              code: activeCoupon.name,
+              type: activeCoupon.type,
+              value: activeCoupon.value,
+              min_cart_value: activeCoupon.min_cart_value
+            } : null
           }),
         }
       );
@@ -823,18 +835,9 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
           try {
+            console.log("caught response")
             console.log(response);
             // Handle points redemption first (if any)
-            if (isRedeemingPoints && pointsToRedeem > 0) {
-              await updateUserLoyaltyPoints(-pointsToRedeem); // Negative value for deduction
-              toast.success(`Successfully redeemed ${pointsToRedeem} points!`);
-            }
-
-            // Then handle points earned from the purchase
-            if (pointsToEarn > 0) {
-              await updateUserLoyaltyPoints(pointsToEarn); // Positive value for addition
-              toast.success(`Earned ${pointsToEarn} new loyalty points!`);
-            }
 
             // Handle the rest of your booking logic here
             toast.success("Booking successful!");
@@ -1153,6 +1156,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${accessToken}`,
+              "x-hasura-role": "user",
             },
             body: JSON.stringify({
               query: `

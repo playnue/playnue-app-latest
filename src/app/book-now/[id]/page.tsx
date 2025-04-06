@@ -100,7 +100,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
   const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState();
   const [pointsToEarn, setPointsToEarn] = useState();
   const calculateLoyaltyPoints = (amount) => {
-    return Math.floor(amount / 100) * 2; // 1 point per ₹100
+    return Math.floor(amount / 100) * 1; // 1 point per ₹100
   };
 
   const [pointsToRedeem, setPointsToRedeem] = useState();

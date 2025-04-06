@@ -12,6 +12,7 @@ import { useGeolocated } from "react-geolocated";
 import Navbar from "../components/Navbar";
 import "../loader.css";
 import { useAccessToken, useUserData } from "@nhost/nextjs";
+
 const getLocationFromCoords = async (latitude, longitude) => {
   try {
     const response = await fetch(
@@ -38,6 +39,7 @@ const getLocationFromCoords = async (latitude, longitude) => {
     return null;
   }
 };
+
 export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -51,6 +53,7 @@ export default function Bookings() {
   const accessToken = useAccessToken();
   const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
+  
   // Geolocation hook
   const { coords, isGeolocationAvailable, isGeolocationEnabled } =
     useGeolocated({
@@ -60,6 +63,104 @@ export default function Bookings() {
       },
       userDecisionTimeout: 5000,
     });
+
+  // MOVED: Loyalty points useEffect to component level
+  useEffect(() => {
+    const addInitialLoyaltyPoints = async () => {
+      // Only proceed if we have valid userData and accessToken
+      if (userData && accessToken) {
+        try {
+          // Fetch current user data to check metadata
+          const response = await fetch(
+            process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+                "x-hasura-role": "user",
+              },
+              body: JSON.stringify({
+                query: `
+                query GetUser($id: uuid!) {
+                  user(id: $id) {
+                    metadata
+                  }
+                }
+              `,
+                variables: { id: userData.id },
+              }),
+            }
+          );
+
+          const { data, errors } = await response.json();
+
+          if (errors) {
+            console.error("GraphQL errors:", errors);
+            return;
+          }
+
+          // Check if loyaltyPoints already exists in metadata
+          const userMetadata = data?.user?.metadata || {};
+
+          if (userMetadata.loyaltyPoints === undefined) {
+            // If not, update the metadata with 50 loyalty points
+            const updatedMetadata = {
+              ...userMetadata,
+              loyaltyPoints: 100,
+            };
+
+            // Update user metadata with GraphQL
+            const updateResponse = await fetch(
+              process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                  "x-hasura-role": "user",
+                },
+                body: JSON.stringify({
+                  query: `
+                  mutation UpdateUser($id: uuid!, $metadata: jsonb) {
+                    updateUser(
+                      pk_columns: { id: $id },
+                      _set: { metadata: $metadata }
+                    ) {
+                      id
+                      metadata
+                    }
+                  }
+                `,
+                  variables: {
+                    id: userData.id,
+                    metadata: updatedMetadata,
+                  },
+                }),
+              }
+            );
+
+            const updateResult = await updateResponse.json();
+
+            if (updateResult.errors) {
+              console.error(
+                "Error adding loyalty points:",
+                updateResult.errors
+              );
+            } else {
+              console.log(
+                "Successfully added 50 loyalty points for new user"
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Failed to update user metadata:", error);
+        }
+      }
+    };
+
+    addInitialLoyaltyPoints();
+  }, [userData, accessToken]); // Dependency array includes userData and accessToken
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
@@ -113,8 +214,9 @@ export default function Bookings() {
   }, [coords]);
 
   // Ensure component only renders on client
-
-  // Fetch location details based on coordinates
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const getVenues = async () => {
     const response = await fetch(
@@ -250,6 +352,7 @@ export default function Bookings() {
       );
     }
   };
+  
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };
@@ -260,6 +363,7 @@ export default function Bookings() {
       venueSection.scrollIntoView({ behavior: "smooth" });
     }
   };
+  
   const LocationButton = () => (
     <button
       onClick={requestLocationPermission}
@@ -269,8 +373,7 @@ export default function Bookings() {
     </button>
   );
 
-  // Venue card rendering component
-
+  // Venue card rendering component - FIXED: Removed the useEffect from inside this function
   const renderVenueCard = (item) => {
     // Function to get the correct image source based on item.id
     const getImageSource = (id) => {
@@ -311,7 +414,7 @@ export default function Bookings() {
     };
 
     const imageSource = getImageSource(item.id);
-
+    
     return (
       <div className="venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
         {/* Image Section */}
@@ -373,9 +476,6 @@ export default function Bookings() {
   };
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-  useEffect(() => {
     getVenues();
   }, [location]);
 
@@ -402,16 +502,6 @@ export default function Bookings() {
       </>
     );
   }
-
-  // useEffect(() => {
-  //   const preloader = document.getElementById("preloader");
-  //   if (preloader) {
-  //     preloader.style.opacity = "0"; // Fade out effect
-  //     setTimeout(() => {
-  //       preloader.style.display = "none"; // Hide preloader
-  //     }, 600); // Matches CSS transition duration
-  //   }
-  // }, []);
 
   return (
     <>

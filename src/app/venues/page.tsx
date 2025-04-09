@@ -41,19 +41,42 @@ const getLocationFromCoords = async (latitude, longitude) => {
 };
 
 export default function Bookings() {
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [hoveredItem, setHoveredItem] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showAllVenues, setShowAllVenues] = useState(false);
   const [location, setLocation] = useState("Lucknow, Uttar Pradesh");
   const [venues, setVenues] = useState([]);
+  const [featuredVenues, setFeaturedVenues] = useState([]);
   const [localVenues, setLocalVenues] = useState([]);
   const [otherVenues, setOtherVenues] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationError, setLocationError] = useState("");
+  const [selectedSportCategory, setSelectedSportCategory] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const accessToken = useAccessToken();
   const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
-  
+
+  // Sport categories for dropdown
+  const sportCategories = [
+    {
+      id: 1,
+      name: "Racket Sports",
+      sports: ["Pickleball", "LawnTennis", "Badminton", "Tennis"],
+    },
+    {
+      id: 2,
+      name: "Team Sports",
+      sports: ["Football", "Cricket", "Cricket_Net", "BoxCricket"],
+    },
+    {
+      id: 3,
+      name: "Indoor Games",
+      sports: ["Snooker", "Pool", "PS4"],
+    },
+  ];
+
   // Geolocation hook
   const { coords, isGeolocationAvailable, isGeolocationEnabled } =
     useGeolocated({
@@ -64,7 +87,7 @@ export default function Bookings() {
       userDecisionTimeout: 5000,
     });
 
-  // MOVED: Loyalty points useEffect to component level
+  // Loyalty points useEffect
   useEffect(() => {
     const addInitialLoyaltyPoints = async () => {
       // Only proceed if we have valid userData and accessToken
@@ -148,9 +171,7 @@ export default function Bookings() {
                 updateResult.errors
               );
             } else {
-              console.log(
-                "Successfully added 50 loyalty points for new user"
-              );
+              console.log("Successfully added 50 loyalty points for new user");
             }
           }
         } catch (error) {
@@ -160,7 +181,7 @@ export default function Bookings() {
     };
 
     addInitialLoyaltyPoints();
-  }, [userData, accessToken]); // Dependency array includes userData and accessToken
+  }, [userData, accessToken]);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
@@ -241,6 +262,7 @@ export default function Bookings() {
               description
               user_id
               image_id
+              created_at
             }
           }
         `,
@@ -274,6 +296,12 @@ export default function Bookings() {
 
     setVenues(venuesWithImages);
 
+    // Set featured venues - 3 latest venues based on created_at
+    const sortedVenues = [...venuesWithImages].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+    setFeaturedVenues(sortedVenues.slice(0, 3));
+
     const currentCity = location.split(",")[0].trim().toLowerCase();
 
     const localVenuesList = venuesWithImages.filter(
@@ -286,6 +314,9 @@ export default function Bookings() {
 
     setLocalVenues(localVenuesList);
     setOtherVenues(otherVenuesList);
+
+    // Reset filtered venues when venues change
+    handleFilterBySportCategory(selectedSportCategory);
   };
 
   const sportIcons = {
@@ -334,6 +365,33 @@ export default function Bookings() {
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
+    setSelectedSportCategory(null); // Reset sport category filter when searching
+  };
+
+  // Handle filtering by sport category
+  const handleFilterBySportCategory = (categoryId) => {
+    setSelectedSportCategory(categoryId);
+
+    if (!categoryId) {
+      setFilteredVenues(venues);
+      return;
+    }
+
+    const category = sportCategories.find((cat) => cat.id === categoryId);
+    if (!category) {
+      setFilteredVenues(venues);
+      return;
+    }
+
+    const filtered = venues.filter((venue) => {
+      if (!venue.sports || !venue.sports.length) return false;
+
+      // Check if any sport in the venue matches any sport in the category
+      return venue.sports.some((sport) => category.sports.includes(sport));
+    });
+
+    setFilteredVenues(filtered);
+    setSearchQuery(""); // Clear search query when filtering by sport
   };
 
   const requestLocationPermission = () => {
@@ -352,7 +410,7 @@ export default function Bookings() {
       );
     }
   };
-  
+
   const handleToggle = () => {
     setIsSearching((prev) => !prev);
   };
@@ -363,7 +421,7 @@ export default function Bookings() {
       venueSection.scrollIntoView({ behavior: "smooth" });
     }
   };
-  
+
   const LocationButton = () => (
     <button
       onClick={requestLocationPermission}
@@ -373,8 +431,8 @@ export default function Bookings() {
     </button>
   );
 
-  // Venue card rendering component - FIXED: Removed the useEffect from inside this function
-  const renderVenueCard = (item) => {
+  // Venue card rendering component
+  const renderVenueCard = (item, isFeatured = false) => {
     // Function to get the correct image source based on item.id
     const getImageSource = (id) => {
       switch (id) {
@@ -407,16 +465,33 @@ export default function Bookings() {
         case "0dbd3a09-30f4-4e34-b178-a6a7c4398255":
           return "/tt1.jpg";
         case "8158e7e5-714e-4fb6-b7b9-0668a3180e04":
-          return "/arcadia.jpg";
+          return "/arcadia.webp";
+        case "37d1eeb4-d8b6-4edd-a6db-fb3cb8b8457b":
+          return "/infinity.webp";
+        case "ae50b3c5-9129-45c6-8d59-6d1c90bf5f9b":
+          return "/sportsSquare.webp";
+        case "cfde78ee-6686-475d-b343-1ca966023db7":
+          return "/lordsCricket.webp";
         default:
           return "/comingSoon.jpeg";
       }
     };
 
     const imageSource = getImageSource(item.id);
-    
+
     return (
-      <div className="venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+      <div
+        className={`venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
+          isFeatured ? "relative" : ""
+        }`}
+      >
+        {/* Featured Badge */}
+        {isFeatured && (
+          <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-1 rounded-bl-lg z-10 font-semibold">
+            Featured
+          </div>
+        )}
+
         {/* Image Section */}
         <div className="h-64 overflow-hidden">
           {imageSource ? (
@@ -506,64 +581,476 @@ export default function Bookings() {
   return (
     <>
       <Navbar />
-      {/* <div id="preloader"></div> Add Preloader */}
       <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-12">
+          {/* Page Header with subtle animation */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-white mb-4 animate-fadeIn">
               Our <span className="text-purple-500">Venues</span>
             </h1>
-            <p className="text-gray-400">
+            <p className="text-gray-400 max-w-2xl mx-auto">
               Discover our premium locations perfect for your next match
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="max-w-md mx-auto mb-8">
-            <div className="flex flex-col gap-4">
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="Search by city or venue name"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  className="w-full bg-gray-800 text-white border-gray-700 rounded-lg pl-10 pr-4 py-2"
-                />
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  🔍
-                </span>
+          {/* Search & Filter Area */}
+          <div className="max-w-4xl mx-auto mb-12 flex flex-col md:flex-row gap-4 items-center">
+            {/* Search Box */}
+            <div className="w-full md:w-2/3 relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  ></path>
+                </svg>
               </div>
+              <input
+                type="search"
+                placeholder="Search for venues..."
+                className="w-full bg-gray-800 border border-gray-700 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+              />
+            </div>
 
-              {locationError && (
-                <p className="text-yellow-500 text-sm text-center">
-                  {locationError}
-                </p>
-              )}
-
+            {/* Category Dropdown */}
+            <div className="w-full md:w-1/3 relative">
               <button
-                onClick={requestLocationPermission}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-300"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full flex items-center justify-between bg-gray-800 text-white px-6 py-3 rounded-lg border border-gray-700 hover:bg-gray-700 transition-all duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="listbox"
               >
-                Use My Current Location
+                <span className="text-lg truncate">
+                  {selectedSportCategory
+                    ? sportCategories.find(
+                        (cat) => cat.id === selectedSportCategory
+                      )?.name
+                    : "All Sports"}
+                </span>
+                <svg
+                  className={`w-5 h-5 transition-transform duration-300 ${
+                    isDropdownOpen ? "transform rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
               </button>
+
+              {isDropdownOpen && (
+                <>
+                  {/* Backdrop for closing dropdown when clicking outside */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsDropdownOpen(false)}
+                    aria-hidden="true"
+                  ></div>
+
+                  <div
+                    className="absolute mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto"
+                    role="listbox"
+                  >
+                    {/* "All Sports" option */}
+                    <div className="border-b border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleFilterBySportCategory(null); // Clear filter
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-white hover:bg-gray-700 ${
+                          !selectedSportCategory ? "bg-purple-800" : ""
+                        }`}
+                        role="option"
+                        aria-selected={!selectedSportCategory}
+                      >
+                        <span className="flex items-center">
+                          <span className="mr-2">🏆</span>
+                          All Sports
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Sport Categories */}
+                    <div className="py-1">
+                      {sportCategories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="border-t border-gray-700 first:border-t-0"
+                        >
+                          <button
+                            onClick={() => {
+                              handleFilterBySportCategory(category.id);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 text-white hover:bg-gray-700 flex items-center justify-between ${
+                              selectedSportCategory === category.id
+                                ? "bg-purple-800"
+                                : ""
+                            }`}
+                            role="option"
+                            aria-selected={
+                              selectedSportCategory === category.id
+                            }
+                          >
+                            <span>{category.name}</span>
+                            <div className="flex space-x-1">
+                              {category.sports.slice(0, 3).map((sport) => (
+                                <span
+                                  key={sport}
+                                  title={sport}
+                                  className="text-lg"
+                                >
+                                  {sportIcons[sport]}
+                                </span>
+                              ))}
+                            </div>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(searchQuery ? filteredVenues : venues).map(renderVenueCard)}
-          </div>
+          {/* Featured Venues Section - Enhanced Horizontal Scrolling */}
+          {featuredVenues.length > 0 && (
+            <div className="mb-16">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <span className="text-purple-500 mr-2">⭐</span> Featured Venues
+                <span className="ml-auto text-sm text-gray-400 hidden md:flex items-center">
+                  <span>Scroll for more</span>
+                  <svg
+                    className="w-4 h-4 ml-1 animate-bounce"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </span>
+              </h2>
 
-          {venues.length === 0 && (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div id="preloader"></div>
+              <div className="relative group">
+                {/* Left scroll button - Improved visibility */}
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("featured-venues-container")
+                      .scrollBy({ left: -300, behavior: "smooth" })
+                  }
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 bg-gray-800 hover:bg-purple-600 text-white rounded-full p-3 shadow-lg z-10 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300 transform hover:scale-110"
+                  aria-label="Scroll left"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    ></path>
+                  </svg>
+                </button>
+
+                {/* Scrollable container with swipe hint */}
+                <div
+                  id="featured-venues-container"
+                  className="flex overflow-x-auto pb-8 space-x-6 scrollbar-hide snap-x snap-mandatory relative"
+                  style={{
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {/* Mobile swipe hint */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center md:hidden z-10 opacity-70 animate-fadeOut">
+                    <div className="bg-gray-800 bg-opacity-70 rounded-full p-3 text-white">
+                      <svg
+                        className="w-8 h-8 animate-swipe"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
+
+                  {featuredVenues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      className="flex-none w-full sm:w-80 md:w-96 snap-center"
+                    >
+                      {renderVenueCard(venue, true)}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right scroll button - Improved visibility */}
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("featured-venues-container")
+                      .scrollBy({ left: 300, behavior: "smooth" })
+                  }
+                  className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 bg-gray-800 hover:bg-purple-600 text-white rounded-full p-3 shadow-lg z-10 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300 transform hover:scale-110"
+                  aria-label="Scroll right"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </button>
+
+                {/* Progress bar for better scroll position feedback */}
+                <div className="mt-4 bg-gray-700 rounded-full h-1 w-full overflow-hidden">
+                  <div
+                    id="scroll-progress-indicator"
+                    className="bg-purple-500 h-full transition-all duration-300"
+                    style={{ width: "0%" }}
+                  ></div>
+                </div>
+
+                {/* View all venues button - Cleaner alternative */}
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setShowAllVenues(true)}
+                    className="inline-flex items-center text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300"
+                  >
+                    View all venues
+                    <svg
+                      className="w-4 h-4 ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          {venues.length > 0 && (
-            <div className="text-center mt-8">
-              <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                More Venues
-              </button>
+          {/* Category Venues Section - Improved with sorting options */}
+          {selectedSportCategory && (
+            <div id="category-venues-section" className="mb-16 animate-fadeIn">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white mb-4 md:mb-0">
+                  {
+                    sportCategories.find(
+                      (cat) => cat.id === selectedSportCategory
+                    )?.name
+                  }{" "}
+                  Venues
+                </h2>
+
+                {/* Sort options */}
+              </div>
+
+              {filteredVenues.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredVenues.map((venue) => renderVenueCard(venue))}
+                  </div>
+
+                  {/* Results summary */}
+                  <div className="mt-6 text-center text-gray-400">
+                    Showing {filteredVenues.length}{" "}
+                    {filteredVenues.length === 1 ? "venue" : "venues"} in this
+                    category
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-gray-800 rounded-lg shadow-lg">
+                  <svg
+                    className="w-16 h-16 mb-4 text-purple-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <p className="text-xl font-semibold">
+                    No venues found in this category
+                  </p>
+                  <p className="mt-2 mb-6">
+                    Please try selecting a different category
+                  </p>
+                  <button
+                    onClick={() => handleFilterBySportCategory(null)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-300 flex items-center"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                      ></path>
+                    </svg>
+                    Show All Venues
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* All Venues Section with improved toggle interaction */}
+          {!selectedSportCategory && (
+            <div className="mt-12">
+              {!showAllVenues ? (
+                <div className="text-center">
+                  <p className="text-gray-400 mb-6">
+                    Want to explore all our venues at once?
+                  </p>
+                  <button
+                    onClick={() => setShowAllVenues(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center mx-auto"
+                  >
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                      ></path>
+                    </svg>
+                    View All Venues
+                  </button>
+                </div>
+              ) : (
+                <div id="all-venues-section" className="animate-fadeIn">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+                    <h2 className="text-2xl font-bold text-white mb-4 md:mb-0">
+                      All Available Venues
+                    </h2>
+
+                    {/* Filter & Sort Area */}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {venues.map((venue) => renderVenueCard(venue))}
+                  </div>
+
+                  {/* Improved Load More UI */}
+                  {venues.length > 0 && (
+                    <div className="flex flex-col items-center mt-12 space-y-4">
+                      <p className="text-gray-400">
+                        Showing {venues.length} of {venues.length} venues
+                      </p>
+                      <button className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 flex items-center">
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                        Load More Venues
+                      </button>
+
+                      {/* Hide all venues button */}
+                      <button
+                        onClick={() => setShowAllVenues(false)}
+                        className="text-gray-400 hover:text-white transition-colors duration-300 flex items-center text-sm"
+                      >
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 15l7-7 7 7"
+                          ></path>
+                        </svg>
+                        Collapse View
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Share, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   MapPin,
@@ -15,6 +16,7 @@ import {
   Contact,
   ArrowLeft,
   AlertTriangle,
+  Timer,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
@@ -23,6 +25,7 @@ import Link from "next/link";
 
 const GameDetails = () => {
   const params = useParams();
+  const [copySuccess, setCopySuccess] = useState(false);
   const router = useRouter();
   const gameId = params?.id;
   const [game, setGame] = useState(null);
@@ -35,7 +38,20 @@ const GameDetails = () => {
     responseData: null,
   });
 
+  const copyToClipboard = () => {
+    const currentUrl = window.location.href;
+    navigator.clipboard.writeText(currentUrl)
+      .then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000); // Hide the success message after 2 seconds
+      })
+      .catch(err => {
+        console.error('Failed to copy URL: ', err);
+      });
+  };
+  
   // Separate function to fetch game details
+
   const fetchGameDetails = async () => {
     setLoading(true);
     try {
@@ -126,6 +142,7 @@ const GameDetails = () => {
         // Use the first game or null if empty
         if (allGamesData.data.games && allGamesData.data.games.length > 0) {
           const gameData = allGamesData.data.games[0];
+          console.log(gameData)
           setGame(gameData);
           
           // If venue_id exists, call the venue fetch function
@@ -305,6 +322,7 @@ const GameDetails = () => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+        
         <div className="container mx-auto px-4 py-8">
           {/* Back button */}
           <motion.div
@@ -378,6 +396,12 @@ const GameDetails = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
+                      <Timer className="w-5 h-5 text-purple-400" />
+                      <span className="text-gray-200">
+                        {game.time.split('+')[0] || "Location not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-purple-400" />
                       <span className="text-gray-200">
                         {game.seats || "0"} {game.seats === 1 ? "spot" : "spots"} available
@@ -402,7 +426,24 @@ const GameDetails = () => {
                       {game.description || "No description available"}
                     </p>
                   </div>
-
+                  <div className="mt-4 flex justify-center">
+  <Button 
+    onClick={copyToClipboard}
+    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+  >
+    {copySuccess ? (
+      <>
+        <Check className="w-4 h-4" />
+        Copied!
+      </>
+    ) : (
+      <>
+        <Share className="w-4 h-4" />
+        Share Game
+      </>
+    )}
+  </Button>
+</div>
                   {/* Action Buttons */}
                   {/* <div className="bg-yellow-500/10 p-6 rounded-xl border border-yellow-500/30 flex items-start space-x-4">
                     <AlertTriangle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
@@ -416,8 +457,11 @@ const GameDetails = () => {
                     </div>
                   </div> */}
                 </CardContent>
+                
               </Card>
+              
             </motion.div>
+            
           </div>
         </div>
       </div>

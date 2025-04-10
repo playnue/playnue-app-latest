@@ -143,7 +143,7 @@ const VenuePage = () => {
       case "8158e7e5-714e-4fb6-b7b9-0668a3180e04":
         return "/arcadia.webp";
       case "37d1eeb4-d8b6-4edd-a6db-fb3cb8b8457b":
-        return "/infinity.webp";
+        return "/infinity.jpg";
       case "ae50b3c5-9129-45c6-8d59-6d1c90bf5f9b":
         return "/sportsSquare.webp";
       case "cfde78ee-6686-475d-b343-1ca966023db7":

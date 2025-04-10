@@ -58,6 +58,12 @@ export default function Bookings() {
   const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
 
+  const requestedFeaturedIds = [
+    "562cb30c-f543-4f19-86fd-a424c4265091", // PicklePro
+    "cfde78ee-6686-475d-b343-1ca966023db7", // Lords Cricket
+    "ae50b3c5-9129-45c6-8d59-6d1c90bf5f9b", // Sports Square
+  ];
+
   // Sport categories for dropdown
   const sportCategories = [
     {
@@ -295,12 +301,21 @@ export default function Bookings() {
     );
 
     setVenues(venuesWithImages);
-
-    // Set featured venues - 3 latest venues based on created_at
-    const sortedVenues = [...venuesWithImages].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    const requestedFeaturedVenues = venuesWithImages.filter((venue) =>
+      requestedFeaturedIds.includes(venue.id)
     );
-    setFeaturedVenues(sortedVenues.slice(0, 3));
+    if (requestedFeaturedVenues.length === 3) {
+      setFeaturedVenues(requestedFeaturedVenues);
+    } else {
+      // Fallback to original logic - 3 latest venues based on created_at
+      const sortedVenues = [...venuesWithImages].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setFeaturedVenues(sortedVenues.slice(0, 3));
+      console.log(
+        "Not all requested featured venues found, using latest venues instead"
+      );
+    }
 
     const currentCity = location.split(",")[0].trim().toLowerCase();
 
@@ -467,7 +482,7 @@ export default function Bookings() {
         case "8158e7e5-714e-4fb6-b7b9-0668a3180e04":
           return "/arcadia.webp";
         case "37d1eeb4-d8b6-4edd-a6db-fb3cb8b8457b":
-          return "/infinity.webp";
+          return "/infinity.jpg";
         case "ae50b3c5-9129-45c6-8d59-6d1c90bf5f9b":
           return "/sportsSquare.webp";
         case "cfde78ee-6686-475d-b343-1ca966023db7":
@@ -481,19 +496,19 @@ export default function Bookings() {
 
     return (
       <div
-        className={`venue-card bg-[#1a1b26] rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
+        className={`venue-card bg-[#1a1b26] rounded-lg overflow-hidden shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-xl ${
           isFeatured ? "relative" : ""
         }`}
       >
-        {/* Featured Badge */}
+        {/* Featured Badge - Smaller and more compact */}
         {isFeatured && (
-          <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-1 rounded-bl-lg z-10 font-semibold">
+          <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-2 py-0.5 rounded-bl-lg z-10 font-medium text-xs">
             Featured
           </div>
         )}
 
-        {/* Image Section */}
-        <div className="h-64 overflow-hidden">
+        {/* Image Section - Further reduced height */}
+        <div className="h-32 md:h-40 overflow-hidden">
           {imageSource ? (
             <img
               src={imageSource}
@@ -502,46 +517,40 @@ export default function Bookings() {
             />
           ) : (
             <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-              <p className="text-xl font-bold text-gray-400">Coming Soon</p>
+              <p className="text-sm font-bold text-gray-400">Coming Soon</p>
             </div>
           )}
         </div>
 
-        {/* Compact Content Section */}
-        <div className="venue-content p-4 transition-transform duration-300">
-          {/* Title and Location */}
-          <div className="mb-2">
-            <h3 className="text-xl font-semibold text-white">{item.title}</h3>
-            <div className="flex items-center text-sm text-gray-400">
-              <span className="mr-1">📍</span>
-              <span className="capitalize">{item.location}</span>
+        {/* More Compact Content Section */}
+        <div className="venue-content p-2">
+          {/* Title and Location in more compact layout */}
+          <div className="mb-1">
+            <h3 className="text-base font-semibold text-white truncate">
+              {item.title}
+            </h3>
+            <div className="flex items-center text-xs text-gray-400">
+              <span className="mr-0.5">📍</span>
+              <span className="capitalize truncate text-xs">
+                {item.location}
+              </span>
             </div>
           </div>
 
-          {/* Timing - if available in API */}
-          {item.open_at && item.close_at && (
-            <div className="text-gray-400 text-xs mb-2">
-              ⏰{" "}
-              {item.open_at === "00:00:00" && item.close_at === "00:00:00"
-                ? "24/7"
-                : `${item.open_at} - ${item.close_at}`}
-            </div>
-          )}
-
-          {/* Sports - if available in API */}
+          {/* Sports icons - Smaller and more compact */}
           {item.sports && item.sports.length > 0 && (
-            <div className="flex gap-1 mb-3">
+            <div className="flex gap-0.5 mb-1.5">
               {item.sports.map((sport) => (
-                <span key={sport} className="text-lg" title={sport}>
+                <span key={sport} className="text-sm" title={sport}>
                   {sportIcons[sport] || "❓"}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Book Now Button */}
+          {/* Smaller Book Now Button */}
           <Link href={`/venue-details/${item.id}`}>
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-1 px-2 rounded text-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
               Book Now
             </button>
           </Link>

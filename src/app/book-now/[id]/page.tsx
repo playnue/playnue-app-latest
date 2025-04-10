@@ -711,12 +711,12 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
     }
   
     // Check if player selection is required for this venue
-    const isSpecialVenue = id === "562cb30c-f543-4f19-86fd-a424c4265091";
+    // const isSpecialVenue = id === "562cb30c-f543-4f19-86fd-a424c4265091";
     
-    if (isSpecialVenue && !selectedPlayerOption) {
-      alert("Please select the number of players");
-      return;
-    }
+    // if (isSpecialVenue && !selectedPlayerOption) {
+    //   alert("Please select the number of players");
+    //   return;
+    // }
   
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
@@ -728,9 +728,9 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
       );
       
       // Apply multiplier only for the special venue
-      if (isSpecialVenue) {
-        selectedSlotPrice = selectedSlotPrice * playerMultiplier;
-      }
+      // if (isSpecialVenue) {
+      //   selectedSlotPrice = selectedSlotPrice * playerMultiplier;
+      // }
   
       return {
         id: Date.now() + Math.random(), // Ensure unique ID
@@ -738,7 +738,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
         time: formatTimeRange(slot.start_at, slot.end_at),
         duration: duration,
         court: selectedCourtName,
-        playerOption: isSpecialVenue ? selectedPlayerOption : null,
+        // playerOption: isSpecialVenue ? selectedPlayerOption : null,
         price: selectedSlotPrice,
       };
     });
@@ -747,10 +747,10 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
     setCart([...cart, ...newBookings]);
     
     // Reset selections after adding to cart
-    if (isSpecialVenue) {
-      setSelectedPlayerOption(null);
-      setPlayerMultiplier(1);
-    }
+    // if (isSpecialVenue) {
+    //   setSelectedPlayerOption(null);
+    //   setPlayerMultiplier(1);
+    // }
   };
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));

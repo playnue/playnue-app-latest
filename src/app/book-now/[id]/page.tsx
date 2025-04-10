@@ -1440,7 +1440,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
             </Dialog>
           </div>
           {/* Player Selection Dialog - Only shows for specific venue */}
-          {id === "562cb30c-f543-4f19-86fd-a424c4265091" && (
+          {/* {id === "562cb30c-f543-4f19-86fd-a424c4265091" && (
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">
                 Number of Players
@@ -1525,7 +1525,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
                 </DialogContent>
               </Dialog>
             </div>
-          )}
+          )} */}
           <Button onClick={handleAddToCart} className="w-full">
             Add to Cart
           </Button>

@@ -44,6 +44,9 @@ export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showAllVenues, setShowAllVenues] = useState(false);
+  const [showAllSports, setShowAllSports] = useState(false);
+  const [showFilterExplanation, setShowFilterExplanation] = useState(true);
+
   const [location, setLocation] = useState("Lucknow, Uttar Pradesh");
   const [venues, setVenues] = useState([]);
   const [featuredVenues, setFeaturedVenues] = useState([]);
@@ -384,11 +387,18 @@ export default function Bookings() {
   };
 
   // Handle filtering by sport category
+  // This code should replace your existing handleFilterBySportCategory function
+
+  // Modify the handleFilterBySportCategory function
   const handleFilterBySportCategory = (categoryId) => {
     setSelectedSportCategory(categoryId);
+    setShowFilterExplanation(false); // Hide the explanation once any filter is applied
 
     if (!categoryId) {
+      // Show all venues when "All Sports" is selected
       setFilteredVenues(venues);
+      setShowAllVenues(true);
+      setIsDropdownOpen(false); // Close the dropdown when "All Sports" is selected
       return;
     }
 
@@ -407,6 +417,8 @@ export default function Bookings() {
 
     setFilteredVenues(filtered);
     setSearchQuery(""); // Clear search query when filtering by sport
+    setIsDropdownOpen(false); // Close the dropdown after selection
+    setShowAllVenues(false); // Hide the "all venues" section since we're showing filtered results
   };
 
   const requestLocationPermission = () => {
@@ -676,11 +688,12 @@ export default function Bookings() {
                     role="listbox"
                   >
                     {/* "All Sports" option */}
+                    {/* "All Sports" option */}
                     <div className="border-b border-gray-700">
                       <button
                         onClick={() => {
                           handleFilterBySportCategory(null); // Clear filter
-                          setIsDropdownOpen(false);
+                          setIsDropdownOpen(false); // Close dropdown
                         }}
                         className={`w-full text-left px-4 py-3 text-white hover:bg-gray-700 ${
                           !selectedSportCategory ? "bg-purple-800" : ""
@@ -739,159 +752,80 @@ export default function Bookings() {
             </div>
           </div>
 
-          {/* Featured Venues Section - Enhanced Horizontal Scrolling */}
+          {/* Featured Venues Section - Vertical Layout */}
           {featuredVenues.length > 0 && (
             <div className="mb-16">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <h2 className="text-2xl font-bold text-white mb-6">
                 <span className="text-purple-500 mr-2">⭐</span> Featured Venues
-                <span className="ml-auto text-sm text-gray-400 hidden md:flex items-center">
-                  <span>Scroll for more</span>
-                  <svg
-                    className="w-4 h-4 ml-1 animate-bounce"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
-                </span>
               </h2>
 
-              <div className="relative group">
-                {/* Left scroll button - Improved visibility */}
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("featured-venues-container")
-                      .scrollBy({ left: -300, behavior: "smooth" })
-                  }
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 bg-gray-800 hover:bg-purple-600 text-white rounded-full p-3 shadow-lg z-10 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300 transform hover:scale-110"
-                  aria-label="Scroll left"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 19l-7-7 7-7"
-                    ></path>
-                  </svg>
-                </button>
-
-                {/* Scrollable container with swipe hint */}
-                <div
-                  id="featured-venues-container"
-                  className="flex overflow-x-auto pb-8 space-x-6 scrollbar-hide snap-x snap-mandatory relative"
-                  style={{
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
-                    WebkitOverflowScrolling: "touch",
-                  }}
-                >
-                  {/* Mobile swipe hint */}
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center md:hidden z-10 opacity-70 animate-fadeOut">
-                    <div className="bg-gray-800 bg-opacity-70 rounded-full p-3 text-white">
-                      <svg
-                        className="w-8 h-8 animate-swipe"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        ></path>
-                      </svg>
-                    </div>
+              <div className="flex flex-col space-y-4">
+                {featuredVenues.map((venue) => (
+                  <div key={venue.id} className="max-w-md mx-auto w-full">
+                    {renderVenueCard(venue, true)}
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Filter Explanation Section - Shown by default */}
+          {showFilterExplanation && (
+            <div className="mb-16">
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  <span className="text-purple-500 mr-2">🔍</span> Filter Venues
+                  by Sport
+                </h2>
 
-                  {featuredVenues.map((venue) => (
+                <p className="text-gray-300 mb-6">
+                  Select a sport category from the dropdown above to find venues
+                  that offer specific sports.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {sportCategories.map((category) => (
                     <div
-                      key={venue.id}
-                      className="flex-none w-full sm:w-80 md:w-96 snap-center"
+                      key={category.id}
+                      className="bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
                     >
-                      {renderVenueCard(venue, true)}
+                      <button
+                        onClick={() => handleFilterBySportCategory(category.id)}
+                        className="w-full h-full p-4 text-left"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-2">
+                          {category.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {category.sports.slice(0, 3).map((sport) => (
+                            <span key={sport} className="text-lg" title={sport}>
+                              {sportIcons[sport] || "❓"}
+                            </span>
+                          ))}
+                          {category.sports.length > 3 && (
+                            <span className="text-sm text-gray-400">
+                              +{category.sports.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </button>
                     </div>
                   ))}
                 </div>
 
-                {/* Right scroll button - Improved visibility */}
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("featured-venues-container")
-                      .scrollBy({ left: 300, behavior: "smooth" })
-                  }
-                  className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 bg-gray-800 hover:bg-purple-600 text-white rounded-full p-3 shadow-lg z-10 hidden md:block opacity-70 group-hover:opacity-100 transition-opacity duration-300 transform hover:scale-110"
-                  aria-label="Scroll right"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
-                </button>
-
-                {/* Progress bar for better scroll position feedback */}
-                <div className="mt-4 bg-gray-700 rounded-full h-1 w-full overflow-hidden">
-                  <div
-                    id="scroll-progress-indicator"
-                    className="bg-purple-500 h-full transition-all duration-300"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-
-                {/* View all venues button - Cleaner alternative */}
-                <div className="mt-6 text-center">
+                <div className="text-center">
                   <button
-                    onClick={() => setShowAllVenues(true)}
-                    className="inline-flex items-center text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300"
+                    onClick={() => {
+                      handleFilterBySportCategory(null);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
-                    View all venues
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      ></path>
-                    </svg>
+                    View All Venues
                   </button>
                 </div>
               </div>
             </div>
           )}
-
           {/* Category Venues Section - Improved with sorting options */}
           {selectedSportCategory && (
             <div id="category-venues-section" className="mb-16 animate-fadeIn">

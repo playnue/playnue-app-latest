@@ -148,6 +148,8 @@ const VenuePage = () => {
         return "/sportsSquare.webp";
       case "cfde78ee-6686-475d-b343-1ca966023db7":
         return "/lordsCricket.webp";
+      case "c6be6c46-0355-4f59-bee4-1c4066e5de92":
+        return "/nextgen.jpg";
       default:
         return "/playturf.jpg";
     }

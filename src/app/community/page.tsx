@@ -129,7 +129,15 @@ const CommunityGames = () => {
   // Function to determine game status
   const getGameStatus = (gameDate, gameTime) => {
     const now = new Date();
-    const gameDateTime = new Date(`${gameDate}T${gameTime || '00:00:00'}`);
+    
+    // Clean the time string by removing the timezone part if it exists
+    const cleanTime = gameTime ? gameTime.replace(/([+-]\d{2})$/, '') : '00:00:00';
+    
+    // Create a proper date string
+    const dateTimeString = `${gameDate}T${cleanTime}`;
+    
+    // Parse the date
+    const gameDateTime = new Date(dateTimeString);
     
     // Assume a game lasts 2 hours
     const gameEndTime = new Date(gameDateTime);
@@ -174,22 +182,37 @@ const CommunityGames = () => {
           `,
         }),
       });
-
+  
       const { data, errors } = await response.json();
-
+  
       if (errors) {
         console.error("GraphQL errors:", errors);
         throw new Error(errors[0].message);
       }
-
+  
+      // Get all unique venue IDs
+      const venueIds = [...new Set(data.games
+        .filter(game => game.venue_id)
+        .map(game => game.venue_id))];
+      
+      // If we have venue IDs, fetch venue data
+      let venuesData = {};
+      if (venueIds.length > 0) {
+        venuesData = await fetchVenuesData(venueIds);
+      }
+  
       // Process and set the games data
-      const processedGames = data.games.map((game) => ({
-        ...game,
-        venue_name: game.venue?.title || "N/A",
-        venue_location: game.venue?.location || game.location || "N/A",
-        status: getGameStatus(game.date, game.time)
-      }));
-
+      const processedGames = data.games.map((game) => {
+        const venueInfo = game.venue_id ? venuesData[game.venue_id] : null;
+        
+        return {
+          ...game,
+          venue_name: venueInfo?.title || "N/A",
+          venue_location: venueInfo?.location || game.location || "N/A",
+          status: getGameStatus(game.date, game.time)
+        };
+      });
+  
       setGames(processedGames);
       
       // Categorize games by status
@@ -203,29 +226,74 @@ const CommunityGames = () => {
       
       const uniqueLocations = getAllUniqueLocations(processedGames);
       setAvailableLocations(uniqueLocations);
-      // Get the current city
+      
+      // Continue with your existing code for filtering local and other games
       const currentCity = location.split(",")[0].trim().toLowerCase();
-
-      // Filter games by location
+      
       const localGamesList = processedGames.filter(
         (game) =>
           game.venue_location.toLowerCase().includes(currentCity) ||
           game.location.toLowerCase().includes(currentCity)
       );
-
+  
       const otherGamesList = processedGames.filter(
         (game) =>
           !game.venue_location.toLowerCase().includes(currentCity) &&
           !game.location.toLowerCase().includes(currentCity)
       );
-
+  
       setLocalGames(localGamesList);
       setOtherGames(otherGamesList);
+      
     } catch (error) {
       console.error("Error fetching games:", error);
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Add this new function to fetch venues data
+  const fetchVenuesData = async (venueIds) => {
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
+            query GetVenues($ids: [uuid!]) {
+              venues(where: {id: {_in: $ids}}) {
+                id
+                title
+                location
+              }
+            }
+          `,
+          variables: {
+            ids: venueIds
+          }
+        }),
+      });
+  
+      const { data, errors } = await response.json();
+  
+      if (errors) {
+        console.error("GraphQL errors when fetching venues:", errors);
+        return {};
+      }
+  
+      // Create a mapping of venue ID to venue data
+      const venuesMap = {};
+      data.venues.forEach(venue => {
+        venuesMap[venue.id] = venue;
+      });
+  
+      return venuesMap;
+    } catch (error) {
+      console.error("Error fetching venues:", error);
+      return {};
     }
   };
 
@@ -469,7 +537,7 @@ const CommunityGames = () => {
               <HiLocationMarker className="w-5 h-5 mr-3 text-purple-400 group-hover:text-purple-300" />
               <span>
                 {game.venue_name !== "N/A"
-                  ? `${game.venue_name}, ${game.venue_location}`
+                  ? `${game.venue_name}`
                   : game.location}
               </span>
             </div>

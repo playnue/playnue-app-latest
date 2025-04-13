@@ -33,9 +33,10 @@ const CommunityGames = () => {
     sport: "",
     difficulty: "",
     location: "",
-    date: "",
+    date:"", // Today's date in YYYY-MM-DD format
     status: "upcoming" // Default to show upcoming games
   });
+
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const getLocationFromCoords = async (latitude, longitude) => {
@@ -65,6 +66,7 @@ const CommunityGames = () => {
     }
   };
   // Fetch location on component mount
+  
   useEffect(() => {
     const detectLocation = async () => {
       setLocationError("");

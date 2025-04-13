@@ -40,16 +40,17 @@ const GameDetails = () => {
 
   const copyToClipboard = () => {
     const currentUrl = window.location.href;
-    navigator.clipboard.writeText(currentUrl)
+    navigator.clipboard
+      .writeText(currentUrl)
       .then(() => {
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000); // Hide the success message after 2 seconds
       })
-      .catch(err => {
-        console.error('Failed to copy URL: ', err);
+      .catch((err) => {
+        console.error("Failed to copy URL: ", err);
       });
   };
-  
+
   // Separate function to fetch game details
 
   const fetchGameDetails = async () => {
@@ -99,7 +100,7 @@ const GameDetails = () => {
       if (responseData.data?.games_by_pk) {
         const gameData = responseData.data.games_by_pk;
         setGame(gameData);
-        
+
         // If venue_id exists, call the venue fetch function
         if (gameData.venue_id) {
           fetchVenueDetails(gameData.venue_id);
@@ -142,9 +143,9 @@ const GameDetails = () => {
         // Use the first game or null if empty
         if (allGamesData.data.games && allGamesData.data.games.length > 0) {
           const gameData = allGamesData.data.games[0];
-          console.log(gameData)
+          console.log(gameData);
           setGame(gameData);
-          
+
           // If venue_id exists, call the venue fetch function
           if (gameData.venue_id) {
             fetchVenueDetails(gameData.venue_id);
@@ -163,7 +164,7 @@ const GameDetails = () => {
   // Dedicated function to fetch venue details separately
   const fetchVenueDetails = async (venueId) => {
     if (!venueId) return;
-    
+
     try {
       const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
         method: "POST",
@@ -187,7 +188,7 @@ const GameDetails = () => {
       });
 
       const responseData = await response.json();
-      
+
       if (responseData.errors) {
         console.error("Error fetching venue:", responseData.errors);
         return;
@@ -214,7 +215,6 @@ const GameDetails = () => {
       return dateString;
     }
   };
-
 
   if (loading) {
     return (
@@ -258,7 +258,7 @@ const GameDetails = () => {
                 </ul>
                 <div className="mt-6 flex space-x-4">
                   <Button
-                    onClick={() => router.push('/community')}
+                    onClick={() => router.push("/community")}
                     className="bg-gray-700 hover:bg-gray-600 text-white"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -271,7 +271,6 @@ const GameDetails = () => {
                     Retry Loading
                   </Button>
                 </div>
-
               </CardContent>
             </Card>
           </motion.div>
@@ -293,10 +292,12 @@ const GameDetails = () => {
             <Card className="bg-gray-800/50 backdrop-blur-lg border border-red-500/20 shadow-xl">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <p className="text-xl font-semibold text-red-400 mb-4">{error}</p>
+                  <p className="text-xl font-semibold text-red-400 mb-4">
+                    {error}
+                  </p>
                   <div className="flex space-x-4 justify-center">
                     <Button
-                      onClick={() => router.push('/community')}
+                      onClick={() => router.push("/community")}
                       className="bg-gray-700 hover:bg-gray-600 text-white"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
@@ -322,7 +323,6 @@ const GameDetails = () => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-        
         <div className="container mx-auto px-4 py-8">
           {/* Back button */}
           <motion.div
@@ -361,14 +361,17 @@ const GameDetails = () => {
                       </Badge>
                     )}
                     {game.difficulty && (
-                      <Badge variant="outline" className="border-purple-300/30 text-purple-100">
+                      <Badge
+                        variant="outline"
+                        className="border-purple-300/30 text-purple-100"
+                      >
                         {game.difficulty === 1
-                ? "Beginner"
-                : game.difficulty === 2
-                ? "Intermediate"
-                : game.difficulty === 3
-                ? "Advanced"
-                : game.difficulty}
+                          ? "Beginner"
+                          : game.difficulty === 2
+                          ? "Intermediate"
+                          : game.difficulty === 3
+                          ? "Advanced"
+                          : game.difficulty}
                       </Badge>
                     )}
                   </div>
@@ -398,13 +401,14 @@ const GameDetails = () => {
                     <div className="flex items-center gap-3">
                       <Timer className="w-5 h-5 text-purple-400" />
                       <span className="text-gray-200">
-                        {game.time.split('+')[0] || "Location not specified"}
+                        {game.time.split("+")[0] || "Location not specified"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-purple-400" />
                       <span className="text-gray-200">
-                        {game.seats || "0"} {game.seats === 1 ? "spot" : "spots"} available
+                        {game.seats || "0"}{" "}
+                        {game.seats === 1 ? "spot" : "spots"} available
                       </span>
                     </div>
                     {venue && (
@@ -415,8 +419,28 @@ const GameDetails = () => {
                         </span>
                       </div>
                     )}
+                    
                   </div>
-
+                  {venue && venue.location && (
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-white mb-4">
+                          Location
+                        </h2>
+                        <div className="bg-[#252632] p-4 rounded-lg">
+                          <Link
+                            href={`https://google.com/maps/search/?api=1&query=${encodeURIComponent(
+                              venue.location
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center text-purple-400 hover:text-purple-300 py-4"
+                          >
+                            <span className="mr-2">🗺️</span>
+                            View on Map
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   {/* Description */}
                   <div className="bg-gray-700/20 p-6 rounded-xl border border-purple-500/10">
                     <h3 className="text-lg font-semibold text-purple-300 mb-3">
@@ -427,23 +451,23 @@ const GameDetails = () => {
                     </p>
                   </div>
                   <div className="mt-4 flex justify-center">
-  <Button 
-    onClick={copyToClipboard}
-    className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-  >
-    {copySuccess ? (
-      <>
-        <Check className="w-4 h-4" />
-        Copied!
-      </>
-    ) : (
-      <>
-        <Share className="w-4 h-4" />
-        Share Game
-      </>
-    )}
-  </Button>
-</div>
+                    <Button
+                      onClick={copyToClipboard}
+                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                    >
+                      {copySuccess ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Share className="w-4 h-4" />
+                          Share Game
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   {/* Action Buttons */}
                   {/* <div className="bg-yellow-500/10 p-6 rounded-xl border border-yellow-500/30 flex items-start space-x-4">
                     <AlertTriangle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
@@ -457,11 +481,8 @@ const GameDetails = () => {
                     </div>
                   </div> */}
                 </CardContent>
-                
               </Card>
-              
             </motion.div>
-            
           </div>
         </div>
       </div>

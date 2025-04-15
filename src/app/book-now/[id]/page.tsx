@@ -54,7 +54,8 @@ export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState(null);
   const [selectedPlayerOption, setSelectedPlayerOption] = useState(null);
-const [playerMultiplier, setPlayerMultiplier] = useState(1);
+  const disablePartialPaymentForVenues = ["1010f53d-bf3b-43a6-bfe6-e1bfab6b0760","562cb30c-f543-4f19-86fd-a424c4265091"];
+  const [playerMultiplier, setPlayerMultiplier] = useState(1);
   const { id } = useParams();
   const router = useRouter();
   const accessToken = useAccessToken();
@@ -111,7 +112,6 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
     setSelectedPlayerOption(option);
     setPlayerMultiplier(multiplier);
   };
-
 
   const handlePartialPaymentChange = (checked) => {
     if (checked) {
@@ -709,29 +709,27 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
       alert("Please select a court and at least one time slot");
       return;
     }
-  
+
     // Check if player selection is required for this venue
     // const isSpecialVenue = id === "562cb30c-f543-4f19-86fd-a424c4265091";
-    
+
     // if (isSpecialVenue && !selectedPlayerOption) {
     //   alert("Please select the number of players");
     //   return;
     // }
-  
+
     const selectedCourtName =
       courts.find((court) => court.id === selectedCourt)?.name || "Court";
-  
+
     // Add all selected slots to cart
     const newBookings = selectedSlots.map((slot) => {
-      let selectedSlotPrice = parseFloat(
-        slot.price.replace(/[^0-9.-]+/g, "")
-      );
-      
+      let selectedSlotPrice = parseFloat(slot.price.replace(/[^0-9.-]+/g, ""));
+
       // Apply multiplier only for the special venue
       // if (isSpecialVenue) {
       //   selectedSlotPrice = selectedSlotPrice * playerMultiplier;
       // }
-  
+
       return {
         id: Date.now() + Math.random(), // Ensure unique ID
         slotId: slot.id,
@@ -742,10 +740,10 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
         price: selectedSlotPrice,
       };
     });
-  
+
     console.log("New bookings:", newBookings);
     setCart([...cart, ...newBookings]);
-    
+
     // Reset selections after adding to cart
     // if (isSpecialVenue) {
     //   setSelectedPlayerOption(null);
@@ -794,15 +792,18 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
             loyalty_points: {
               redeeming: isRedeemingPoints ? pointsToRedeem : 0,
               earning: pointsToEarn,
-              current_balance: currentLoyaltyPoints
+              current_balance: currentLoyaltyPoints,
             },
-            coupon: isCouponApplied && activeCoupon ? {
-              id: activeCoupon.id,
-              code: activeCoupon.name,
-              type: activeCoupon.type,
-              value: activeCoupon.value,
-              min_cart_value: activeCoupon.min_cart_value
-            } : null
+            coupon:
+              isCouponApplied && activeCoupon
+                ? {
+                    id: activeCoupon.id,
+                    code: activeCoupon.name,
+                    type: activeCoupon.type,
+                    value: activeCoupon.value,
+                    min_cart_value: activeCoupon.min_cart_value,
+                  }
+                : null,
           }),
         }
       );
@@ -835,7 +836,7 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
         order_id: orderData.id, // Use the order_id from the created order
         handler: async function (response) {
           try {
-            console.log("caught response")
+            console.log("caught response");
             console.log(response);
             // Handle points redemption first (if any)
 
@@ -996,8 +997,6 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
     }
   };
 
-  
-  
   const calculateEndTime = (startTime, duration) => {
     const [hours, minutes] = startTime.split(":").map(Number);
     const endDate = new Date();
@@ -1561,28 +1560,31 @@ const [playerMultiplier, setPlayerMultiplier] = useState(1);
           </div>
 
           <Card className="mt-4 p-4">
-            {cart.some((item) => isEligibleForPartialPayment(item)) && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Partial Payment Available</h3>
-                    <p className="text-sm text-gray-600">
-                      Pay 50% now, rest at venue
-                    </p>
-                    {activeDiscount === "coupon" && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        Note: Cannot be combined with coupon
+            {cart.some((item) => isEligibleForPartialPayment(item)) &&
+              !disablePartialPaymentForVenues.includes(id) && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">
+                        Partial Payment Available
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Pay 50% now, rest at venue
                       </p>
-                    )}
+                      {activeDiscount === "coupon" && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          Note: Cannot be combined with coupon
+                        </p>
+                      )}
+                    </div>
+                    <Switch
+                      checked={isPartialPayment}
+                      onCheckedChange={handlePartialPaymentChange}
+                      disabled={activeDiscount === "coupon"}
+                    />
                   </div>
-                  <Switch
-                    checked={isPartialPayment}
-                    onCheckedChange={handlePartialPaymentChange}
-                    disabled={activeDiscount === "coupon"}
-                  />
                 </div>
-              </div>
-            )}
+              )}
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>

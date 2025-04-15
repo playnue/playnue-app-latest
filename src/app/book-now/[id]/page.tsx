@@ -54,7 +54,10 @@ export default function BookNow() {
   const [expanded, setExpanded] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState(null);
   const [selectedPlayerOption, setSelectedPlayerOption] = useState(null);
-  const disablePartialPaymentForVenues = ["1010f53d-bf3b-43a6-bfe6-e1bfab6b0760","562cb30c-f543-4f19-86fd-a424c4265091"];
+  const disablePartialPaymentForVenues = [
+    "1010f53d-bf3b-43a6-bfe6-e1bfab6b0760",
+    "562cb30c-f543-4f19-86fd-a424c4265091",
+  ];
   const [playerMultiplier, setPlayerMultiplier] = useState(1);
   const { id } = useParams();
   const router = useRouter();
@@ -1560,31 +1563,36 @@ export default function BookNow() {
           </div>
 
           <Card className="mt-4 p-4">
-            {cart.some((item) => isEligibleForPartialPayment(item)) &&
-              !disablePartialPaymentForVenues.includes(id) && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">
-                        Partial Payment Available
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Pay 50% now, rest at venue
+            {cart.some((item) => isEligibleForPartialPayment(item)) && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Partial Payment Available</h3>
+                    <p className="text-sm text-gray-600">
+                      Pay 50% now, rest at venue
+                    </p>
+                    {activeDiscount === "coupon" && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Note: Cannot be combined with coupon
                       </p>
-                      {activeDiscount === "coupon" && (
-                        <p className="text-xs text-orange-600 mt-1">
-                          Note: Cannot be combined with coupon
-                        </p>
-                      )}
-                    </div>
-                    <Switch
-                      checked={isPartialPayment}
-                      onCheckedChange={handlePartialPaymentChange}
-                      disabled={activeDiscount === "coupon"}
-                    />
+                    )}
+                    {disablePartialPaymentForVenues.includes(id) && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Not available for this venue
+                      </p>
+                    )}
                   </div>
+                  <Switch
+                    checked={isPartialPayment}
+                    onCheckedChange={handlePartialPaymentChange}
+                    disabled={
+                      activeDiscount === "coupon" ||
+                      disablePartialPaymentForVenues.includes(id)
+                    }
+                  />
                 </div>
-              )}
+              </div>
+            )}
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>

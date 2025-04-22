@@ -146,7 +146,7 @@ const TournamentDetails = () => {
       startDate: "2025-04-26",
       endDate: "2025-04-27",
       venue: "Playturf",
-      teamsRegistered: 0,
+      teamsRegistered: 10,
       players: 7,
       maxTeams: 16,
       priceType: "team",

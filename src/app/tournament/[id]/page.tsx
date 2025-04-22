@@ -167,7 +167,7 @@ const TournamentDetails = () => {
         runnerUp: "₹3,000",
         manOfTheTournament: "₹1,100"
       },
-      registrationForm: "",
+      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
       contactInfo: ["+91-9235392351", "+91-7017958799"]
     }
 

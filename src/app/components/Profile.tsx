@@ -189,6 +189,104 @@ const ProfileForm = () => {
       console.error("Error fetching user details:", error);
     }
   };
+
+
+  useEffect(() => {
+    const addInitialLoyaltyPoints = async () => {
+      // Only proceed if we have valid userData and accessToken
+      if (user && accessToken) {
+        try {
+          // Fetch current user data to check metadata
+          const response = await fetch(
+            process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+                "x-hasura-role": "user",
+              },
+              body: JSON.stringify({
+                query: `
+                query GetUser($id: uuid!) {
+                  user(id: $id) {
+                    metadata
+                  }
+                }
+              `,
+                variables: { id: user.id },
+              }),
+            }
+          );
+
+          const { data, errors } = await response.json();
+
+          if (errors) {
+            console.error("GraphQL errors:", errors);
+            return;
+          }
+
+          // Check if loyaltyPoints already exists in metadata
+          const userMetadata = data?.user?.metadata || {};
+
+          if (userMetadata.loyaltyPoints === undefined) {
+            // If not, update the metadata with 100 loyalty points
+            const updatedMetadata = {
+              ...userMetadata,
+              loyaltyPoints: 100,
+            };
+
+            // Update user metadata with GraphQL
+            const updateResponse = await fetch(
+              process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                  "x-hasura-role": "user",
+                },
+                body: JSON.stringify({
+                  query: `
+                  mutation UpdateUser($id: uuid!, $metadata: jsonb) {
+                    updateUser(
+                      pk_columns: { id: $id },
+                      _set: { metadata: $metadata }
+                    ) {
+                      id
+                      metadata
+                    }
+                  }
+                `,
+                  variables: {
+                    id: user.id,
+                    metadata: updatedMetadata,
+                  },
+                }),
+              }
+            );
+
+            const updateResult = await updateResponse.json();
+
+            if (updateResult.errors) {
+              console.error(
+                "Error adding loyalty points:",
+                updateResult.errors
+              );
+            } else {
+              console.log("Successfully added 100 loyalty points for new user");
+            }
+          }
+        } catch (error) {
+          console.error("Failed to update user metadata:", error);
+        }
+      }
+    };
+
+    addInitialLoyaltyPoints();
+  }, [user, accessToken]);
+
+
   return (
     <>
       <ToastContainer />

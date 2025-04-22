@@ -136,6 +136,39 @@ const TournamentDetails = () => {
         "Quarter-finals, Semi-finals, and Finals"
       ],
       registrationForm: "https://forms.gle/WGbNoE3xV92AyA877"
+    },
+    {
+      id: 4,
+      name: "PlayTurf Cricket Tournament",
+      sport: "Cricket",
+      area: "B-1/130 Sector-G, Aliganj, Lucknow Near Cold-Storage (Gulab Watika)",
+      entryFee: 2000,
+      startDate: "2025-04-26",
+      endDate: "2025-04-27",
+      venue: "Playturf",
+      teamsRegistered: 0,
+      players: 7,
+      maxTeams: 16,
+      priceType: "team",
+      status: "open",
+      image: "/tournament4.jpg",
+      description: "Join PlayTurf's exciting cricket tournament in Aliganj, Lucknow. Compete in this 6-a-side format with an impact player for a chance to win exciting cash prizes!",
+      instructions: [
+        "Format: 6-A-SIDE TEAM + 1 IMPACT PLAYER",
+        "Registration fee: Rs. 2000 per team",
+        "Tournament dates: April 26th-27th, 2025",
+        "Teams must register before the tournament date",
+        "All matches will be played according to tournament rules",
+        "Teams should arrive on time for their scheduled matches",
+        "Fair play is expected from all participants"
+      ],
+      prizes: {
+        first: "₹10,000",
+        runnerUp: "₹3,000",
+        manOfTheTournament: "₹1,100"
+      },
+      registrationForm: "",
+      contactInfo: ["+91-9235392351", "+91-7017958799"]
     }
 
   ];

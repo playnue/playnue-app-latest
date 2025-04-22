@@ -42,11 +42,33 @@ export default function Tournaments() {
       entryFee: 3499,
       startDate: "2025-04-19",
       venue: "Athletes Sports Arena 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, Uttar Pradesh 226021",
-      teamsRegistered: 0,
+      teamsRegistered: 10,
       maxTeams: 16,
-      status: "open",
+      status: "closed",
       image: "/lbcl1.jpg",
     },
+
+    {
+      id: 4,
+      name: "PlayTurf Cricket Tournament",
+      sport: "Cricket",
+      area: "Sector-G, Aliganj, Lucknow",
+      entryFee: 2000,
+      startDate: "2025-04-26",
+      venue: "B-1/130 Sector-G, Aliganj, Lucknow Near Cold-Storage (Gulab Watika)",
+      teamsRegistered: 0,
+      maxTeams: null,
+      status: "open",
+      image: "/tournament4.jpg",
+      prize: {
+        winner: 10000,
+        runnerUp: 3000,
+        manOfTournament: 1100
+      },
+      format: "6-A-SIDE TEAM + 1 IMPACT PLAYER",
+      contactInfo: ["+91-9235392351", "+91-7017958799"],
+      endDate: "2025-04-27"
+    }
   ];
 
   // State for filters

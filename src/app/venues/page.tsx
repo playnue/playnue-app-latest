@@ -136,7 +136,7 @@ export default function Bookings() {
           const userMetadata = data?.user?.metadata || {};
 
           if (userMetadata.loyaltyPoints === undefined) {
-            // If not, update the metadata with 50 loyalty points
+            // If not, update the metadata with 100 loyalty points
             const updatedMetadata = {
               ...userMetadata,
               loyaltyPoints: 100,
@@ -180,7 +180,7 @@ export default function Bookings() {
                 updateResult.errors
               );
             } else {
-              console.log("Successfully added 50 loyalty points for new user");
+              console.log("Successfully added 100 loyalty points for new user");
             }
           }
         } catch (error) {

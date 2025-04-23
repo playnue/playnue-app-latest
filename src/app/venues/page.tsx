@@ -97,19 +97,6 @@ export default function Bookings() {
     });
 
   // Loyalty points useEffect
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
 
   useEffect(() => {
     const detectLocation = async () => {
@@ -286,11 +273,6 @@ export default function Bookings() {
     filterVenues();
   }, [searchQuery, venues]);
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-    setSelectedSportCategory(null); // Reset sport category filter when searching
-  };
-
   // Handle filtering by sport category
   // This code should replace your existing handleFilterBySportCategory function
 
@@ -342,26 +324,6 @@ export default function Bookings() {
       );
     }
   };
-
-  const handleToggle = () => {
-    setIsSearching((prev) => !prev);
-  };
-
-  const scrollToVenues = () => {
-    const venueSection = document.getElementById("venues-section");
-    if (venueSection) {
-      venueSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const LocationButton = () => (
-    <button
-      onClick={requestLocationPermission}
-      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
-    >
-      Use My Current Location
-    </button>
-  );
 
   // Venue card rendering component
   const renderVenueCard = (item, isFeatured = false) => {
@@ -544,9 +506,33 @@ export default function Bookings() {
               <input
                 type="search"
                 placeholder="Search for venues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
               />
             </div>
+            {searchQuery.trim() !== "" && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                title="Clear search"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            )}
 
             {/* Category Dropdown */}
             <div className="w-full md:w-1/3 relative">
@@ -752,7 +738,13 @@ export default function Bookings() {
               {filteredVenues.length > 0 ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredVenues.map((venue) => renderVenueCard(venue))}
+                    {filteredVenues.length > 0 ? (
+                      filteredVenues.map((venue) => renderVenueCard(venue))
+                    ) : (
+                      <div className="col-span-3 text-center py-8 text-gray-400">
+                        No venues found matching your search criteria.
+                      </div>
+                    )}
                   </div>
 
                   {/* Results summary */}
@@ -849,14 +841,18 @@ export default function Bookings() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {venues.map((venue) => renderVenueCard(venue))}
+                    {searchQuery.trim() !== ""
+                      ? filteredVenues.map((venue) => renderVenueCard(venue))
+                      : venues.map((venue) => renderVenueCard(venue))}
                   </div>
 
                   {/* Improved Load More UI */}
                   {venues.length > 0 && (
                     <div className="flex flex-col items-center mt-12 space-y-4">
                       <p className="text-gray-400">
-                        Showing {venues.length} of {venues.length} venues
+                        {searchQuery.trim() !== ""
+                          ? `Showing ${filteredVenues.length} of ${venues.length} venues matching "${searchQuery}"`
+                          : `Showing ${venues.length} of ${venues.length} venues`}
                       </p>
                       <button className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 flex items-center">
                         <svg

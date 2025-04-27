@@ -368,6 +368,8 @@ export default function Bookings() {
           return "/lordsCricket.webp";
         case "c6be6c46-0355-4f59-bee4-1c4066e5de92":
           return "/nextgen.jpg";
+        case "e062a12e-c969-446e-a239-c3ca921f97da":
+          return "/athin.jpg";
         default:
           return "/comingSoon.jpeg";
       }
@@ -741,8 +743,59 @@ export default function Bookings() {
                     {filteredVenues.length > 0 ? (
                       filteredVenues.map((venue) => renderVenueCard(venue))
                     ) : (
-                      <div className="col-span-3 text-center py-8 text-gray-400">
-                        No venues found matching your search criteria.
+                      <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
+                        <div className="bg-gray-800 rounded-lg p-8 shadow-lg max-w-lg">
+                          <svg
+                            className="w-16 h-16 mx-auto mb-6 text-purple-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            ></path>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            ></path>
+                          </svg>
+                          <h3 className="text-2xl font-bold text-white mb-4">
+                            {searchQuery.trim() !== ""
+                              ? `No venues in ${searchQuery} for this category yet`
+                              : `No venues available in this category`}
+                          </h3>
+                          <p className="text-gray-400 mb-6">
+                            {searchQuery.trim() !== ""
+                              ? `PlayNue is constantly expanding! We'll be bringing ${
+                                  sportCategories.find(
+                                    (cat) => cat.id === selectedSportCategory
+                                  )?.name
+                                } venues to ${searchQuery} soon.`
+                              : `Please try another category or check back later as we add more venues.`}
+                          </p>
+                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            {searchQuery.trim() !== "" && (
+                              <button
+                                onClick={() => setSearchQuery("")}
+                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300"
+                              >
+                                Browse Available Locations
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleFilterBySportCategory(null)}
+                              className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300"
+                            >
+                              View All Sports
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -841,9 +894,54 @@ export default function Bookings() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {searchQuery.trim() !== ""
-                      ? filteredVenues.map((venue) => renderVenueCard(venue))
-                      : venues.map((venue) => renderVenueCard(venue))}
+                    {searchQuery.trim() !== "" ? (
+                      filteredVenues.length > 0 ? (
+                        // Show filtered venues when there are results
+                        filteredVenues.map((venue) => renderVenueCard(venue))
+                      ) : (
+                        // No results message with call to action
+                        <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
+                          <div className="bg-gray-800 rounded-lg p-8 shadow-lg max-w-lg">
+                            <svg
+                              className="w-16 h-16 mx-auto mb-6 text-purple-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              ></path>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              ></path>
+                            </svg>
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                              No venues in {searchQuery} yet
+                            </h3>
+                            <p className="text-gray-400 mb-6">
+                              PlayNue is constantly expanding! We'll be
+                              launching venues in {searchQuery} soon.
+                            </p>
+                            <button
+                              onClick={() => setSearchQuery("")}
+                              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300"
+                            >
+                              Browse Available Locations
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      // Show all venues when there's no search query
+                      venues.map((venue) => renderVenueCard(venue))
+                    )}
                   </div>
 
                   {/* Improved Load More UI */}

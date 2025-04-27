@@ -150,6 +150,8 @@ const VenuePage = () => {
         return "/lordsCricket.webp";
       case "c6be6c46-0355-4f59-bee4-1c4066e5de92":
         return "/nextgen.jpg";
+      case "e062a12e-c969-446e-a239-c3ca921f97da":
+        return "/athin.jpg";
       default:
         return "/playturf.jpg";
     }

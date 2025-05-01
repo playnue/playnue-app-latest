@@ -8,20 +8,21 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { useRouter } from "next/navigation";
 import "../../loader.css";
-import { parse } from "path";
-import { nhost } from "@/lib/nhost";
+import Head from "next/head";
+
 interface VenueDetails {
   id: string;
   title: string;
   address: string;
   description: string;
-  sports: { name: string; icon: string }[];
+  sports: string[];
   amenities: string[];
   extra_image_ids: string[];
   location: string;
   open_at: string;
   close_at: string;
-  rating?: number; // Optional fields can be added based on available data
+  slug: string;
+  rating?: number;
   reviews?: number;
 }
 
@@ -39,26 +40,24 @@ const sportIcons = {
   PS4: "🎮",
   LawnTennis: "🎾",
   Cricket_Net: "🏏",
-  // TableTennis: " :table "
 };
 
 const VenuePage = () => {
-  const { id } = useParams();
-  console.log(id);
+  const { slug } = useParams();
   const [venue, setVenue] = useState<VenueDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState(0);
   const [isClient, setIsClient] = useState(false);
-  const [image, setImage] = useState();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
   const handleButtonClick = (e) => {
-    e.preventDefault(); // Prevent the default behavior of the link
+    e.preventDefault();
     setIsLoading(true);
     router.push(`/book-now/${venue.id}`);
   };
-  // Fetch data from Hasura
+
+  // Fetch data from Hasura using the slug
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {
@@ -68,13 +67,11 @@ const VenuePage = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // "x-hasura-admin-secret": `${process.env.NEXT_PUBLIC_ADMIN_SECRET}`,
-              // Authorization: `Bearer ${parsedData.accessToken}`,
             },
             body: JSON.stringify({
               query: `
-              query MyQuery {
-                venues(where: {id: {_eq: "${id}"}}) {
+              query GetVenueBySlug {
+                venues(where: {slug: {_eq: "${slug}"}}) {
                   id
                   title
                   description
@@ -84,6 +81,7 @@ const VenuePage = () => {
                   location
                   open_at
                   close_at
+                  slug
                   
                 }
               }
@@ -96,19 +94,25 @@ const VenuePage = () => {
         if (data.errors) {
           throw new Error("Failed to fetch venue data");
         }
-        setVenue(data.data.venues[0]);
-        console.log(data?.data);
-        // setImage(data.data.venues[0].id);
-        // console.log(data.data.venues[0].image_id);
+
+        if (data.data.venues.length === 0) {
+          setError("Venue not found");
+        } else {
+          setVenue(data.data.venues[0]);
+        }
+
         setLoading(false);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching venue:", error);
+        setError("Failed to load venue information");
         setLoading(false);
       }
     };
 
-    fetchVenueDetails();
-  }, [id]);
+    if (slug) {
+      fetchVenueDetails();
+    }
+  }, [slug]);
 
   const getImageSource = (id) => {
     switch (id) {
@@ -157,16 +161,67 @@ const VenuePage = () => {
     }
   };
 
-  const imageSource = getImageSource(venue?.id);
+  const imageSource = venue ? getImageSource(venue.id) : "/placeholder.jpg";
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // If not client-side, render nothing or a placeholder
+  // Generate structured data for SEO
+  const generateStructuredData = () => {
+    if (!venue) return null;
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "SportsActivityLocation",
+      name: venue.title,
+      description: venue.description,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: venue.location,
+      },
+      openingHours:
+        venue.open_at === "00:00:00" && venue.close_at === "00:00:00"
+          ? "Mo-Su 00:00-24:00"
+          : `Mo-Su ${venue.open_at}-${venue.close_at}`,
+      image: `${process.env.NEXT_PUBLIC_SITE_URL}${imageSource}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/venue/${venue.slug}`,
+      amenityFeature: venue.amenities?.map((amenity) => ({
+        "@type": "LocationFeatureSpecification",
+        name: amenity,
+      })),
+      sportActivityLocation: venue.sports?.map(sport => ({
+        "@type": "LocationFeatureSpecification",
+        name: sport
+      }))
+    };
+
+    return JSON.stringify(structuredData);
+  };
+
+  // Create meta title and description using venue data
+  const metaTitle = venue 
+    ? `${venue.title} - Book Sports Venue in ${venue.location} | PlaySports` 
+    : "Loading Venue | PlaySports";
+    
+  const metaDescription = venue 
+    ? `Book ${venue.title} in ${venue.location}. Available sports: ${venue.sports?.join(', ')}. ${venue.open_at === "00:00:00" && venue.close_at === "00:00:00" ? "Open 24/7" : `Open from ${venue.open_at} to ${venue.close_at}`}.` 
+    : "Loading venue details. Book sports venues easily with PlaySports.";
+
+  // Create canonical URL for SEO
+  const canonicalUrl = venue 
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/venue/${venue.slug}` 
+    : null;
+
+  // If not client-side, render minimal SSR-compatible content
   if (!isClient) {
     return (
       <>
+        <Head>
+          <title>{metaTitle}</title>
+          <meta name="description" content={metaDescription} />
+          {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        </Head>
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div id="preloader"></div>
@@ -175,12 +230,95 @@ const VenuePage = () => {
     );
   }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
-  if (!venue) return <p>Venue not found.</p>;
+  if (loading)
+    return (
+      <>
+        <Head>
+          <title>Loading Venue | PlaySports</title>
+          <meta name="description" content="Loading venue details. Book sports venues easily with PlaySports." />
+        </Head>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div id="preloader"></div>
+        </div>
+      </>
+    );
+
+  if (error)
+    return (
+      <>
+        <Head>
+          <title>Venue Not Found | PlaySports</title>
+          <meta name="description" content="The venue you're looking for doesn't exist or has been removed." />
+        </Head>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="bg-[#1a1b26] p-8 rounded-xl">
+            <h1 className="text-2xl text-white mb-4">Error</h1>
+            <p className="text-gray-300">{error}</p>
+            <Link
+              href="/"
+              className="mt-4 text-purple-400 hover:text-purple-300 block"
+            >
+              ← Back to home
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+
+  if (!venue)
+    return (
+      <>
+        <Head>
+          <title>Venue Not Found | PlaySports</title>
+          <meta name="description" content="The venue you're looking for doesn't exist or has been removed." />
+        </Head>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="bg-[#1a1b26] p-8 rounded-xl">
+            <h1 className="text-2xl text-white mb-4">Venue Not Found</h1>
+            <p className="text-gray-300">
+              The venue you're looking for doesn't exist or has been removed.
+            </p>
+            <Link
+              href="/"
+              className="mt-4 text-purple-400 hover:text-purple-300 block"
+            >
+              ← Back to home
+            </Link>
+          </div>
+        </div>
+      </>
+    );
 
   return (
     <>
+      <Head>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta name="keywords" content={`${venue.title}, ${venue.location}, ${venue.sports?.join(', ')}, sports venue, book sports, PlaySports`} />
+        <link rel="canonical" href={canonicalUrl} />
+        
+        {/* Open Graph tags for social sharing */}
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}${imageSource}`} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter Card data */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}${imageSource}`} />
+        
+        {/* Structured data for rich snippets */}
+        <script 
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: generateStructuredData() }}
+        />
+      </Head>
       <Navbar />
       <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-12">
@@ -189,7 +327,7 @@ const VenuePage = () => {
             <div className="relative h-96">
               <img
                 src={imageSource}
-                alt={venue.title}
+                alt={`${venue.title} - Sports venue in ${venue.location}`}
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-8">
@@ -280,7 +418,9 @@ const VenuePage = () => {
                 </h2>
                 <div className="bg-[#252632] p-4 rounded-lg">
                   <Link
-                    href={`https://google.com/maps/search/?api=1&query=${venue.location}`}
+                    href={`https://google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.title} ${venue.location}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-center text-purple-400 hover:text-purple-300 py-4"
                   >
                     <span className="mr-2">🗺️</span>
@@ -294,6 +434,7 @@ const VenuePage = () => {
                 onClick={handleButtonClick}
                 disabled={isLoading}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:-translate-y-1 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                aria-label={`Book ${venue.title} now`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">

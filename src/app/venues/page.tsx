@@ -164,6 +164,7 @@ export default function Bookings() {
               user_id
               image_id
               created_at
+              slug
             }
           }
         `,
@@ -432,7 +433,7 @@ export default function Bookings() {
           )}
 
           {/* Smaller Book Now Button */}
-          <Link href={`/venue-details/${item.id}`}>
+          <Link href={`/venue-details/${item.slug}`}>
             <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-1 px-2 rounded text-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
               Book Now
             </button>

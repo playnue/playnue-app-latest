@@ -290,79 +290,7 @@ export default function BookNow() {
     }
   };
 
-  const updateUserLoyaltyPoints = async (pointsChange) => {
-    if (!user || !accessToken) return;
-
-    try {
-      // First, fetch current metadata
-      const getCurrentMetadata = await fetch(
-        process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            query: `
-              query GetUserMetadata {
-                users(where: {id: {_eq: "${user.id}"}}) {
-                  metadata
-                }
-              }
-            `,
-          }),
-        }
-      );
-
-      const currentData = await getCurrentMetadata.json();
-      const currentMetadata = currentData.data.users[0]?.metadata || {};
-
-      // Calculate new loyalty points value
-      const currentPoints = currentMetadata.loyaltyPoints || 0;
-      const newPoints = Math.max(0, currentPoints + pointsChange); // Ensure points don't go below 0
-
-      // Prepare updated metadata
-      const updatedMetadata = {
-        ...currentMetadata,
-        loyaltyPoints: newPoints,
-      };
-
-      // Update the metadata
-      const response = await fetch(process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          query: `
-              mutation UpdateUserMetadata($userId: uuid!, $metadata: jsonb!) {
-                updateUser(pk_columns: {id: $userId}, _set: {metadata: $metadata}) {
-                  id
-                  metadata
-                }
-              }
-            `,
-          variables: {
-            userId: user.id,
-            metadata: updatedMetadata,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      if (data.errors) {
-        throw new Error("Failed to update loyalty points");
-      }
-
-      // Update the local state
-      setCurrentLoyaltyPoints(newPoints);
-    } catch (error) {
-      console.error("Error updating loyalty points:", error);
-      toast.error("Failed to update loyalty points balance");
-    }
-  };
+  
 
   // Calculate remaining amount for partial payment
   const calculateRemainingAmount = () => {
@@ -405,6 +333,22 @@ export default function BookNow() {
       setIsCouponApplied(false);
       setActiveCoupon(null);
       return;
+    }
+
+    if (coupon.slot_ids?.length > 0) {
+      // Check if any item in the cart has a slot that matches the coupon's slot_ids
+      const hasValidSlot = cart.some((item) => {
+        // Assuming each cart item has a slot ID or a way to identify the slot
+        const slotId = item.slotId; // Adjust based on your actual data structure
+        return slotId && coupon.slot_ids.includes(slotId);
+      });
+    
+      if (!hasValidSlot) {
+        setCouponError("This coupon is not valid for selected slots");
+        setIsCouponApplied(false);
+        setActiveCoupon(null);
+        return;
+      }
     }
 
     // Check court restriction if court_ids is not empty

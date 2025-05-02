@@ -246,25 +246,48 @@ export default function Bookings() {
     Cricket_Net: "🏏",
   };
 
+  // Replace your existing useEffect for filtering venues with this updated version:
+
   useEffect(() => {
     if (!venues.length) return;
 
     const filterVenues = () => {
-      const searchTerm = searchQuery.toLowerCase();
-      const filtered = venues.filter((venue) => {
-        const venueLocation = venue.location.toLowerCase();
-        const venueTitle = venue.title.toLowerCase();
+      const searchTerm = searchQuery.toLowerCase().trim();
 
-        // Check if the search term matches location or title
+      if (!searchTerm) {
+        setFilteredVenues(venues);
+        return;
+      }
+
+      const filtered = venues.filter((venue) => {
+        // Check location
+        const venueLocation = venue.location.toLowerCase();
+        // Check title
+        const venueTitle = venue.title.toLowerCase();
+        // Check slug (new)
+        const venueSlug = venue.slug ? venue.slug.toLowerCase() : "";
+        // Check description (new)
+        const venueDescription = venue.description
+          ? venue.description.toLowerCase()
+          : "";
+
+        // Check if the search term matches location, title, slug or description
         return (
-          venueLocation.includes(searchTerm) || venueTitle.includes(searchTerm)
+          venueLocation.includes(searchTerm) ||
+          venueTitle.includes(searchTerm) ||
+          venueSlug.includes(searchTerm) ||
+          venueDescription.includes(searchTerm)
         );
       });
 
       // Sort venues by relevance (exact matches first)
       filtered.sort((a, b) => {
-        const aExactMatch = a.location.toLowerCase() === searchTerm;
-        const bExactMatch = b.location.toLowerCase() === searchTerm;
+        const aExactMatch =
+          a.title.toLowerCase() === searchTerm ||
+          a.slug?.toLowerCase() === searchTerm;
+        const bExactMatch =
+          b.title.toLowerCase() === searchTerm ||
+          b.slug?.toLowerCase() === searchTerm;
         return bExactMatch - aExactMatch;
       });
 

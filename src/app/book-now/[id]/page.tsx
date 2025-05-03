@@ -272,24 +272,50 @@ export default function BookNow() {
   const handlePointsRedemption = (value) => {
     // Convert input to number, defaulting to empty string if 0
     const inputValue = value === "0" ? "" : value;
-
+  
     // If the input is empty, set points to redeem to empty string
     if (!inputValue) {
       setPointsToRedeem("");
+      // Re-validate coupon with zero points redemption
+      validateCouponWithLoyaltyPoints(0);
       return;
     }
-
+  
     // Convert to number for validation
     const points = parseInt(inputValue) || 0;
-
+  
     // Allow typing numbers less than 100 but don't apply the discount
     if (points <= currentLoyaltyPoints) {
       setPointsToRedeem(points);
+      // Validate coupon with new points value
+      validateCouponWithLoyaltyPoints(points);
     } else {
       setPointsToRedeem(currentLoyaltyPoints);
+      // Validate coupon with maximum points
+      validateCouponWithLoyaltyPoints(currentLoyaltyPoints);
     }
   };
 
+
+  const validateCouponWithLoyaltyPoints = (points) => {
+    // Skip validation if no coupon is applied
+    if (!activeCoupon) return;
+  
+    // Calculate loyalty discount based on points
+    const pointsDiscount = points >= 100 ? (points * POINTS_TO_RUPEES_RATIO) : 0;
+    
+    // Calculate the effective cart value after loyalty points
+    const effectiveCartValue = fullAmount - pointsDiscount;
+    
+    // Check if the effective cart value meets the minimum requirement
+    if (effectiveCartValue < activeCoupon.min_cart_value) {
+      // If minimum is no longer met, remove the coupon
+      setIsCouponApplied(false);
+      setActiveCoupon(null);
+      setCouponError(`Minimum cart value of ₹${activeCoupon.min_cart_value} required for this coupon`);
+      setActiveDiscount("none");
+    }
+  };
   
 
   // Calculate remaining amount for partial payment
@@ -308,17 +334,23 @@ export default function BookNow() {
     const coupon = availableCoupons.find(
       (c) => c.name.toLowerCase() === couponCode.trim().toLowerCase()
     );
-
+  
     if (!coupon) {
       setCouponError("Invalid coupon code");
       setIsCouponApplied(false);
       setActiveCoupon(null);
       return;
     }
-
-    // Check minimum cart value requirement
-    const currentCartValue = fullAmount;
-    if (currentCartValue < coupon.min_cart_value) {
+  
+    // Calculate current loyalty discount
+    const currentLoyaltyDiscount = isRedeemingPoints && pointsToRedeem >= 100 
+      ? pointsToRedeem * POINTS_TO_RUPEES_RATIO 
+      : 0;
+    
+    // Check minimum cart value requirement with loyalty points considered
+    const effectiveCartValue = fullAmount - currentLoyaltyDiscount;
+    
+    if (effectiveCartValue < coupon.min_cart_value) {
       setCouponError(
         `Minimum cart value of ₹${coupon.min_cart_value} required for this coupon`
       );
@@ -326,7 +358,8 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-
+  
+    // Rest of the existing validation code...
     // Check venue restriction if venue_ids is not empty
     if (coupon.venue_ids?.length > 0 && !coupon.venue_ids.includes(id)) {
       setCouponError("This coupon is not valid for this venue");
@@ -334,7 +367,7 @@ export default function BookNow() {
       setActiveCoupon(null);
       return;
     }
-
+  
     if (coupon.slot_ids?.length > 0) {
       // Check if any item in the cart has a slot that matches the coupon's slot_ids
       const hasValidSlot = cart.some((item) => {
@@ -350,7 +383,7 @@ export default function BookNow() {
         return;
       }
     }
-
+  
     // Check court restriction if court_ids is not empty
     if (coupon.court_ids?.length > 0) {
       // Check if any item in the cart has a court that matches the coupon's court_ids
@@ -358,7 +391,7 @@ export default function BookNow() {
         const courtId = courts.find((court) => court.name === item.court)?.id;
         return courtId && coupon.court_ids.includes(courtId);
       });
-
+  
       if (!hasValidCourt) {
         setCouponError("This coupon is not valid for selected courts");
         setIsCouponApplied(false);
@@ -366,7 +399,7 @@ export default function BookNow() {
         return;
       }
     }
-
+  
     // Disable partial payment when applying coupon
     setIsPartialPayment(false);
     setActiveDiscount("coupon");

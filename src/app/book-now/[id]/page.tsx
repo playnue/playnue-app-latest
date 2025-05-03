@@ -1066,6 +1066,7 @@ export default function BookNow() {
                 venues(where: {id: {_eq: "${id}"}}) {
                   id
                   title
+                  slug
                   sports
                 }
               }`,
@@ -1198,7 +1199,7 @@ export default function BookNow() {
       <Navbar />
       <div className="max-w-md mx-auto p-4">
         <Card className="p-4 mb-4">
-          <Link href={`/venue-details/${id}`} className="inline-block">
+          <Link href={`/venue-details/${venue.slug}`} className="inline-block">
             <button
               className={`
           flex items-center justify-center 

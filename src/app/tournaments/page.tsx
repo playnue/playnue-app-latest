@@ -47,7 +47,6 @@ export default function Tournaments() {
       status: "closed",
       image: "/lbcl1.jpg",
     },
-
     {
       id: 4,
       name: "PlayTurf Cricket Tournament",
@@ -58,7 +57,7 @@ export default function Tournaments() {
       venue: "B-1/130 Sector-G, Aliganj, Lucknow Near Cold-Storage (Gulab Watika)",
       teamsRegistered: 0,
       maxTeams: null,
-      status: "open",
+      status: "closed",
       image: "/tournament4.jpg",
       prize: {
         winner: 10000,
@@ -68,7 +67,28 @@ export default function Tournaments() {
       format: "6-A-SIDE TEAM + 1 IMPACT PLAYER",
       contactInfo: ["+91-9235392351", "+91-7017958799"],
       endDate: "2025-04-27"
-    }
+    },
+    {
+  id: 5,
+  name: "Junior Awadh Football League (U-19)",
+  sport: "Football",
+  area: "Awadh, Lucknow", 
+  entryFee: 2799,
+  startDate: "2025-06-14",
+  venue: "NEXT GEN sports arena , Atheletes sports arena",
+  teamsRegistered: 0,
+  maxTeams: null,
+  status: "open",
+  image: "/afli.jpg",
+  prizes: {
+    "first": "₹13,333 + Trophy + Medals",
+    "runnerUp": "₹5,555 + Trophy + Medals",
+    "third": "Trophy + Medals"
+  },
+  format: "5-A-SIDE + 3 ROLLING SUBS",
+  contactInfo: ["7081786006","7007194398"],
+  endDate: "2025-06-15"
+}
   ];
 
   // State for filters

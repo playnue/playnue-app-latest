@@ -43,7 +43,7 @@ const getLocationFromCoords = async (latitude, longitude) => {
 export default function Bookings() {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [showAllVenues, setShowAllVenues] = useState(false);
+  const [showAllVenues, setShowAllVenues] = useState(true);
   const [showAllSports, setShowAllSports] = useState(false);
   const [showFilterExplanation, setShowFilterExplanation] = useState(true);
 

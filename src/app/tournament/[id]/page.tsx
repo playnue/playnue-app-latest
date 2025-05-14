@@ -169,7 +169,41 @@ const TournamentDetails = () => {
       },
       registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
       contactInfo: ["+91-9235392351", "+91-7017958799"]
-    }
+    },
+    {
+  id: 5,
+  name: "Junior Awadh Football League (U-19)",
+  sport: "Football",
+  area: "Awadh, Lucknow",
+  entryFee: 2799,
+  startDate: "2025-06-14",
+  endDate: "2025-06-15",
+  venue: "NEXT GEN sports arena , Atheletes sports arena",
+  teamsRegistered: 0,
+  players: 8,
+  maxTeams: 16,
+  priceType: "team",
+  status: "open",
+  image: "/aflo.jpg",
+  description: "TrueBlue Events presents the Junior Awadh Football League (U-19), an exciting 5-a-side football tournament for youth players. Compete in our league-cum-knockout format for a chance to win exciting cash prizes and trophies!",
+  instructions: [
+    "Format: 5-A-SIDE + 3 ROLLING SUBS",
+    "Teams will be divided into 4 groups (A, B, C, D)",
+    "Each team plays 3 guaranteed group-stage matches",
+    "Top 2 teams from each group qualify for Quarterfinals",
+    "League matches: 5-1-5 minutes per half",
+    "Knockout matches: 7-1-7 minutes per half",
+    "All players must carry original Aadhar Card and Class 10th marksheet for age verification",
+    "Teams must report 30 minutes before scheduled match time"
+  ],
+  prizes: {
+    "first": "₹13,333 + Trophy + Medals",
+    "runnerUp": "₹5,555 + Trophy + Medals",
+    "third": "Trophy + Medals"
+  },
+  registrationForm: "https://forms.gle/jaflRegistration",
+  contactInfo: ["7081786006","7007194398"],
+}
 
   ];
   

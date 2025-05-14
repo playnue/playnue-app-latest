@@ -175,7 +175,7 @@ const TournamentDetails = () => {
   name: "Junior Awadh Football League (U-19)",
   sport: "Football",
   area: "Awadh, Lucknow",
-  entryFee: 2799,
+  entryFee: 2699,
   startDate: "2025-06-14",
   endDate: "2025-06-15",
   venue: "NEXT GEN sports arena , Atheletes sports arena",
@@ -201,7 +201,7 @@ const TournamentDetails = () => {
     "runnerUp": "₹5,555 + Trophy + Medals",
     "third": "Trophy + Medals"
   },
-  registrationForm: "https://forms.gle/jaflRegistration",
+  registrationForm: "https://forms.gle/sppXAVRest1T29WX6",
   contactInfo: ["7081786006","7007194398"],
 }
 

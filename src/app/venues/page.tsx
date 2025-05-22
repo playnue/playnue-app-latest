@@ -60,7 +60,61 @@ export default function Bookings() {
   const accessToken = useAccessToken();
   const [filteredVenues, setFilteredVenues] = useState([]);
   const userData = useUserData();
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
 
+  // Available locations for filter
+  const availableLocations = [
+    { id: 1, name: "Lucknow, Uttar Pradesh" },
+    { id: 2, name: "Hyderabad, Telangana" },
+  ];
+
+  // Handle location filter
+  // Improved location filtering function
+  // Improved location filtering function with empty state handling
+  const handleLocationFilter = (locationId) => {
+    setSelectedLocation(locationId);
+
+    if (locationId) {
+      const selectedLoc = availableLocations.find(
+        (loc) => loc.id === locationId
+      );
+
+      if (selectedLoc) {
+        // Extract just the city name and make case-insensitive comparison
+        const locationName = selectedLoc.name
+          .split(",")[0]
+          .trim()
+          .toLowerCase();
+
+        // Filter venues based on selected location
+        const filteredByLocation = venues.filter((venue) => {
+          const venueLocation = venue.location
+            ? venue.location.toLowerCase()
+            : "";
+          return venueLocation.includes(locationName);
+        });
+
+        // Set filtered venues even if empty - we'll handle the empty state in the UI
+        setFilteredVenues(filteredByLocation);
+        setShowAllVenues(false); // Hide the "all venues" section
+
+        // If we have no venues for this location, we might want to track that
+        if (filteredByLocation.length === 0) {
+          console.log(`No venues found for ${selectedLoc.name}`);
+          // We'll handle this in the UI
+        }
+      }
+    } else {
+      // If "All Locations" is selected
+      setFilteredVenues(venues);
+      setShowAllVenues(true);
+    }
+
+    setSearchQuery("");
+    setIsLocationDropdownOpen(false);
+    setShowFilterExplanation(false);
+  };
   const requestedFeaturedIds = [
     "562cb30c-f543-4f19-86fd-a424c4265091", // PicklePro
     "cfde78ee-6686-475d-b343-1ca966023db7", // Lords Cricket
@@ -197,6 +251,7 @@ export default function Bookings() {
     );
 
     setVenues(venuesWithImages);
+
     const requestedFeaturedVenues = venuesWithImages.filter((venue) =>
       requestedFeaturedIds.includes(venue.id)
     );
@@ -228,6 +283,9 @@ export default function Bookings() {
 
     // Reset filtered venues when venues change
     handleFilterBySportCategory(selectedSportCategory);
+    if (selectedLocation) {
+      handleLocationFilter(selectedLocation);
+    }
   };
 
   const sportIcons = {
@@ -252,56 +310,64 @@ export default function Bookings() {
     if (!venues.length) return;
 
     const filterVenues = () => {
+      let filtered = venues;
       const searchTerm = searchQuery.toLowerCase().trim();
 
+      // Apply location filter first if selected
+      if (selectedLocation) {
+        const selectedLoc = availableLocations.find(
+          (loc) => loc.id === selectedLocation
+        );
+        const locationName = selectedLoc.name
+          .split(",")[0]
+          .trim()
+          .toLowerCase();
+
+        filtered = venues.filter((venue) => {
+          const venueLocation = venue.location
+            ? venue.location.toLowerCase()
+            : "";
+          return venueLocation.includes(locationName);
+        });
+      }
+
+      // If no search term, return the location-filtered results (or all venues)
       if (!searchTerm) {
-        setFilteredVenues(venues);
+        setFilteredVenues(filtered);
         return;
       }
 
-      const filtered = venues.filter((venue) => {
-        // Check location
-        const venueLocation = venue.location.toLowerCase();
-        // Check title
-        const venueTitle = venue.title.toLowerCase();
-        // Check slug (new)
-        const venueSlug = venue.slug ? venue.slug.toLowerCase() : "";
-        // Check description (new)
-        const venueDescription = venue.description
-          ? venue.description.toLowerCase()
-          : "";
-
-        // Check if the search term matches location, title, slug or description
+      // Apply search filter on top of location filter
+      filtered = filtered.filter((venue) => {
+        // Check all searchable venue properties
         return (
-          venueLocation.includes(searchTerm) ||
-          venueTitle.includes(searchTerm) ||
-          venueSlug.includes(searchTerm) ||
-          venueDescription.includes(searchTerm)
+          venue.location?.toLowerCase().includes(searchTerm) ||
+          venue.title?.toLowerCase().includes(searchTerm) ||
+          venue.slug?.toLowerCase().includes(searchTerm) ||
+          venue.description?.toLowerCase().includes(searchTerm)
         );
-      });
-
-      // Sort venues by relevance (exact matches first)
-      filtered.sort((a, b) => {
-        const aExactMatch =
-          a.title.toLowerCase() === searchTerm ||
-          a.slug?.toLowerCase() === searchTerm;
-        const bExactMatch =
-          b.title.toLowerCase() === searchTerm ||
-          b.slug?.toLowerCase() === searchTerm;
-        return bExactMatch - aExactMatch;
       });
 
       setFilteredVenues(filtered);
     };
 
     filterVenues();
-  }, [searchQuery, venues]);
-
+  }, [searchQuery, venues, selectedLocation]);
   // Handle filtering by sport category
   // This code should replace your existing handleFilterBySportCategory function
 
   // Modify the handleFilterBySportCategory function
   const handleFilterBySportCategory = (categoryId) => {
+    let baseVenues = venues;
+    if (selectedLocation) {
+      const selectedLoc = availableLocations.find(
+        (loc) => loc.id === selectedLocation
+      );
+      const locationName = selectedLoc.name.split(",")[0].trim().toLowerCase();
+      baseVenues = venues.filter(
+        (venue) => venue.location.toLowerCase() === locationName
+      );
+    }
     setSelectedSportCategory(categoryId);
     setShowFilterExplanation(false); // Hide the explanation once any filter is applied
 
@@ -669,8 +735,189 @@ export default function Bookings() {
                 </>
               )}
             </div>
-          </div>
+            {/* Location Dropdown */}
+            <div className="w-full md:w-1/3 relative">
+              <button
+                onClick={() =>
+                  setIsLocationDropdownOpen(!isLocationDropdownOpen)
+                }
+                className="w-full flex items-center justify-between bg-gray-800 text-white px-6 py-3 rounded-lg border border-gray-700 hover:bg-gray-700 transition-all duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-expanded={isLocationDropdownOpen}
+                aria-haspopup="listbox"
+              >
+                <span className="text-lg truncate">
+                  {selectedLocation
+                    ? availableLocations.find(
+                        (loc) => loc.id === selectedLocation
+                      )?.name
+                    : "All Locations"}
+                </span>
+                <svg
+                  className={`w-5 h-5 transition-transform duration-300 ${
+                    isLocationDropdownOpen ? "transform rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
+              </button>
 
+              {isLocationDropdownOpen && (
+                <>
+                  {/* Backdrop for closing dropdown */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsLocationDropdownOpen(false)}
+                    aria-hidden="true"
+                  ></div>
+
+                  <div
+                    className="absolute mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto"
+                    role="listbox"
+                  >
+                    {/* "All Locations" option */}
+                    <div className="border-b border-gray-700">
+                      <button
+                        onClick={() => {
+                          handleLocationFilter(null); // Clear filter
+                          setIsLocationDropdownOpen(false); // Close dropdown
+                        }}
+                        className={`w-full text-left px-4 py-3 text-white hover:bg-gray-700 ${
+                          !selectedLocation ? "bg-purple-800" : ""
+                        }`}
+                        role="option"
+                        aria-selected={!selectedLocation}
+                      >
+                        <span className="flex items-center">
+                          <span className="mr-2">🌎</span>
+                          All Locations
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Location options */}
+                    <div className="py-1">
+                      {availableLocations.map((location) => (
+                        <div
+                          key={location.id}
+                          className="border-t border-gray-700 first:border-t-0"
+                        >
+                          <button
+                            onClick={() => {
+                              handleLocationFilter(location.id);
+                              setIsLocationDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 text-white hover:bg-gray-700 ${
+                              selectedLocation === location.id
+                                ? "bg-purple-800"
+                                : ""
+                            }`}
+                            role="option"
+                            aria-selected={selectedLocation === location.id}
+                          >
+                            <span>
+                              <span className="mr-2">📍</span>
+                              {location.name}
+                            </span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          {/* Location-filtered Venues Section */}
+          {selectedLocation && (
+            <div id="location-venues-section" className="mb-16 animate-fadeIn">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white mb-4 md:mb-0">
+                  Venues in{" "}
+                  {
+                    availableLocations.find(
+                      (loc) => loc.id === selectedLocation
+                    )?.name
+                  }
+                </h2>
+              </div>
+
+              {filteredVenues.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredVenues.map((venue) => renderVenueCard(venue))}
+                </div>
+              ) : (
+                <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
+                  <div className="bg-gray-800 rounded-lg p-8 shadow-lg max-w-lg">
+                    <svg
+                      className="w-16 h-16 mx-auto mb-6 text-purple-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      ></path>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      ></path>
+                    </svg>
+                    <h3 className="text-2xl font-bold text-white mb-4">
+                      Coming Soon to{" "}
+                      {
+                        availableLocations.find(
+                          (loc) => loc.id === selectedLocation
+                        )?.name
+                      }
+                      !
+                    </h3>
+                    <p className="text-gray-400 mb-6">
+                      We're excited to announce that PlayNue will be launching
+                      venues in{" "}
+                      {
+                        availableLocations
+                          .find((loc) => loc.id === selectedLocation)
+                          ?.name.split(",")[0]
+                      }{" "}
+                      soon. Stay tuned for updates!
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <button
+                        onClick={() => setSelectedLocation(null)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300"
+                      >
+                        View All Locations
+                      </button>
+                      {/* You could add a notification signup or other CTA here */}
+                      <button
+                        className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300"
+                        onClick={() => {
+                          /* Maybe add to waitlist or notification */
+                        }}
+                      >
+                        Notify Me When Available
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* Featured Venues Section - Vertical Layout */}
           {featuredVenues.length > 0 && (
             <div className="mb-16">

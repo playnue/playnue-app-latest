@@ -52,9 +52,6 @@ export const useAuth = () => {
         options.redirectTo = process.env.NEXT_PUBLIC_DOMAIN + redirectPath;
       }
       console.log(options)
-      
-// process.env.url + "/" + returnUrl
-      
       const result = await nhost.auth.signIn({
         provider: 'google',
         // options

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@nhost/core": "^0.9.4",
-    "@nhost/nextjs": "^2.1.22",
+    "@nhost/nextjs": "^2.2.7",
     "@nhost/nhost-js": "^3.2.1",
     "@nhost/react": "^3.8.0",
     "@radix-ui/react-avatar": "^1.1.1",

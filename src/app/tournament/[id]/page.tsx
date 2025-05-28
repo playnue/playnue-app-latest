@@ -179,7 +179,7 @@ const TournamentDetails = () => {
   startDate: "2025-06-14",
   endDate: "2025-06-15",
   venue: "NEXT GEN sports arena , Atheletes sports arena",
-  teamsRegistered: 0,
+  teamsRegistered: 10,
   players: 8,
   maxTeams: 16,
   priceType: "team",

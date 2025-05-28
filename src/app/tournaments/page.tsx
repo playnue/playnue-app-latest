@@ -76,7 +76,7 @@ export default function Tournaments() {
   entryFee: 2699,
   startDate: "2025-06-14",
   venue: "NEXT GEN sports arena , Atheletes sports arena",
-  teamsRegistered: 0,
+  teamsRegistered: 10,
   maxTeams: null,
   status: "open",
   image: "/afao.jpg",

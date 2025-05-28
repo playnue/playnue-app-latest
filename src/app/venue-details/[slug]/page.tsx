@@ -156,6 +156,8 @@ const VenuePage = () => {
         return "/nextgen.jpg";
       case "e062a12e-c969-446e-a239-c3ca921f97da":
         return "/athin.jpg";
+        case "efab4779-e5a2-456a-8a88-1a3bb123b0bb":
+          return "/gsai.jpg";
       default:
         return "/playturf.jpg";
     }

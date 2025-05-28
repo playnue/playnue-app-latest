@@ -462,6 +462,8 @@ export default function Bookings() {
           return "/athin.jpg";
         case "efab4779-e5a2-456a-8a88-1a3bb123b0bb":
           return "/gsao.jpg";
+        case "130359ad-1935-4460-ad94-a6476e3c5441":
+          return "/spo.jpg";
         default:
           return "/comingSoon.jpeg";
       }

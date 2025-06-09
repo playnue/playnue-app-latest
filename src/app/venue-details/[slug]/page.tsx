@@ -162,6 +162,8 @@ const VenuePage = () => {
           return "/spi.jpg";
           case "3ac6a259-0d35-4c0b-8b1d-cdfeeeb7a073":
           return "/b&g1.jpg";
+          case "00b63bf9-cc55-44d3-a916-a6e10343bc02":
+          return "/iz2.jpg";
       default:
         return "/playturf.jpg";
     }

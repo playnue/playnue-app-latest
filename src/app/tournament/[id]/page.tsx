@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAccessToken, useAuthenticationStatus, useUserData } from "@nhost/nextjs";
+import {
+  useAccessToken,
+  useAuthenticationStatus,
+  useUserData,
+} from "@nhost/nextjs";
 import "../../loader.css";
 import {
   Dialog,
@@ -74,7 +78,8 @@ const TournamentDetails = () => {
       priceType: "team",
       status: "open",
       image: "/footballtournament2.jpg",
-      description: "Here's to a fantastic football tournament! May every match be filled with excitement and fair play",
+      description:
+        "Here's to a fantastic football tournament! May every match be filled with excitement and fair play",
       instructions: [
         "Maximum Participants: 16 teams",
         "Total Players: 6+2 per team",
@@ -82,14 +87,14 @@ const TournamentDetails = () => {
         "Registration fee includes refreshments",
         "Pre-registration is mandatory through official website",
         "Teams must arrive on time for their scheduled matches",
-        "All players must follow fair play guidelines"
+        "All players must follow fair play guidelines",
       ],
       prizes: {
         first: "₹7000",
         runnerUp: "₹3000",
-        topScorer: "₹1500"
+        topScorer: "₹1500",
       },
-      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6"
+      registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
     },
     {
       id: 3,
@@ -106,7 +111,8 @@ const TournamentDetails = () => {
       priceType: "team",
       status: "open",
       image: "/lbcl2.jpg",
-      description: "Lucknow awaits its cricketing conqueror: 16 teams, 1 dream, 1 trophy. Experience the thrill of box cricket in Lucknow's premier cricket competition with a prize pool of ₹30,000!",
+      description:
+        "Lucknow awaits its cricketing conqueror: 16 teams, 1 dream, 1 trophy. Experience the thrill of box cricket in Lucknow's premier cricket competition with a prize pool of ₹30,000!",
       instructions: [
         "Format: Box Cricket (6 overs per innings)",
         "Teams: 16 teams maximum (8 players per team - 6 main players + 1 impact player + 1 substitute)",
@@ -116,7 +122,7 @@ const TournamentDetails = () => {
         "Teams must arrive 30 minutes before scheduled match time",
         "Decisions by umpires and tournament officials are final",
         "Fair play is expected from all participants",
-        "No refunds for no-shows or disqualified teams"
+        "No refunds for no-shows or disqualified teams",
       ],
       prizes: {
         first: "₹20,000",
@@ -128,14 +134,14 @@ const TournamentDetails = () => {
         "Medals for outstanding performers",
         "Certificates for all participants",
         "10% discount vouchers at ASA Sports Store",
-        "Tournament merchandise and goodies"
+        "Tournament merchandise and goodies",
       ],
       tournamentFormat: [
         "Group Stage: 4 groups of 4 teams each",
         "Top 2 teams from each group advance to knockout stage",
-        "Quarter-finals, Semi-finals, and Finals"
+        "Quarter-finals, Semi-finals, and Finals",
       ],
-      registrationForm: "https://forms.gle/WGbNoE3xV92AyA877"
+      registrationForm: "https://forms.gle/WGbNoE3xV92AyA877",
     },
     {
       id: 4,
@@ -152,7 +158,8 @@ const TournamentDetails = () => {
       priceType: "team",
       status: "open",
       image: "/tournament4.jpg",
-      description: "Join PlayTurf's exciting cricket tournament in Aliganj, Lucknow. Compete in this 6-a-side format with an impact player for a chance to win exciting cash prizes!",
+      description:
+        "Join PlayTurf's exciting cricket tournament in Aliganj, Lucknow. Compete in this 6-a-side format with an impact player for a chance to win exciting cash prizes!",
       instructions: [
         "Format: 6-A-SIDE TEAM + 1 IMPACT PLAYER",
         "Registration fee: Rs. 2000 per team",
@@ -160,53 +167,88 @@ const TournamentDetails = () => {
         "Teams must register before the tournament date",
         "All matches will be played according to tournament rules",
         "Teams should arrive on time for their scheduled matches",
-        "Fair play is expected from all participants"
+        "Fair play is expected from all participants",
       ],
       prizes: {
         first: "₹10,000",
         runnerUp: "₹3,000",
-        manOfTheTournament: "₹1,100"
+        manOfTheTournament: "₹1,100",
       },
       registrationForm: "https://forms.gle/87pRZJ81iMYdF7sj6",
-      contactInfo: ["+91-9235392351", "+91-7017958799"]
+      contactInfo: ["+91-9235392351", "+91-7017958799"],
     },
     {
-  id: 5,
-  name: "Junior Awadh Football League (U-19)",
-  sport: "Football",
-  area: "Awadh, Lucknow",
-  entryFee: 2699,
-  startDate: "2025-06-14",
-  endDate: "2025-06-15",
-  venue: "NEXT GEN sports arena , Atheletes sports arena",
-  teamsRegistered: 10,
-  players: 8,
-  maxTeams: 16,
-  priceType: "team",
-  status: "open",
-  image: "/aflo.jpg",
-  description: "TrueBlue Events presents the Junior Awadh Football League (U-19), an exciting 5-a-side football tournament for youth players. Compete in our league-cum-knockout format for a chance to win exciting cash prizes and trophies!",
-  instructions: [
-    "Format: 5-A-SIDE + 3 ROLLING SUBS",
-    "Teams will be divided into 4 groups (A, B, C, D)",
-    "Each team plays 3 guaranteed group-stage matches",
-    "Top 2 teams from each group qualify for Quarterfinals",
-    "League matches: 5-1-5 minutes per half",
-    "Knockout matches: 7-1-7 minutes per half",
-    "All players must carry original Aadhar Card and Class 10th marksheet for age verification",
-    "Teams must report 30 minutes before scheduled match time"
-  ],
-  prizes: {
-    "first": "₹13,333 + Trophy + Medals",
-    "runnerUp": "₹5,555 + Trophy + Medals",
-    "third": "Trophy + Medals"
-  },
-  registrationForm: "https://forms.gle/sppXAVRest1T29WX6",
-  contactInfo: ["7081786006","7007194398"],
-}
-
+      id: 5,
+      name: "Junior Awadh Football League (U-19)",
+      sport: "Football",
+      area: "Awadh, Lucknow",
+      entryFee: 2699,
+      startDate: "2025-06-14",
+      endDate: "2025-06-15",
+      venue: "NEXT GEN sports arena , Atheletes sports arena",
+      teamsRegistered: 10,
+      players: 8,
+      maxTeams: 16,
+      priceType: "team",
+      status: "open",
+      image: "/aflo.jpg",
+      description:
+        "TrueBlue Events presents the Junior Awadh Football League (U-19), an exciting 5-a-side football tournament for youth players. Compete in our league-cum-knockout format for a chance to win exciting cash prizes and trophies!",
+      instructions: [
+        "Format: 5-A-SIDE + 3 ROLLING SUBS",
+        "Teams will be divided into 4 groups (A, B, C, D)",
+        "Each team plays 3 guaranteed group-stage matches",
+        "Top 2 teams from each group qualify for Quarterfinals",
+        "League matches: 5-1-5 minutes per half",
+        "Knockout matches: 7-1-7 minutes per half",
+        "All players must carry original Aadhar Card and Class 10th marksheet for age verification",
+        "Teams must report 30 minutes before scheduled match time",
+      ],
+      prizes: {
+        first: "₹13,333 + Trophy + Medals",
+        runnerUp: "₹5,555 + Trophy + Medals",
+        third: "Trophy + Medals",
+      },
+      registrationForm: "https://forms.gle/sppXAVRest1T29WX6",
+      contactInfo: ["7081786006", "7007194398"],
+    },
+    {
+      id: 6,
+      name: "PlayNue Mini Tournament",
+      sport: "Cricket",
+      area: "Playturf, Aliganj",
+      entryFee: 1600,
+      startDate: "2025-10-06",
+      endDate: "2025-10-06",
+      venue: "Playturf, Aliganj",
+      teamsRegistered: 0,
+      players: 11,
+      maxTeams: 16,
+      priceType: "team",
+      status: "open",
+      image: "/pmt.jpg",
+      description:
+        "PlayNue presents an exciting Mini Cricket Tournament at Playturf, Aliganj. Join us for big rewards and bigger action in this thrilling cricket competition!",
+      instructions: [
+        "Mini Cricket Tournament format",
+        "Teams must report 30 minutes before scheduled match time",
+        "All players must carry original identification documents",
+        "Entry fee: ₹1,600 per team",
+        "Tournament will be held at Playturf, Aliganj",
+        "Contact for more details: +91 90444 05954",
+      ],
+      prizes: {
+        first: "₹4,000",
+        runnerUp: "₹1,600",
+        third: "Medals",
+      },
+      registrationForm: "https://forms.gle/FaWkKnJPuvBPTPkN6",
+      contactInfo: ["+91 90444 05954"],
+      website: "www.playnue.com",
+      tagline: "TURF. CRICKET. GLORY. GRAB YOUR TEAM & OWN THE PITCH!",
+    },
   ];
-  
+
   // useEffect(() => {
   //   // Check authentication status after initial load
   //   if (!isLoading) {
@@ -216,7 +258,7 @@ const TournamentDetails = () => {
   //       const searchParams = window.location.search;
   //       const fullPath = `${currentPath}${searchParams}`;
   //       const returnUrl = encodeURIComponent(fullPath);
-        
+
   //       // Redirect to login with return URL
   //       router.push(`/login?returnUrl=${returnUrl}`);
   //       return;
@@ -231,9 +273,7 @@ const TournamentDetails = () => {
   // }, [isAuthenticated, isLoading, id, router]);
   useEffect(() => {
     // Find and set tournament data without authentication check
-    const foundTournament = allTournaments.find(
-      (t) => t.id === parseInt(id)
-    );
+    const foundTournament = allTournaments.find((t) => t.id === parseInt(id));
     setTournament(foundTournament || null);
   }, [id]);
   // Show loading state while authentication is being checked
@@ -246,7 +286,6 @@ const TournamentDetails = () => {
   }
 
   // If not authenticated, don't render anything (redirection will happen in useEffect)
-  
 
   // If no tournament found after loading
   if (!tournament) {
@@ -256,14 +295,10 @@ const TournamentDetails = () => {
       </div>
     );
   }
- 
-
-  
 
   const handleRegistration = () => {
     window.open(tournament.registrationForm, "_blank");
   };
-
 
   const getPrizeBackgroundColor = (prizeKey) => {
     switch (prizeKey) {

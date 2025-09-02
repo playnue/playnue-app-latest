@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
- 
+
 export default function Tournaments() {
   // Sample tournament data - replace with your API data
   const allTournaments = [
@@ -41,7 +41,8 @@ export default function Tournaments() {
       area: "Jankipuram, Lucknow 22605",
       entryFee: 3499,
       startDate: "2025-04-19",
-      venue: "Athletes Sports Arena 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, Uttar Pradesh 226021",
+      venue:
+        "Athletes Sports Arena 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, Uttar Pradesh 226021",
       teamsRegistered: 10,
       maxTeams: 16,
       status: "closed",
@@ -54,7 +55,8 @@ export default function Tournaments() {
       area: "Sector-G, Aliganj, Lucknow",
       entryFee: 2000,
       startDate: "2025-04-26",
-      venue: "B-1/130 Sector-G, Aliganj, Lucknow Near Cold-Storage (Gulab Watika)",
+      venue:
+        "B-1/130 Sector-G, Aliganj, Lucknow Near Cold-Storage (Gulab Watika)",
       teamsRegistered: 0,
       maxTeams: null,
       status: "closed",
@@ -62,33 +64,56 @@ export default function Tournaments() {
       prize: {
         winner: 10000,
         runnerUp: 3000,
-        manOfTournament: 1100
+        manOfTournament: 1100,
       },
       format: "6-A-SIDE TEAM + 1 IMPACT PLAYER",
       contactInfo: ["+91-9235392351", "+91-7017958799"],
-      endDate: "2025-04-27"
+      endDate: "2025-04-27",
     },
     {
-  id: 5,
-  name: "Junior Awadh Football League (U-19)",
-  sport: "Football",
-  area: "Awadh, Lucknow", 
-  entryFee: 2699,
-  startDate: "2025-06-14",
-  venue: "NEXT GEN sports arena , Atheletes sports arena",
-  teamsRegistered: 10,
-  maxTeams: null,
-  status: "open",
-  image: "/afao.jpg",
-  prizes: {
-    "first": "₹13,333 + Trophy + Medals",
-    "runnerUp": "₹5,555 + Trophy + Medals",
-    "third": "Trophy + Medals"
-  },
-  format: "5-A-SIDE + 3 ROLLING SUBS",
-  contactInfo: ["7081786006","7007194398"],
-  endDate: "2025-06-15"
-}
+      id: 5,
+      name: "Junior Awadh Football League (U-19)",
+      sport: "Football",
+      area: "Awadh, Lucknow",
+      entryFee: 2699,
+      startDate: "2025-06-14",
+      venue: "NEXT GEN sports arena , Atheletes sports arena",
+      teamsRegistered: 10,
+      maxTeams: null,
+      status: "closed",
+      image: "/afao.jpg",
+      prizes: {
+        first: "₹13,333 + Trophy + Medals",
+        runnerUp: "₹5,555 + Trophy + Medals",
+        third: "Trophy + Medals",
+      },
+      format: "5-A-SIDE + 3 ROLLING SUBS",
+      contactInfo: ["7081786006", "7007194398"],
+      endDate: "2025-06-15",
+    },
+    {
+      id: 6,
+      name: "PlayNue Mini Tournament",
+      sport: "Cricket",
+      area: "Playturf, Aliganj",
+      entryFee: 1600,
+      startDate: "2025-10-06",
+      venue: "Playturf, Aliganj",
+      teamsRegistered: 0,
+      maxTeams: null,
+      status: "open",
+      image: "/pmt.jpg",
+      prizes: {
+        first: "₹4,000",
+        runnerUp: "₹1,600",
+      },
+      format: "Mini Cricket Tournament",
+      contactInfo: ["+91 90444 05954"],
+      website: "www.playnue.com",
+      endDate: "2025-10-06",
+      tagline: "TURF. CRICKET. GLORY. GRAB YOUR TEAM & OWN THE PITCH!",
+      description: "BIG REWARDS, BIGGER ACTION!",
+    },
   ];
 
   // State for filters
@@ -300,16 +325,18 @@ export default function Tournaments() {
                       {tournament.teamsRegistered} teams registered
                     </span>
                     <Link href={`/tournament/${tournament.id}`}>
-                    <button
-  disabled={tournament.status === "closed"}
-  className={`${
-    tournament.status === "closed"
-      ? "bg-gray-600 cursor-not-allowed"
-      : "bg-blue-600 hover:bg-blue-700"
-  } text-white px-4 py-2 rounded`}
->
-  {tournament.status === "closed" ? "Closed" : "View Details"}
-</button>
+                      <button
+                        disabled={tournament.status === "closed"}
+                        className={`${
+                          tournament.status === "closed"
+                            ? "bg-gray-600 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700"
+                        } text-white px-4 py-2 rounded`}
+                      >
+                        {tournament.status === "closed"
+                          ? "Closed"
+                          : "View Details"}
+                      </button>
                     </Link>
                   </div>
                 </div>

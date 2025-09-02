@@ -218,15 +218,15 @@ const TournamentDetails = () => {
       sport: "Cricket",
       area: "Playturf, Aliganj",
       entryFee: 1600,
-      startDate: "2025-10-06",
-      endDate: "2025-10-06",
+      startDate: "2025-10-05",
+      endDate: "2025-10-05",
       venue: "Playturf, Aliganj",
       teamsRegistered: 0,
       players: 11,
       maxTeams: 16,
       priceType: "team",
       status: "open",
-      image: "/pmt.jpg",
+      image: "/pmt1.jpg",
       description:
         "PlayNue presents an exciting Mini Cricket Tournament at Playturf, Aliganj. Join us for big rewards and bigger action in this thrilling cricket competition!",
       instructions: [

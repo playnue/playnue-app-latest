@@ -247,6 +247,45 @@ const TournamentDetails = () => {
       website: "www.playnue.com",
       tagline: "TURF. CRICKET. GLORY. GRAB YOUR TEAM & OWN THE PITCH!",
     },
+    {
+      id: 7,
+      name: "PLAYNUE Cricket Tournament 2025",
+      sport: "Cricket",
+      area: "Athletes Sports Arena, Jankipuram",
+      entryFee: 1600,
+      startDate: "2025-09-21",
+      endDate: "2025-09-21",
+      venue:
+        "Athletes Sports Arena, 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, UP – 226021",
+      teamsRegistered: 0,
+      players: 11,
+      maxTeams: 8,
+      priceType: "team",
+      status: "open",
+      image: "/pct.jpg",
+      description:
+        "PLAYNUE presents an electrifying cricket tournament with surprise twists in every match. Experience the thrill of competitive cricket with big rewards and bigger action!",
+      instructions: [
+        "5 overs per inning format",
+        "8 teams maximum participation",
+        "Teams must report 30 minutes before scheduled match time",
+        "All players must carry original identification documents",
+        "Entry fee: ₹1,600 per team",
+        "Last date to register: 18th September 2025",
+        "Tournament will be held at Athletes Sports Arena, Jankipuram, Lucknow",
+        "Contact for more details: +91 90444 05954",
+      ],
+      prizes: {
+        first: "₹4,000",
+        runnerUp: "₹1,600",
+        third: "Medals",
+      },
+      registrationForm: "https://forms.gle/FaWkKnJPuvBPTPkN6",
+      contactInfo: ["+91 90444 05954"],
+      website: "playnue.com",
+      tagline:
+        "Get ready for an electrifying cricket battle with a surprise twist in every match!",
+    },
   ];
 
   // useEffect(() => {

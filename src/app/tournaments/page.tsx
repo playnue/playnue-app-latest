@@ -155,13 +155,13 @@ export default function Tournaments() {
         first: "₹50,000+",
         runnerUp: "Total Prize Pool",
       },
-      format: "5 Categories: Singles & Doubles",
+      format: "4 Categories: Singles & Doubles",
       contactInfo: ["+91 90444 05954"],
       website: "playnue.com",
       endDate: "2025-09-28",
       tagline:
         "CAUSE. CONNECT. COMPETE - Multi-category pickleball championship!",
-      description: "5 CATEGORIES, BIGGER REWARDS!",
+      description: "4 CATEGORIES, BIGGER REWARDS!",
     },
   ];
 

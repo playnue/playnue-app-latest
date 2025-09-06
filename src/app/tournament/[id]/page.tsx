@@ -421,9 +421,9 @@ const TournamentDetails = () => {
       status: "open",
       image: "/pt.jpg",
       description:
-        "Comprehensive pickleball championship featuring 4 competitive categories. Experience the thrill of competitive pickleball with surprise twists in every match across Men's Singles, Men's Doubles, Women's Singles, Women's Doubles, and Mixed Doubles!",
+        "Comprehensive pickleball championship featuring 4 competitive categories. Experience the thrill of competitive pickleball with surprise twists in every match across Men's Singles, Men's Doubles, Women's Singles, and Mixed Doubles!",
       instructions: [
-        "4 categories available: Men's Singles, Men's Doubles, Women's Singles, Women's Doubles, Mixed Doubles",
+        "4 categories available: Men's Singles, Men's Doubles, Women's Singles, Mixed Doubles",
         "Men's Singles: 16 participants maximum",
         "Men's Doubles: 16 teams maximum",
         "Women's Singles: 8 participants maximum",

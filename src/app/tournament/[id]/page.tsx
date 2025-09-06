@@ -21,6 +21,124 @@ import {
 } from "@/components/ui/dialog";
 import Navbar from "@/app/components/Navbar";
 
+const MultiCategoryTournamentDetail = ({ tournament }) => {
+  const handleTournamentRegistration = () => {
+    window.open(tournament.registrationForm, "_blank");
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Tournament Overview Card */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-2xl font-bold">Tournament Overview</h2>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-600">Sport</p>
+                <p className="font-semibold">{tournament.sport}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Venue</p>
+                <p className="font-semibold">{tournament.venue}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Total Prize Pool</p>
+                <p className="font-bold text-2xl text-green-600">
+                  {tournament.totalPrizePool}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600">Date</p>
+                <p className="font-semibold">
+                  {new Date(tournament.startDate).toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                General Instructions
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {tournament.instructions?.map((rule, index) => (
+                  <li key={index}>{rule}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Competition Categories Section */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-2xl font-bold">Competition Categories</h2>
+          <p className="text-gray-600">4 exciting categories to compete in</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {tournament.categories.map((category) => (
+              <div
+                key={category.id}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 text-center hover:shadow-md transition-shadow"
+              >
+                <h3 className="text-sm font-bold text-gray-800">{category.name}</h3>
+                <p className="text-xs text-gray-600 mt-1">
+                  Max: {category.maxParticipants || category.maxTeams}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Single Registration Card */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-2xl font-bold">Tournament Registration</h2>
+          <p className="text-gray-600">
+            Register for any or all categories using the single form below
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                How to Register:
+              </h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Use the single registration form for all categories</li>
+                <li>• Select your desired category/categories in the form</li>
+                <li>• Entry fees vary by category (₹500 - ₹1000)</li>
+                <li>• You can register for multiple categories</li>
+              </ul>
+            </div>
+            
+            <div className="text-center">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 py-3 text-lg"
+                onClick={handleTournamentRegistration}
+              >
+                Register for Tournament
+              </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                Click to open registration form and select your categories
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const TournamentDetails = () => {
   const { id } = useParams();
   const [tournament, setTournament] = useState(null);
@@ -286,6 +404,98 @@ const TournamentDetails = () => {
       tagline:
         "Get ready for an electrifying cricket battle with a surprise twist in every match!",
     },
+    {
+      id: 8,
+      name: "Paddle Pickleball Championship",
+      sport: "Pickleball",
+      area: "Gomti Nagar, Lucknow",
+      type: "multi-category",
+      entryFee: "₹1499-₹2499",
+      startDate: "2025-09-28",
+      endDate: "2025-09-28",
+      venue: "Picklemasters",
+      teamsRegistered: 0,
+      players: "1-2 per category",
+      maxTeams: 48,
+      priceType: "varies",
+      status: "open",
+      image: "/pt.jpg",
+      description:
+        "Comprehensive pickleball championship featuring 5 competitive categories. Experience the thrill of competitive pickleball with surprise twists in every match across Men's Singles, Men's Doubles, Women's Singles, Women's Doubles, and Mixed Doubles!",
+      instructions: [
+        "5 categories available: Men's Singles, Men's Doubles, Women's Singles, Women's Doubles, Mixed Doubles",
+        "Men's Singles: 16 participants maximum",
+        "Men's Doubles: 16 teams maximum",
+        "Women's Singles: 8 participants maximum",
+        "Mixed Doubles: 8 teams maximum",
+        "All players must carry original identification documents",
+        "Entry fees vary by category (₹500-₹1000)",
+        "Last date to register: 25th September 2025",
+        "Tournament will be held on 28th September 2025",
+        "Contact for more details: +91 90444 05954",
+      ],
+      prizes: {
+        first: "₹50,000+",
+        runnerUp: "Total Prize Pool",
+        third: "Medals & Trophies",
+      },
+      registrationForm: "https://forms.gle/nkVaBsbyJ6Yy7EPF7",
+      contactInfo: ["+91 90444 05954"],
+      website: "playnue.com",
+      tagline:
+        "CAUSE. CONNECT. COMPETE - Multi-category pickleball championship!",
+      totalPrizePool: "₹50,000+",
+      categories: [
+        {
+          id: "men_singles",
+          name: "Men's Singles",
+          entryFee: 1499,
+          maxParticipants: 16,
+          registrations: 0,
+          registrationForm: "https://forms.gle/nkVaBsbyJ6Yy7EPF7",
+          prizeDistribution: {
+            first: "TBD",
+            second: "TBD",
+          },
+        },
+        {
+          id: "men_doubles",
+          name: "Men's Doubles",
+          entryFee: 2499,
+          maxTeams: 16,
+          registrations: 0,
+          registrationForm: "https://forms.gle/nkVaBsbyJ6Yy7EPF7",
+          prizeDistribution: {
+            first: "TBD",
+            second: "TBD",
+          },
+        },
+        {
+          id: "women_singles",
+          name: "Women's Singles",
+          entryFee: 1499,
+          maxParticipants: 8,
+          registrations: 0,
+          registrationForm: "https://forms.gle/nkVaBsbyJ6Yy7EPF7",
+          prizeDistribution: {
+            first: "TBD",
+            second: "TBD",
+          },
+        },
+        {
+          id: "mixed_doubles",
+          name: "Mixed Doubles",
+          entryFee: 2499,
+          maxTeams: 8,
+          registrations: 0,
+          registrationForm: "https://forms.gle/nkVaBsbyJ6Yy7EPF7",
+          prizeDistribution: {
+            first: "TBD",
+            second: "TBD",
+          },
+        },
+      ],
+    },
   ];
 
   // useEffect(() => {
@@ -436,111 +646,116 @@ const TournamentDetails = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Main Content - 8 columns */}
             <div className="lg:col-span-8">
-              <div className="space-y-8">
-                {/* Tournament Details Card */}
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-2xl font-bold">Tournament Details</h2>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-gray-600">Sport</p>
-                          <p className="font-semibold">{tournament.sport}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Venue</p>
-                          <p className="font-semibold">{tournament.venue}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Start Date</p>
-                          <p className="font-semibold">
-                            {new Date(tournament.startDate).toLocaleDateString(
-                              "en-US",
-                              {
+              {tournament.type === "multi-category" ? (
+                <MultiCategoryTournamentDetail tournament={tournament} />
+              ) : (
+                <div className="space-y-8">
+                  {/* Tournament Details Card */}
+                  <Card>
+                    <CardHeader>
+                      <h2 className="text-2xl font-bold">Tournament Details</h2>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-gray-600">Sport</p>
+                            <p className="font-semibold">{tournament.sport}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Venue</p>
+                            <p className="font-semibold">{tournament.venue}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Start Date</p>
+                            <p className="font-semibold">
+                              {new Date(
+                                tournament.startDate
+                              ).toLocaleDateString("en-US", {
                                 day: "numeric",
                                 month: "long",
                                 year: "numeric",
-                              }
-                            )}
-                          </p>
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">End Date</p>
+                            <p className="font-semibold">
+                              {new Date(tournament.endDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                          </div>
                         </div>
+
                         <div>
-                          <p className="text-gray-600">End Date</p>
+                          <h3 className="text-xl font-semibold mb-2">
+                            Instructions
+                          </h3>
+                          <ul className="list-disc list-inside space-y-1">
+                            {tournament.instructions?.map((rule, index) => (
+                              <li key={index}>{rule}</li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {renderPrizes()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Registration Details Card */}
+                  <Card>
+                    <CardHeader>
+                      <h2 className="text-2xl font-bold">
+                        Registration Details
+                      </h2>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {renderPriceDisplay()}
+                        <div>
+                          <p className="text-gray-600">Teams Registered</p>
                           <p className="font-semibold">
-                            {new Date(tournament.endDate).toLocaleDateString(
-                              "en-US",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
+                            {tournament.teamsRegistered} / {tournament.maxTeams}
+                          </p>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                            <div
+                              className="bg-blue-600 h-2.5 rounded-full"
+                              style={{
+                                width: `${
+                                  (tournament.teamsRegistered /
+                                    tournament.maxTeams) *
+                                  100
+                                }%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        <Button
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          onClick={handleRegistration}
+                        >
+                          Register and Pay
+                        </Button>
+
+                        <div className="text-sm text-gray-500 text-center mt-4">
+                          <p>
+                            Click above to fill the registration form and make
+                            payment via UPI
                           </p>
                         </div>
                       </div>
-
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">
-                          Instructions
-                        </h3>
-                        <ul className="list-disc list-inside space-y-1">
-                          {tournament.instructions?.map((rule, index) => (
-                            <li key={index}>{rule}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {renderPrizes()}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Registration Details Card */}
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-2xl font-bold">Registration Details</h2>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {renderPriceDisplay()}
-                      <div>
-                        <p className="text-gray-600">Teams Registered</p>
-                        <p className="font-semibold">
-                          {tournament.teamsRegistered} / {tournament.maxTeams}
-                        </p>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{
-                              width: `${
-                                (tournament.teamsRegistered /
-                                  tournament.maxTeams) *
-                                100
-                              }%`,
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={handleRegistration}
-                      >
-                        Register and Pay
-                      </Button>
-
-                      <div className="text-sm text-gray-500 text-center mt-4">
-                        <p>
-                          Click above to fill the registration form and make
-                          payment via UPI
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
 
             {/* Sidebar - 4 columns */}

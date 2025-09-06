@@ -99,7 +99,7 @@ export default function Tournaments() {
       entryFee: 1600,
       startDate: "2025-10-05",
       venue: "Playturf, Aliganj",
-      teamsRegistered: 0,
+      teamsRegistered: 5,
       maxTeams: null,
       status: "open",
       image: "/pmt1.jpg",
@@ -123,7 +123,7 @@ export default function Tournaments() {
       startDate: "2025-09-21",
       venue:
         "Athletes Sports Arena, 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, UP – 226021",
-      teamsRegistered: 0,
+      teamsRegistered: 3,
       maxTeams: 8,
       status: "open",
       image: "/pct.jpg",
@@ -138,6 +138,30 @@ export default function Tournaments() {
       tagline:
         "Get ready for an electrifying cricket battle with a surprise twist in every match!",
       description: "BIG REWARDS, BIGGER ACTION!",
+    },
+    {
+      id: 8,
+      name: "Paddle Pickleball Championship",
+      sport: "Pickleball",
+      area: "Picklemasters",
+      entryFee: "1499-₹2499",
+      startDate: "2025-09-28",
+      venue: "Picklemasters",
+      teamsRegistered: 0,
+      maxTeams: 48,
+      status: "open",
+      image: "/pt.jpg",
+      prizes: {
+        first: "₹50,000+",
+        runnerUp: "Total Prize Pool",
+      },
+      format: "5 Categories: Singles & Doubles",
+      contactInfo: ["+91 90444 05954"],
+      website: "playnue.com",
+      endDate: "2025-09-28",
+      tagline:
+        "CAUSE. CONNECT. COMPETE - Multi-category pickleball championship!",
+      description: "5 CATEGORIES, BIGGER REWARDS!",
     },
   ];
 

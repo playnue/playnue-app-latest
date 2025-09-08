@@ -147,7 +147,7 @@ export default function Tournaments() {
       entryFee: "1499-₹2499",
       startDate: "2025-09-28",
       venue: "Picklemasters",
-      teamsRegistered: 0,
+      teamsRegistered: 1,
       maxTeams: 48,
       status: "open",
       image: "/pt.jpg",
@@ -156,7 +156,7 @@ export default function Tournaments() {
         runnerUp: "Total Prize Pool",
       },
       format: "4 Categories: Singles & Doubles",
-      contactInfo: ["+91 90444 05954"],
+      contactInfo: ["+91 7081130345" ],
       website: "playnue.com",
       endDate: "2025-09-28",
       tagline:

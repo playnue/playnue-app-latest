@@ -414,7 +414,7 @@ const TournamentDetails = () => {
       startDate: "2025-09-28",
       endDate: "2025-09-28",
       venue: "Picklemasters",
-      teamsRegistered: 1,
+      teamsRegistered: 9,
       players: "1-2 per category",
       maxTeams: 48,
       priceType: "varies",

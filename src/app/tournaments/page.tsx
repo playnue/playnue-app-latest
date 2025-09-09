@@ -147,7 +147,7 @@ export default function Tournaments() {
       entryFee: "1499-₹2499",
       startDate: "2025-09-28",
       venue: "Picklemasters",
-      teamsRegistered: 1,
+      teamsRegistered: 9,
       maxTeams: 48,
       status: "open",
       image: "/pt.jpg",

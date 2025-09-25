@@ -99,7 +99,7 @@ export default function Tournaments() {
       entryFee: 1600,
       startDate: "2025-10-05",
       venue: "Playturf, Aliganj",
-      teamsRegistered: 5,
+      teamsRegistered: 2,
       maxTeams: null,
       status: "open",
       image: "/pmt1.jpg",
@@ -123,9 +123,9 @@ export default function Tournaments() {
       startDate: "2025-09-21",
       venue:
         "Athletes Sports Arena, 38, Engineering College Rd, Sector B, Jankipuram, Lucknow, UP – 226021",
-      teamsRegistered: 3,
+      teamsRegistered: 8,
       maxTeams: 8,
-      status: "open",
+      status: "closed",
       image: "/pct.jpg",
       prizes: {
         first: "₹4,000",
